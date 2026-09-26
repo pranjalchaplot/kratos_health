@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/daily_log.dart';
 import '../models/log_entry.dart';
 import '../models/user_goals.dart';
+import '../services/screen_time_service.dart';
 
 class KratosProvider extends ChangeNotifier {
   DateTime _selectedDate = DateTime.now();
@@ -219,6 +220,21 @@ class KratosProvider extends ChangeNotifier {
     currentLog.digitalMinutes = minutes;
     notifyListeners();
     await saveToPrefs();
+  }
+
+  Future<bool> syncScreenTimeFromDevice() async {
+    try {
+      final total = await ScreenTimeService.getTodayTotalScreenTime();
+      if (total > Duration.zero) {
+        final hours = total.inHours;
+        final minutes = total.inMinutes.remainder(60);
+        await logDigital(hours, minutes);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Screen time sync failed: $e');
+    }
+    return false;
   }
 
   Future<void> deleteLogEntry(String id) async {

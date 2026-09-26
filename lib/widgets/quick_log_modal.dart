@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/kratos_provider.dart';
+import '../services/screen_time_service.dart';
 import '../theme/kratos_theme.dart';
 
 class QuickLogModal extends StatefulWidget {
@@ -625,7 +626,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             color: KratosColors.onSecondaryContainer,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 12),
         Text(
           '${_digitalHours.toInt()}h ${_digitalMinutes.toInt()}m',
           style: const TextStyle(
@@ -635,11 +636,41 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             color: Colors.amberAccent,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.amberAccent,
+            side: const BorderSide(color: Colors.amberAccent),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          onPressed: () async {
+            final duration = await ScreenTimeService.getTodayTotalScreenTime();
+            if (duration > Duration.zero) {
+              setState(() {
+                _digitalHours = duration.inHours.toDouble();
+                _digitalMinutes = (duration.inMinutes % 60).toDouble();
+              });
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Synced screen time from device: ${duration.inHours}h ${duration.inMinutes % 60}m')),
+                );
+              }
+            } else {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Could not fetch usage stats. Ensure Usage Access permission is granted in Android settings.')),
+                );
+              }
+            }
+          },
+          icon: const Icon(Icons.sync, size: 16),
+          label: const Text('AUTO-FETCH FROM DEVICE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        ),
+        const SizedBox(height: 12),
         _buildValueControl('Screen Hours', '${_digitalHours.toInt()} hrs', _digitalHours, 0, 18, (v) {
           setState(() => _digitalHours = v);
         }),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _buildValueControl('Screen Minutes', '${_digitalMinutes.toInt()} mins', _digitalMinutes, 0, 59, (v) {
           setState(() => _digitalMinutes = v);
         }),
