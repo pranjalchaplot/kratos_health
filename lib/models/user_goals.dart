@@ -10,6 +10,12 @@ class UserGoals {
   double sleepGoal;
   int digitalGoalHours;
 
+  double? weightKg;
+  double? heightCm;
+  int? age;
+  String? primaryFocus;
+  String? userName;
+
   UserGoals({
     this.caloriesGoal = 3200,
     this.proteinGoal = 180,
@@ -19,6 +25,11 @@ class UserGoals {
     this.waterGoal = 3.5,
     this.sleepGoal = 8.5,
     this.digitalGoalHours = 10,
+    this.weightKg,
+    this.heightCm,
+    this.age,
+    this.primaryFocus,
+    this.userName,
   });
 
   Map<String, dynamic> toJson() {
@@ -31,6 +42,11 @@ class UserGoals {
       'waterGoal': waterGoal,
       'sleepGoal': sleepGoal,
       'digitalGoalHours': digitalGoalHours,
+      'weightKg': weightKg,
+      'heightCm': heightCm,
+      'age': age,
+      'primaryFocus': primaryFocus,
+      'userName': userName,
     };
   }
 
@@ -44,6 +60,11 @@ class UserGoals {
       waterGoal: (json['waterGoal'] as num?)?.toDouble() ?? 3.5,
       sleepGoal: (json['sleepGoal'] as num?)?.toDouble() ?? 8.5,
       digitalGoalHours: (json['digitalGoalHours'] as num?)?.toInt() ?? 10,
+      weightKg: (json['weightKg'] as num?)?.toDouble(),
+      heightCm: (json['heightCm'] as num?)?.toDouble(),
+      age: (json['age'] as num?)?.toInt(),
+      primaryFocus: json['primaryFocus'] as String?,
+      userName: json['userName'] as String?,
     );
   }
 
@@ -51,3 +72,4 @@ class UserGoals {
 
   factory UserGoals.decode(String str) => UserGoals.fromJson(jsonDecode(str));
 }
+

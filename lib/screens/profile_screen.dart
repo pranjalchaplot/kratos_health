@@ -95,28 +95,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: const Icon(Icons.person, color: KratosColors.primaryContainer, size: 32),
                   ),
                   const SizedBox(width: 16),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'KRATOS Athlete',
-                        style: TextStyle(
-                          fontFamily: 'Geist',
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: KratosColors.onSurface,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          provider.userGoals.userName ?? 'KRATOS Athlete',
+                          style: const TextStyle(
+                            fontFamily: 'Geist',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: KratosColors.onSurface,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'Performance Level: Elite',
-                        style: TextStyle(
-                          fontFamily: 'JetBrains Mono',
-                          fontSize: 12,
-                          color: KratosColors.primaryContainer,
+                        const SizedBox(height: 4),
+                        Text(
+                          provider.userGoals.primaryFocus ?? 'Focus: Peak Athletic Performance',
+                          style: const TextStyle(
+                            fontFamily: 'JetBrains Mono',
+                            fontSize: 12,
+                            color: KratosColors.primaryContainer,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -175,6 +177,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     waterGoal: double.tryParse(_waterController.text) ?? 3.5,
                     sleepGoal: double.tryParse(_sleepController.text) ?? 8.5,
                     digitalGoalHours: int.tryParse(_digitalController.text) ?? 10,
+                    weightKg: provider.userGoals.weightKg,
+                    heightCm: provider.userGoals.heightCm,
+                    age: provider.userGoals.age,
+                    primaryFocus: provider.userGoals.primaryFocus,
+                    userName: provider.userGoals.userName,
                   );
 
                   await provider.updateGoals(newGoals);
@@ -199,7 +206,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: KratosColors.primaryContainer,
+                  side: const BorderSide(color: KratosColors.primaryContainer),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                onPressed: () async {
+                  await provider.resetOnboarding();
+                },
+                icon: const Icon(Icons.restart_alt),
+                label: const Text(
+                  'RE-RUN ONBOARDING FLOW',
+                  style: TextStyle(
+                    fontFamily: 'Geist',
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               height: 48,

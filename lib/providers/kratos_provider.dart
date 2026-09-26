@@ -12,11 +12,13 @@ class KratosProvider extends ChangeNotifier {
   UserGoals _userGoals = UserGoals();
   final Map<String, DailyLog> _logsMap = {};
   bool _isLoading = true;
+  bool _isOnboardingCompleted = false;
 
   DateTime get selectedDate => _selectedDate;
   int get currentTabIndex => _currentTabIndex;
   UserGoals get userGoals => _userGoals;
   bool get isLoading => _isLoading;
+  bool get isOnboardingCompleted => _isOnboardingCompleted;
 
   String _formatKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -62,6 +64,9 @@ class KratosProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       
+      // Load Onboarding Status
+      _isOnboardingCompleted = prefs.getBool('kratos_onboarding_completed') ?? false;
+
       // Load Goals
       final goalsStr = prefs.getString('kratos_user_goals');
       if (goalsStr != null) {
@@ -94,6 +99,7 @@ class KratosProvider extends ChangeNotifier {
   Future<void> saveToPrefs() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('kratos_onboarding_completed', _isOnboardingCompleted);
       await prefs.setString('kratos_user_goals', _userGoals.encode());
 
       final Map<String, dynamic> logsExport = {};
@@ -104,6 +110,31 @@ class KratosProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error saving data: $e');
     }
+  }
+
+  Future<void> completeOnboarding(UserGoals newGoals) async {
+    _userGoals = newGoals;
+    _isOnboardingCompleted = true;
+    currentLog.applyGoals(newGoals);
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  Future<void> resetOnboarding() async {
+    _isOnboardingCompleted = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('kratos_onboarding_completed', false);
+    notifyListeners();
+  }
+
+  Future<void> clearAllData() async {
+    _logsMap.clear();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('kratos_daily_logs');
+    final todayKey = _formatKey(DateTime.now());
+    _logsMap[todayKey] = DailyLog.empty(DateTime.now(), _userGoals);
+    notifyListeners();
+    await saveToPrefs();
   }
 
   void setTab(int index) {
@@ -246,16 +277,6 @@ class KratosProvider extends ChangeNotifier {
   Future<void> updateGoals(UserGoals newGoals) async {
     _userGoals = newGoals;
     currentLog.applyGoals(newGoals);
-    notifyListeners();
-    await saveToPrefs();
-  }
-
-  Future<void> clearAllData() async {
-    _logsMap.clear();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('kratos_daily_logs');
-    final todayKey = _formatKey(DateTime.now());
-    _logsMap[todayKey] = DailyLog.empty(DateTime.now(), _userGoals);
     notifyListeners();
     await saveToPrefs();
   }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'theme/kratos_theme.dart';
 import 'providers/kratos_provider.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/logs_screen.dart';
 import 'screens/library_screen.dart';
@@ -55,6 +56,10 @@ class MainShell extends StatelessWidget {
           ),
         ),
       );
+    }
+
+    if (!provider.isOnboardingCompleted) {
+      return const OnboardingScreen();
     }
 
     Widget bodyWidget;
