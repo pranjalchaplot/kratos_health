@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'kratos_fonts.dart';
+
+export 'kratos_fonts.dart';
 
 /// Kratos Design System Colors
 class KratosColors {
@@ -64,76 +67,7 @@ class KratosTheme {
         error: KratosColors.error,
         onSurface: KratosColors.onSurface,
       ),
-      textTheme: const TextTheme(
-        // Display - 48px, 800, Geist
-        displayLarge: TextStyle(
-          fontFamily: 'Geist',
-          fontSize: 48,
-          fontWeight: FontWeight.w800,
-          height: 1.1,
-          letterSpacing: -1.92, // -0.04em
-          color: KratosColors.onSurface,
-        ),
-        // Headline Large - 32px, 700, Geist
-        headlineLarge: TextStyle(
-          fontFamily: 'Geist',
-          fontSize: 32,
-          fontWeight: FontWeight.w700,
-          height: 1.2,
-          letterSpacing: -0.64, // -0.02em
-          color: KratosColors.onSurface,
-        ),
-        // Headline Medium - 24px, 700, Geist (mobile headline)
-        headlineMedium: TextStyle(
-          fontFamily: 'Geist',
-          fontSize: 24,
-          fontWeight: FontWeight.w700,
-          height: 1.2,
-          color: KratosColors.onSurface,
-        ),
-        // Title Large - 20px, 600, Geist
-        titleLarge: TextStyle(
-          fontFamily: 'Geist',
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          height: 1.4,
-          color: KratosColors.onSurface,
-        ),
-        // Body Large - 16px, 400, Geist
-        bodyLarge: TextStyle(
-          fontFamily: 'Geist',
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          height: 1.6,
-          color: KratosColors.onSurface,
-        ),
-        // Body Medium - 14px, 400, Geist
-        bodyMedium: TextStyle(
-          fontFamily: 'Geist',
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          height: 1.5,
-          color: KratosColors.onSurface,
-        ),
-        // Label Large - data-lg: 24px, 700, Geist
-        labelLarge: TextStyle(
-          fontFamily: 'Geist',
-          fontSize: 24,
-          fontWeight: FontWeight.w700,
-          height: 1.0,
-          letterSpacing: -0.48, // -0.02em
-          color: KratosColors.onSurface,
-        ),
-        // Label Small - label-caps: 12px, 700, JetBrains Mono
-        labelSmall: TextStyle(
-          fontFamily: 'JetBrains Mono',
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          height: 1.0,
-          letterSpacing: 1.2, // 0.1em
-          color: KratosColors.onSurface,
-        ),
-      ),
+      textTheme: KratosFonts.createTextTheme(KratosColors.onSurface),
     );
   }
 }
