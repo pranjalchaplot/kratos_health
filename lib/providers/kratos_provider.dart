@@ -138,13 +138,18 @@ class KratosProvider extends ChangeNotifier {
 
   // --- Logging actions ---
 
-  Future<void> logWater(double amountLiters, {String title = 'Water Intake'}) async {
+  Future<void> logWater(double amountLiters, {String title = 'Water Intake', String? customSubtitle}) async {
+    final ml = (amountLiters * 1000).round();
+    final glasses = amountLiters / 0.25;
+    final glassesStr = glasses % 1 == 0 ? glasses.toInt().toString() : glasses.toStringAsFixed(1);
+    final defaultSubtitle = '$ml ml ($glassesStr ${glassesStr == '1' ? 'glass' : 'glasses'})';
+
     final entry = LogEntry(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       timestamp: DateTime.now(),
       type: LogType.water,
       title: title,
-      subtitle: '${(amountLiters * 1000).toInt()}ml',
+      subtitle: customSubtitle ?? defaultSubtitle,
       amount: amountLiters,
     );
     currentLog.entries.insert(0, entry);

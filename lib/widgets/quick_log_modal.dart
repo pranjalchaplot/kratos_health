@@ -26,6 +26,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
 
   // Water Form
   double _waterAmount = 0.5; // Liters
+  bool _isGlassesMode = true; // Mode switch: Glasses or ml
+  int _glassesCount = 2; // Default 2 glasses (500 ml)
 
   // Meal Form
   final _mealNameController = TextEditingController(text: 'Healthy Meal');
@@ -160,6 +162,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
 
   // --- Water Tab ---
   Widget _buildWaterTab() {
+    final int mlValue = (_waterAmount * 1000).round();
+
     return Column(
       children: [
         const Text(
@@ -171,44 +175,270 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             color: KratosColors.onSecondaryContainer,
           ),
         ),
-        const SizedBox(height: 16),
-        Text(
-          '${(_waterAmount * 1000).toInt()} ml',
-          style: const TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 40,
-            fontWeight: FontWeight.w800,
-            color: Colors.cyanAccent,
-          ),
-        ),
-        Slider(
-          value: _waterAmount,
-          min: 0.1,
-          max: 2.0,
-          divisions: 19,
-          activeColor: Colors.cyanAccent,
-          inactiveColor: KratosColors.surfaceContainerHighest,
-          onChanged: (val) => setState(() => _waterAmount = val),
-        ),
-        const SizedBox(height: 16),
-        // Preset Buttons
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          alignment: WrapAlignment.center,
+        const SizedBox(height: 12),
+        // Mode Selector: Glasses vs ML
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildPresetChip('+ 250 ml', () => setState(() => _waterAmount = 0.25)),
-            _buildPresetChip('+ 500 ml', () => setState(() => _waterAmount = 0.50)),
-            _buildPresetChip('+ 750 ml', () => setState(() => _waterAmount = 0.75)),
-            _buildPresetChip('+ 1.0 L', () => setState(() => _waterAmount = 1.0)),
+            _buildUnitToggleChip(
+              icon: Icons.local_drink_outlined,
+              label: 'Glasses',
+              isSelected: _isGlassesMode,
+              onTap: () {
+                setState(() {
+                  _isGlassesMode = true;
+                  _glassesCount = (_waterAmount / 0.25).round().clamp(1, 20);
+                  _waterAmount = _glassesCount * 0.25;
+                });
+              },
+            ),
+            const SizedBox(width: 12),
+            _buildUnitToggleChip(
+              icon: Icons.water_drop_outlined,
+              label: 'Milliliters (ml)',
+              isSelected: !_isGlassesMode,
+              onTap: () {
+                setState(() {
+                  _isGlassesMode = false;
+                });
+              },
+            ),
           ],
         ),
+        const SizedBox(height: 16),
+        if (_isGlassesMode) ...[
+          // Glasses Display with Stepper
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton.filledTonal(
+                onPressed: _glassesCount > 1
+                    ? () {
+                        setState(() {
+                          _glassesCount--;
+                          _waterAmount = _glassesCount * 0.25;
+                        });
+                      }
+                    : null,
+                icon: const Icon(Icons.remove),
+                style: IconButton.styleFrom(
+                  foregroundColor: Colors.cyanAccent,
+                  backgroundColor: Colors.cyanAccent.withValues(alpha: 0.15),
+                  disabledBackgroundColor: KratosColors.cardBackground,
+                ),
+              ),
+              const SizedBox(width: 20),
+              Column(
+                children: [
+                  Text(
+                    '$_glassesCount ${_glassesCount == 1 ? 'Glass' : 'Glasses'}',
+                    style: const TextStyle(
+                      fontFamily: 'Geist',
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.cyanAccent,
+                    ),
+                  ),
+                  Text(
+                    '($mlValue ml)',
+                    style: TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: KratosColors.onSecondaryContainer,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 20),
+              IconButton.filledTonal(
+                onPressed: () {
+                  setState(() {
+                    _glassesCount++;
+                    _waterAmount = _glassesCount * 0.25;
+                  });
+                },
+                icon: const Icon(Icons.add),
+                style: IconButton.styleFrom(
+                  foregroundColor: Colors.cyanAccent,
+                  backgroundColor: Colors.cyanAccent.withValues(alpha: 0.15),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Slider(
+            value: _glassesCount.toDouble().clamp(1.0, 16.0),
+            min: 1.0,
+            max: 16.0,
+            divisions: 15,
+            activeColor: Colors.cyanAccent,
+            inactiveColor: KratosColors.surfaceContainerHighest,
+            onChanged: (val) {
+              setState(() {
+                _glassesCount = val.round();
+                _waterAmount = _glassesCount * 0.25;
+              });
+            },
+          ),
+          const SizedBox(height: 12),
+          // Glasses Preset Buttons
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              _buildPresetChip('1 Glass (250ml)', () {
+                setState(() {
+                  _glassesCount = 1;
+                  _waterAmount = 0.25;
+                });
+              }),
+              _buildPresetChip('2 Glasses (500ml)', () {
+                setState(() {
+                  _glassesCount = 2;
+                  _waterAmount = 0.50;
+                });
+              }),
+              _buildPresetChip('3 Glasses (750ml)', () {
+                setState(() {
+                  _glassesCount = 3;
+                  _waterAmount = 0.75;
+                });
+              }),
+              _buildPresetChip('4 Glasses (1.0L)', () {
+                setState(() {
+                  _glassesCount = 4;
+                  _waterAmount = 1.00;
+                });
+              }),
+            ],
+          ),
+        ] else ...[
+          // ML Display
+          Text(
+            '$mlValue ml',
+            style: const TextStyle(
+              fontFamily: 'Geist',
+              fontSize: 38,
+              fontWeight: FontWeight.w800,
+              color: Colors.cyanAccent,
+            ),
+          ),
+          Text(
+            '(~${(_waterAmount / 0.25).toStringAsFixed(1)} ${_waterAmount / 0.25 == 1.0 ? 'glass' : 'glasses'})',
+            style: TextStyle(
+              fontFamily: 'JetBrains Mono',
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: KratosColors.onSecondaryContainer,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Slider(
+            value: _waterAmount.clamp(0.1, 2.5),
+            min: 0.1,
+            max: 2.5,
+            divisions: 24,
+            activeColor: Colors.cyanAccent,
+            inactiveColor: KratosColors.surfaceContainerHighest,
+            onChanged: (val) {
+              setState(() {
+                _waterAmount = val;
+                _glassesCount = (val / 0.25).round().clamp(1, 20);
+              });
+            },
+          ),
+          const SizedBox(height: 12),
+          // ML Preset Buttons
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              _buildPresetChip('+ 250 ml', () {
+                setState(() {
+                  _waterAmount = 0.25;
+                  _glassesCount = 1;
+                });
+              }),
+              _buildPresetChip('+ 500 ml', () {
+                setState(() {
+                  _waterAmount = 0.50;
+                  _glassesCount = 2;
+                });
+              }),
+              _buildPresetChip('+ 750 ml', () {
+                setState(() {
+                  _waterAmount = 0.75;
+                  _glassesCount = 3;
+                });
+              }),
+              _buildPresetChip('+ 1.0 L', () {
+                setState(() {
+                  _waterAmount = 1.00;
+                  _glassesCount = 4;
+                });
+              }),
+            ],
+          ),
+        ],
         const Spacer(),
         _buildSubmitButton('LOG WATER INTAKE', Colors.cyanAccent, () async {
-          await context.read<KratosProvider>().logWater(_waterAmount);
+          final String customSubtitle = _isGlassesMode
+              ? '$_glassesCount ${_glassesCount == 1 ? 'glass' : 'glasses'} ($mlValue ml)'
+              : '$mlValue ml (~${(_waterAmount / 0.25).toStringAsFixed(1)} glasses)';
+
+          await context.read<KratosProvider>().logWater(
+                _waterAmount,
+                customSubtitle: customSubtitle,
+              );
           if (mounted) Navigator.pop(context);
         }),
       ],
+    );
+  }
+
+  Widget _buildUnitToggleChip({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.cyanAccent.withValues(alpha: 0.15) : KratosColors.cardBackground,
+          border: Border.all(
+            color: isSelected ? Colors.cyanAccent : KratosColors.cardBorder,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.cyanAccent : KratosColors.onSecondaryContainer,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'JetBrains Mono',
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? Colors.cyanAccent : KratosColors.onSecondaryContainer,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
