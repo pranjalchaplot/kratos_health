@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../providers/soma_provider.dart';
 import '../models/user_goals.dart';
 import '../theme/soma_theme.dart';
+import '../services/step_tracker_service.dart';
+import '../services/android_sleep_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -86,24 +88,47 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _currentStep == 2) {
-      _checkAndAutoFetchPermissions();
+      if (_isPermissionRequesting) {
+        _verifyDigitalWellbeingOnResume();
+      } else {
+        _checkPassivePermissions();
+      }
     }
   }
 
-  Future<void> _checkAndAutoFetchPermissions() async {
+  /// Passive check that never prompts or triggers Android Settings intents
+  Future<void> _checkPassivePermissions() async {
     try {
+      final stepGranted = await StepTrackerService.isPermissionGranted();
+      final sleepGranted = await AndroidSleepService.isPermissionGranted();
+      if (!mounted) return;
+      final provider = context.read<SomaProvider>();
+      setState(() {
+        _isStepPermissionGranted = stepGranted;
+        _isSleepPermissionGranted = sleepGranted || provider.isSleepTrackingActive;
+      });
+    } catch (_) {}
+  }
+
+  /// Verify digital wellbeing only when user explicitly tapped the permission button
+  Future<void> _verifyDigitalWellbeingOnResume() async {
+    try {
+      if (!mounted) return;
       final provider = context.read<SomaProvider>();
       final screenTimeSuccess = await provider.syncScreenTimeFromDevice();
-      final stepSuccess = await provider.syncStepTrackingFromDevice();
-      final sleepSuccess = await provider.syncSleepTrackingFromDevice();
       if (mounted) {
         setState(() {
           _isPermissionGranted = screenTimeSuccess;
-          _isStepPermissionGranted = stepSuccess;
-          _isSleepPermissionGranted = sleepSuccess || provider.isSleepTrackingActive;
+          _isPermissionRequesting = false;
         });
       }
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isPermissionRequesting = false;
+        });
+      }
+    }
   }
 
   @override
@@ -426,7 +451,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                     _currentStep = index;
                   });
                   if (index == 2) {
-                    _checkAndAutoFetchPermissions();
+                    _checkPassivePermissions();
                   }
                 },
                 physics: const BouncingScrollPhysics(),
