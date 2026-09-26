@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/exercise_set.dart';
@@ -27,6 +28,7 @@ class QuickLogModal extends StatefulWidget {
 
 class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  Timer? _liveTickerTimer;
 
   // Water Form
   double _waterAmount = 0.5; // Liters
@@ -77,10 +79,18 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
       vsync: this,
       initialIndex: widget.initialTabIndex.clamp(0, 5),
     );
+
+    // Start 100ms real-time ticking timer for per-second live BMR burn display
+    _liveTickerTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
   void dispose() {
+    _liveTickerTimer?.cancel();
     _tabController.dispose();
     _mealNameController.dispose();
     _exerciseNameController.dispose();
@@ -192,10 +202,10 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
     final log = provider.currentLog;
 
     final activeBurn = log.activeCaloriesBurned;
-    final bmrSoFar = CalorieCalculatorService.calculateBmrBurntSoFar(goals, provider.selectedDate);
-    final hourlyBmr = CalorieCalculatorService.calculateHourlyBmr(goals);
+    final preciseBmrSoFar = CalorieCalculatorService.calculatePreciseBmrBurntSoFar(goals, provider.selectedDate);
+    final bmrPerSec = CalorieCalculatorService.calculateBmrPerSecond(goals);
     final bmrDaily = CalorieCalculatorService.calculateBmr(goals);
-    final totalBurn = activeBurn + bmrSoFar;
+    final totalBurnPrecise = activeBurn + preciseBmrSoFar;
 
     final targetTdee = (bmrDaily * 1.3).round(); // Target TDEE estimate
 
@@ -206,7 +216,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'LIVE DAILY CALORIE BURN',
+              'LIVE REAL-TIME CALORIE BURN',
               style: TextStyle(
                 fontFamily: 'JetBrains Mono',
                 fontSize: 12,
@@ -222,9 +232,82 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         ),
         const SizedBox(height: 12),
 
-        // Hero Card
+        // Live Ticking BMR Card
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.orangeAccent.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.4)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'RESTING BMR BURN (BY EXISTING)',
+                    style: TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orangeAccent,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.orangeAccent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '+${bmrPerSec.toStringAsFixed(4)} kcal/sec',
+                      style: const TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    preciseBmrSoFar.toStringAsFixed(3),
+                    style: const TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.orangeAccent,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'kcal',
+                    style: TextStyle(
+                      fontFamily: 'Geist',
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // Total Burn Hero Card
+        Container(
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -232,59 +315,35 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 KratosColors.cardBackground,
               ],
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: KratosColors.primaryContainer.withValues(alpha: 0.5)),
           ),
-          child: Column(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '$totalBurn kcal',
-                        style: const TextStyle(
-                          fontFamily: 'Geist',
-                          fontSize: 34,
-                          fontWeight: FontWeight.w800,
-                          color: KratosColors.primaryContainer,
-                        ),
-                      ),
-                      const Text(
-                        'Total Energy Expended Today',
-                        style: TextStyle(
-                          fontFamily: 'Geist',
-                          fontSize: 12,
-                          color: KratosColors.onSecondaryContainer,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: KratosColors.primaryContainer.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
+                  Text(
+                    'Total Burn: ${totalBurnPrecise.toStringAsFixed(1)} kcal',
+                    style: const TextStyle(
+                      fontFamily: 'Geist',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: KratosColors.primaryContainer,
                     ),
-                    child: const Icon(Icons.local_fire_department, color: KratosColors.primaryContainer, size: 28),
+                  ),
+                  Text(
+                    'Active ($activeBurn kcal) + Resting BMR (${preciseBmrSoFar.toStringAsFixed(1)} kcal)',
+                    style: const TextStyle(
+                      fontFamily: 'Geist',
+                      fontSize: 11,
+                      color: KratosColors.onSecondaryContainer,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              const Divider(color: KratosColors.cardBorder),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildBurnSubStat('ACTIVE BURN', '$activeBurn kcal', KratosColors.secondary),
-                  Container(width: 1, height: 32, color: KratosColors.cardBorder),
-                  _buildBurnSubStat('RESTING (BMR)', '$bmrSoFar kcal', Colors.orangeAccent),
-                  Container(width: 1, height: 32, color: KratosColors.cardBorder),
-                  _buildBurnSubStat('HOURLY RATE', '~${hourlyBmr.toStringAsFixed(1)}/hr', KratosColors.onSurface),
-                ],
-              ),
+              const Icon(Icons.local_fire_department, color: KratosColors.primaryContainer, size: 28),
             ],
           ),
         ),
@@ -304,7 +363,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               ),
             ),
             Text(
-              '${((totalBurn / targetTdee) * 100).round()}%',
+              '${((totalBurnPrecise / targetTdee) * 100).round()}%',
               style: const TextStyle(
                 fontFamily: 'JetBrains Mono',
                 fontSize: 12,
@@ -318,7 +377,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: LinearProgressIndicator(
-            value: (totalBurn / targetTdee).clamp(0.0, 1.0),
+            value: (totalBurnPrecise / targetTdee).clamp(0.0, 1.0),
             minHeight: 8,
             backgroundColor: KratosColors.surfaceContainerHighest,
             color: KratosColors.primaryContainer,
@@ -367,32 +426,6 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               ),
             ),
           ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBurnSubStat(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-            color: color,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(
-            fontFamily: 'JetBrains Mono',
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: KratosColors.onSecondaryContainer,
-          ),
         ),
       ],
     );

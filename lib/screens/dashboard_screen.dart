@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -12,8 +13,32 @@ import '../widgets/quick_log_modal.dart';
 import '../widgets/bmr_info_dialog.dart';
 
 /// Main Dashboard Screen - KRATOS Fitness & Nutrition Ecosystem
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  Timer? _tickerTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // 1-second real-time ticker timer for live Dashboard BMR updates
+    _tickerTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tickerTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,8 +173,8 @@ class DashboardScreen extends StatelessWidget {
                         ProgressRings(
                           calorieProgress: data.caloriesProgress,
                           activityProgress: data.caloriesProgress,
-                          centerValue: formatCurrency.format(data.caloriesBurned),
-                          centerLabel: 'ACTIVE KCAL',
+                          centerValue: formatCurrency.format(data.totalCaloriesBurned),
+                          centerLabel: 'KCAL BURNED',
                         ),
                         const SizedBox(width: 24),
                         Expanded(child: _buildMacrosSection(context, data)),
@@ -161,8 +186,8 @@ class DashboardScreen extends StatelessWidget {
                       ProgressRings(
                         calorieProgress: data.caloriesProgress,
                         activityProgress: data.caloriesProgress,
-                        centerValue: formatCurrency.format(data.caloriesBurned),
-                        centerLabel: 'ACTIVE KCAL',
+                        centerValue: formatCurrency.format(data.totalCaloriesBurned),
+                        centerLabel: 'KCAL BURNED',
                       ),
                       const SizedBox(height: 20),
                       _buildMacrosSection(context, data),
@@ -234,7 +259,7 @@ class DashboardScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          '+${data.bmrBurntSoFar} kcal BMR Resting (${data.totalCaloriesBurned} total)',
+          'Active: ${data.caloriesBurned} kcal • Resting BMR: ${data.bmrBurntSoFar} kcal',
           style: const TextStyle(
             fontFamily: 'JetBrains Mono',
             fontSize: 11,

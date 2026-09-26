@@ -112,7 +112,7 @@ class DashboardData {
     );
   }
 
-  double get caloriesProgress => caloriesGoal > 0 ? (caloriesBurned / caloriesGoal).clamp(0.0, 1.0) : 0.0;
+  double get caloriesProgress => caloriesGoal > 0 ? (totalCaloriesBurned / caloriesGoal).clamp(0.0, 1.0) : 0.0;
   double get proteinProgress => proteinGoal > 0 ? (protein / proteinGoal).clamp(0.0, 1.0) : 0.0;
   double get carbsProgress => carbsGoal > 0 ? (carbs / carbsGoal).clamp(0.0, 1.0) : 0.0;
   double get fatsProgress => fatsGoal > 0 ? (fats / fatsGoal).clamp(0.0, 1.0) : 0.0;

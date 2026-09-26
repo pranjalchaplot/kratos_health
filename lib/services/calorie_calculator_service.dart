@@ -59,6 +59,31 @@ class CalorieCalculatorService {
     return bmr / 24.0;
   }
 
+  /// Per-second BMR burn rate
+  static double calculateBmrPerSecond(UserGoals goals) {
+    final bmr = calculateBmr(goals);
+    return bmr / 86400.0;
+  }
+
+  /// Calculates precise real-time double BMR calories burnt so far today (down to millisecond precision)
+  static double calculatePreciseBmrBurntSoFar(UserGoals goals, DateTime date) {
+    final now = DateTime.now();
+    final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+    final isPast = date.isBefore(DateTime(now.year, now.month, now.day));
+
+    final bmrDaily = calculateBmr(goals).toDouble();
+
+    if (isPast) {
+      return bmrDaily;
+    } else if (isToday) {
+      final secondsPassed = (now.hour * 3600) + (now.minute * 60) + now.second + (now.millisecond / 1000.0);
+      final bmrPerSec = calculateBmrPerSecond(goals);
+      return (secondsPassed * bmrPerSec).clamp(0.0, bmrDaily);
+    } else {
+      return 0.0;
+    }
+  }
+
   /// Calculates real-time BMR calories burnt so far today based on current local time (or target date)
   static int calculateBmrBurntSoFar(UserGoals goals, DateTime date) {
     final now = DateTime.now();
