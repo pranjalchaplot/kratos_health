@@ -26,11 +26,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
   final TextEditingController _ageController = TextEditingController(text: '24');
   String _activityLevel = 'Moderate (3-4 workouts/wk)';
 
-  // Step 3: Permissions (Digital Wellbeing & Step Tracker)
+  // Step 3: Permissions (Digital Wellbeing, Step Tracker & Sleep Sensing)
   bool _isPermissionRequesting = false;
   bool _isPermissionGranted = false;
   bool _isStepPermissionRequesting = false;
   bool _isStepPermissionGranted = false;
+  bool _isSleepPermissionRequesting = false;
+  bool _isSleepPermissionGranted = false;
+  bool _isTestingSensors = false;
   int _digitalLimitHours = 6;
 
   // Calculated goals state
@@ -92,10 +95,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
       final provider = context.read<SomaProvider>();
       final screenTimeSuccess = await provider.syncScreenTimeFromDevice();
       final stepSuccess = await provider.syncStepTrackingFromDevice();
+      final sleepSuccess = await provider.syncSleepTrackingFromDevice();
       if (mounted) {
         setState(() {
           _isPermissionGranted = screenTimeSuccess;
           _isStepPermissionGranted = stepSuccess;
+          _isSleepPermissionGranted = sleepSuccess || provider.isSleepTrackingActive;
         });
       }
     } catch (_) {}
@@ -248,6 +253,73 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           _isStepPermissionRequesting = false;
         });
       }
+    }
+  }
+
+  Future<void> _requestSleepPermission() async {
+    setState(() {
+      _isSleepPermissionRequesting = true;
+    });
+
+    try {
+      final success = await context.read<SomaProvider>().requestSleepPermission();
+      setState(() {
+        _isSleepPermissionGranted = success;
+        if (success) _isStepPermissionGranted = true;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Sleep Sensing Armed! Phone will passively detect sleep overnight.'
+                  : 'Sleep permission not granted. You can still log sleep manually.',
+            ),
+            backgroundColor: success ? SomaColors.primaryContainer : SomaColors.surfaceContainerHigh,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not request sleep permission: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSleepPermissionRequesting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _syncAllSensorsNow() async {
+    setState(() {
+      _isTestingSensors = true;
+    });
+    HapticFeedback.mediumImpact();
+    final results = await context.read<SomaProvider>().syncAllFromPhone();
+    if (mounted) {
+      final provider = context.read<SomaProvider>();
+      setState(() {
+        _isPermissionGranted = results['screenTime'] ?? false;
+        _isStepPermissionGranted = results['steps'] ?? false;
+        _isSleepPermissionGranted = (results['sleep'] ?? false) || provider.isSleepTrackingActive;
+        _isTestingSensors = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Telemetry Synced: Screen Time (${results['screenTime'] == true ? 'Active' : 'Pending'}), Steps (${results['steps'] == true ? 'Active' : 'Pending'}), Sleep (${provider.isSleepTrackingActive ? 'Armed' : 'Pending'})',
+          ),
+          backgroundColor: SomaColors.primaryContainer,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -928,6 +1000,128 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                   ),
                 ),
               ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // 3. Android Sleep API Permission Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: SomaColors.cardBackground,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _isSleepPermissionGranted ? SomaColors.primaryContainer : SomaColors.cardBorder,
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: _isSleepPermissionGranted
+                            ? SomaColors.primaryContainer.withValues(alpha: 0.2)
+                            : SomaColors.surfaceContainerHigh,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _isSleepPermissionGranted ? Icons.nightlight_round : Icons.bedtime_outlined,
+                        color: _isSleepPermissionGranted ? SomaColors.primaryContainer : SomaColors.secondary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _isSleepPermissionGranted
+                                ? 'Sleep Sensing Active'
+                                : 'Nightly Sleep Sensing',
+                            style: SomaFonts.primary(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: SomaColors.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _isSleepPermissionGranted
+                                ? 'Android Sleep API armed to passively detect sleep.'
+                                : 'Uses ambient phone sensors to track sleep overnight.',
+                            style: SomaFonts.primary(
+                              fontSize: 12,
+                              color: SomaColors.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 42,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isSleepPermissionGranted
+                          ? SomaColors.surfaceContainerHigh
+                          : SomaColors.primaryContainer,
+                      foregroundColor: _isSleepPermissionGranted ? SomaColors.onSurface : Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: _isSleepPermissionRequesting ? null : _requestSleepPermission,
+                    icon: _isSleepPermissionRequesting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                          )
+                        : Icon(_isSleepPermissionGranted ? Icons.check : Icons.nightlight_round, size: 18),
+                    label: Text(
+                      _isSleepPermissionGranted ? 'SLEEP SENSING ARMED' : 'ENABLE AUTO SLEEP TRACKER',
+                      style: SomaFonts.mono(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Instant Sync & Verification Button
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: SomaColors.primaryContainer,
+              side: const BorderSide(color: SomaColors.cardBorder),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              minimumSize: const Size(double.infinity, 44),
+            ),
+            onPressed: _isTestingSensors ? null : _syncAllSensorsNow,
+            icon: _isTestingSensors
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: SomaColors.primaryContainer),
+                  )
+                : const Icon(Icons.sync_rounded, size: 18),
+            label: Text(
+              _isTestingSensors ? 'SYNCING SENSOR TELEMETRY...' : 'TEST PHONE SENSOR SYNC NOW',
+              style: SomaFonts.mono(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
 

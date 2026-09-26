@@ -9,12 +9,21 @@ import '../services/screen_time_service.dart';
 import '../theme/soma_theme.dart';
 import 'bmr_info_dialog.dart';
 
+class QuickLogTab {
+  static const int water = 0;
+  static const int meal = 1;
+  static const int burn = 2;
+  static const int activity = 3;
+  static const int sleep = 4;
+  static const int digital = 5;
+}
+
 class QuickLogModal extends StatefulWidget {
   final int initialTabIndex;
 
-  const QuickLogModal({super.key, this.initialTabIndex = 0});
+  const QuickLogModal({super.key, this.initialTabIndex = QuickLogTab.water});
 
-  static void show(BuildContext context, {int initialTabIndex = 0}) {
+  static void show(BuildContext context, {int initialTabIndex = QuickLogTab.water}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -48,8 +57,9 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
   double _sleepHours = 8.0;
 
   // Digital Form
-  double _digitalHours = 4.0;
-  double _digitalMinutes = 30.0;
+  double _digitalHours = 0.0;
+  double _digitalMinutes = 0.0;
+  bool _isAutoSyncingDigital = false;
 
   // Activity Master Switch: 'STEPS', 'CARDIO', 'EXERCISE'
   String _activitySubMode = 'EXERCISE';
@@ -89,6 +99,47 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         setState(() {});
       }
     });
+
+    // Auto-fetch digital wellbeing screen time and sleep from device & active log
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncInitialMetricsFromDevice();
+    });
+  }
+
+  Future<void> _syncInitialMetricsFromDevice() async {
+    if (!mounted) return;
+    final provider = context.read<SomaProvider>();
+    final log = provider.currentLog;
+
+    // 1. Populate initial values from today's active log
+    setState(() {
+      if (log.sleep > 0) {
+        _sleepHours = log.sleep;
+      }
+      _digitalHours = log.digitalHours.toDouble();
+      _digitalMinutes = log.digitalMinutes.toDouble();
+      _isAutoSyncingDigital = true;
+    });
+
+    // 2. Query device's live ScreenTimeService to get the latest screen time
+    try {
+      final duration = await ScreenTimeService.getTodayTotalScreenTime();
+      if (duration > Duration.zero && mounted) {
+        setState(() {
+          _digitalHours = duration.inHours.toDouble();
+          _digitalMinutes = (duration.inMinutes % 60).toDouble();
+        });
+        await provider.logDigital(duration.inHours, duration.inMinutes % 60);
+      }
+    } catch (e) {
+      debugPrint('QuickLogModal: Could not auto-sync live screen time: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAutoSyncingDigital = false;
+        });
+      }
+    }
   }
 
   @override
@@ -1207,7 +1258,42 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             color: Colors.amberAccent,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
+        if (_isAutoSyncingDigital)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 1.5, color: Colors.amberAccent),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'SYNCING LIVE DEVICE USAGE...',
+                  style: SomaFonts.mono(fontSize: 10, color: Colors.amberAccent, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.check_circle_outline_rounded, size: 14, color: Colors.amberAccent),
+                const SizedBox(width: 6),
+                Text(
+                  'SYNCED WITH ANDROID USAGE STATS',
+                  style: SomaFonts.mono(fontSize: 10, color: Colors.amberAccent, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 6),
         OutlinedButton.icon(
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.amberAccent,

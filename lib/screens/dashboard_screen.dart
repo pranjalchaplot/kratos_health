@@ -54,11 +54,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: SomaColors.background,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // App Bar
-          _buildAppBar(context, provider),
+      body: RefreshIndicator(
+        color: Colors.black,
+        backgroundColor: SomaColors.primaryContainer,
+        onRefresh: () async {
+          HapticFeedback.lightImpact();
+          await provider.syncAllFromPhone();
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          slivers: [
+            // App Bar
+            _buildAppBar(context, provider),
 
           // Content
           SliverToBoxAdapter(
@@ -127,7 +134,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   SliverAppBar _buildAppBar(BuildContext context, SomaProvider provider) {
@@ -211,32 +219,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
 
-          // Streak Flame Pill
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: SomaColors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: SomaColors.primaryContainer.withValues(alpha: 0.3),
-                width: 1,
+          // Trailing Actions: Sync from Phone + Streak Pill
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                tooltip: 'Sync Phone Sensors',
+                onPressed: provider.isSyncingFromPhone
+                    ? null
+                    : () async {
+                        HapticFeedback.mediumImpact();
+                        await provider.syncAllFromPhone();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Telemetry Synced • Steps: ${provider.currentLog.steps}, Sleep: ${provider.currentLog.sleep}h, Screen: ${provider.currentLog.digitalHours}h ${provider.currentLog.digitalMinutes}m',
+                              ),
+                              backgroundColor: SomaColors.primaryContainer,
+                              duration: const Duration(seconds: 2),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                icon: provider.isSyncingFromPhone
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: SomaColors.primaryContainer,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.sync_rounded,
+                        color: SomaColors.primaryContainer,
+                        size: 20,
+                      ),
               ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('🔥', style: TextStyle(fontSize: 13)),
-                const SizedBox(width: 4),
-                Text(
-                  '${provider.streak}D',
-                  style: SomaFonts.mono(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: SomaColors.primaryContainer,
+              const SizedBox(width: 4),
+              // Streak Flame Pill
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: SomaColors.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: SomaColors.primaryContainer.withValues(alpha: 0.3),
+                    width: 1,
                   ),
                 ),
-              ],
-            ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('🔥', style: TextStyle(fontSize: 13)),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${provider.streak}D',
+                      style: SomaFonts.mono(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: SomaColors.primaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -262,28 +312,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: Icons.restaurant_rounded,
               label: '+ MEAL',
               color: SomaColors.primaryContainer,
-              onTap: () => QuickLogModal.show(context, initialTabIndex: 1),
+              onTap: () => QuickLogModal.show(context, initialTabIndex: QuickLogTab.meal),
             ),
             const SizedBox(width: 8),
             _buildActionChip(
               icon: Icons.water_drop_rounded,
               label: '+ WATER',
               color: SomaColors.accentCyan,
-              onTap: () => QuickLogModal.show(context, initialTabIndex: 0),
+              onTap: () => QuickLogModal.show(context, initialTabIndex: QuickLogTab.water),
             ),
             const SizedBox(width: 8),
             _buildActionChip(
               icon: Icons.fitness_center_rounded,
               label: '+ WORKOUT',
               color: SomaColors.accentCoral,
-              onTap: () => QuickLogModal.show(context, initialTabIndex: 2),
+              onTap: () => QuickLogModal.show(context, initialTabIndex: QuickLogTab.activity),
             ),
             const SizedBox(width: 8),
             _buildActionChip(
               icon: Icons.bedtime_rounded,
               label: '+ SLEEP',
               color: SomaColors.accentPurple,
-              onTap: () => QuickLogModal.show(context, initialTabIndex: 3),
+              onTap: () => QuickLogModal.show(context, initialTabIndex: QuickLogTab.sleep),
             ),
           ],
         ),
@@ -337,7 +387,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: GestureDetector(
         onTap: () {
           HapticFeedback.lightImpact();
-          QuickLogModal.show(context, initialTabIndex: 2); // Live Calorie Burn tab
+          QuickLogModal.show(context, initialTabIndex: QuickLogTab.burn); // Live Calorie Burn tab
         },
         child: Container(
           decoration: BoxDecoration(
@@ -517,7 +567,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
-              QuickLogModal.show(context, initialTabIndex: 0);
+              QuickLogModal.show(context, initialTabIndex: QuickLogTab.water);
             },
             child: MetricCard(
               label: 'HYDRATION',
@@ -533,7 +583,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
-              QuickLogModal.show(context, initialTabIndex: 3);
+              QuickLogModal.show(context, initialTabIndex: QuickLogTab.sleep);
             },
             child: MetricCard(
               label: 'SLEEP REST',
@@ -549,7 +599,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
-              QuickLogModal.show(context, initialTabIndex: 4);
+              QuickLogModal.show(context, initialTabIndex: QuickLogTab.digital);
             },
             child: MetricCard(
               label: 'DIGITAL USE',
@@ -570,7 +620,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _handleStepsTap(BuildContext context, DashboardData data, SomaProvider provider) {
     if (provider.isStepPermissionGranted) {
-      QuickLogModal.show(context, initialTabIndex: 2);
+      QuickLogModal.show(context, initialTabIndex: QuickLogTab.activity);
     } else {
       _showStepPermissionDialog(context, provider);
     }
@@ -683,7 +733,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   onPressed: () {
                     Navigator.pop(ctx);
-                    QuickLogModal.show(context, initialTabIndex: 2);
+                    QuickLogModal.show(context, initialTabIndex: QuickLogTab.activity);
                   },
                   child: Text(
                     'LOG STEPS MANUALLY INSTEAD',

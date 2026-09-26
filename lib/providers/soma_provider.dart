@@ -18,6 +18,7 @@ class SomaProvider extends ChangeNotifier {
   bool _isOnboardingCompleted = false;
   bool _isStepPermissionGranted = false;
   bool _isSleepTrackingActive = false;
+  bool _isSyncingFromPhone = false;
 
   DateTime get selectedDate => _selectedDate;
   int get currentTabIndex => _currentTabIndex;
@@ -26,6 +27,7 @@ class SomaProvider extends ChangeNotifier {
   bool get isOnboardingCompleted => _isOnboardingCompleted;
   bool get isStepPermissionGranted => _isStepPermissionGranted;
   bool get isSleepTrackingActive => _isSleepTrackingActive;
+  bool get isSyncingFromPhone => _isSyncingFromPhone;
 
   String _formatKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -448,6 +450,39 @@ class SomaProvider extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  /// Unified synchronization of all supported phone sensors:
+  /// 1. Digital Wellbeing (Screen Time)
+  /// 2. Pedometer (Steps)
+  /// 3. Sleep Segment API (Sleep)
+  Future<Map<String, bool>> syncAllFromPhone() async {
+    _isSyncingFromPhone = true;
+    notifyListeners();
+
+    final results = <String, bool>{
+      'screenTime': false,
+      'steps': false,
+      'sleep': false,
+    };
+
+    try {
+      final futures = await Future.wait([
+        syncScreenTimeFromDevice(),
+        syncStepTrackingFromDevice(),
+        syncSleepTrackingFromDevice(),
+      ]);
+      results['screenTime'] = futures[0];
+      results['steps'] = futures[1];
+      results['sleep'] = futures[2];
+    } catch (e) {
+      debugPrint('syncAllFromPhone error: $e');
+    } finally {
+      _isSyncingFromPhone = false;
+      notifyListeners();
+    }
+
+    return results;
   }
 
   Future<void> deleteLogEntry(String id) async {
