@@ -43,7 +43,7 @@ class DashboardScreen extends StatelessWidget {
                 _buildDailySummaryCard(context, data),
                 const SizedBox(height: 16),
                 // Metrics Grid
-                _buildMetricsGrid(context, data),
+                _buildMetricsGrid(context, data, provider),
                 // Bottom padding for nav bar
                 const SizedBox(height: 100),
               ],
@@ -250,7 +250,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricsGrid(BuildContext context, DashboardData data) {
+  Widget _buildMetricsGrid(BuildContext context, DashboardData data, KratosProvider provider) {
     final formatCurrency = NumberFormat("#,##0", "en_US");
     
     return Padding(
@@ -262,9 +262,9 @@ class DashboardScreen extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          // Steps Card (taps open Activity tab)
+          // Steps Card (taps open prompt if permission missed, else open Activity tab)
           GestureDetector(
-            onTap: () => QuickLogModal.show(context, initialTabIndex: 2),
+            onTap: () => _handleStepsTap(context, data, provider),
             child: MetricCard(
               label: 'STEPS TODAY',
               value: formatCurrency.format(data.steps),
@@ -313,6 +313,144 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _handleStepsTap(BuildContext context, DashboardData data, KratosProvider provider) {
+    if (provider.isStepPermissionGranted) {
+      QuickLogModal.show(context, initialTabIndex: 2);
+    } else {
+      _showStepPermissionDialog(context, provider);
+    }
+  }
+
+  void _showStepPermissionDialog(BuildContext context, KratosProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: KratosColors.surfaceContainer,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: KratosColors.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: KratosColors.primaryContainer.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.directions_walk,
+                  color: KratosColors.primaryContainer,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'ENABLE AUTO STEP TRACKING',
+                style: TextStyle(
+                  fontFamily: 'Geist',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: KratosColors.onSurface,
+                  letterSpacing: 0.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'You skipped granting Physical Activity permission during onboarding. Enable it now so KRATOS can auto-detect your daily steps in real time using your phone\'s hardware sensor.',
+                style: TextStyle(
+                  fontFamily: 'Geist',
+                  fontSize: 14,
+                  color: KratosColors.secondary,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: KratosColors.primaryContainer,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    final granted = await provider.requestStepPermission();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            granted
+                                ? 'Physical Activity permission granted! Auto step tracking active.'
+                                : 'Permission was not granted. Ensure physical activity access is enabled in Settings.',
+                          ),
+                          backgroundColor: granted
+                              ? KratosColors.primaryContainer
+                              : KratosColors.surfaceContainerHigh,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.check_circle_outline, size: 20),
+                  label: const Text(
+                    'GRANT STEP PERMISSION',
+                    style: TextStyle(
+                      fontFamily: 'Geist',
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: KratosColors.secondary,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    QuickLogModal.show(context, initialTabIndex: 2);
+                  },
+                  child: const Text(
+                    'LOG STEPS MANUALLY INSTEAD',
+                    style: TextStyle(
+                      fontFamily: 'Geist',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
     );
   }
 }

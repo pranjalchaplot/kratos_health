@@ -5,6 +5,7 @@ import '../models/daily_log.dart';
 import '../models/log_entry.dart';
 import '../models/user_goals.dart';
 import '../services/screen_time_service.dart';
+import '../services/step_tracker_service.dart';
 
 class KratosProvider extends ChangeNotifier {
   DateTime _selectedDate = DateTime.now();
@@ -13,12 +14,14 @@ class KratosProvider extends ChangeNotifier {
   final Map<String, DailyLog> _logsMap = {};
   bool _isLoading = true;
   bool _isOnboardingCompleted = false;
+  bool _isStepPermissionGranted = false;
 
   DateTime get selectedDate => _selectedDate;
   int get currentTabIndex => _currentTabIndex;
   UserGoals get userGoals => _userGoals;
   bool get isLoading => _isLoading;
   bool get isOnboardingCompleted => _isOnboardingCompleted;
+  bool get isStepPermissionGranted => _isStepPermissionGranted;
 
   String _formatKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -88,6 +91,9 @@ class KratosProvider extends ChangeNotifier {
         _logsMap[todayKey] = DailyLog.empty(DateTime.now(), _userGoals);
         await saveToPrefs();
       }
+
+      // Sync & start step tracker listening if permission already granted
+      await syncStepTrackingFromDevice();
     } catch (e) {
       debugPrint('Error loading saved data: $e');
     } finally {
@@ -119,8 +125,9 @@ class KratosProvider extends ChangeNotifier {
     notifyListeners();
     await saveToPrefs();
     
-    // Automatically fetch Digital Wellbeing screen time data after onboarding
+    // Automatically fetch Digital Wellbeing & Step Tracking after onboarding
     await syncScreenTimeFromDevice();
+    await syncStepTrackingFromDevice();
   }
 
   Future<void> resetOnboarding() async {
@@ -269,6 +276,44 @@ class KratosProvider extends ChangeNotifier {
       debugPrint('Screen time sync failed: $e');
     }
     return false;
+  }
+
+  Future<bool> syncStepTrackingFromDevice() async {
+    try {
+      final granted = await StepTrackerService.isPermissionGranted();
+      _isStepPermissionGranted = granted;
+      if (granted) {
+        await StepTrackerService.startListening(
+          onStepsUpdated: (todaySteps) {
+            final todayKey = _formatKey(DateTime.now());
+            if (_logsMap.containsKey(todayKey)) {
+              _logsMap[todayKey]!.additionalSteps = todaySteps;
+              notifyListeners();
+            }
+          },
+        );
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Step tracking sync failed: $e');
+    }
+    return false;
+  }
+
+  Future<bool> requestStepPermission() async {
+    try {
+      final granted = await StepTrackerService.requestPermission();
+      _isStepPermissionGranted = granted;
+      if (granted) {
+        await syncStepTrackingFromDevice();
+      }
+      notifyListeners();
+      return granted;
+    } catch (e) {
+      debugPrint('Step permission request error: $e');
+      return false;
+    }
   }
 
   Future<void> deleteLogEntry(String id) async {

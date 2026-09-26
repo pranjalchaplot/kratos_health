@@ -25,9 +25,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final TextEditingController _ageController = TextEditingController(text: '24');
   String _activityLevel = 'Moderate (3-4 workouts/wk)';
 
-  // Step 3: Digital Wellbeing
+  // Step 3: Permissions (Digital Wellbeing & Step Tracker)
   bool _isPermissionRequesting = false;
   bool _isPermissionGranted = false;
+  bool _isStepPermissionRequesting = false;
+  bool _isStepPermissionGranted = false;
   int _digitalLimitHours = 6;
 
   // Calculated goals state
@@ -74,15 +76,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void initState() {
     super.initState();
     _recalculateGoals();
-    _checkAndAutoFetchDigitalWellbeing();
+    _checkAndAutoFetchPermissions();
   }
 
-  Future<void> _checkAndAutoFetchDigitalWellbeing() async {
+  Future<void> _checkAndAutoFetchPermissions() async {
     try {
-      final success = await context.read<KratosProvider>().syncScreenTimeFromDevice();
-      if (mounted && success) {
+      final provider = context.read<KratosProvider>();
+      final screenTimeSuccess = await provider.syncScreenTimeFromDevice();
+      final stepSuccess = await provider.syncStepTrackingFromDevice();
+      if (mounted) {
         setState(() {
-          _isPermissionGranted = true;
+          _isPermissionGranted = screenTimeSuccess;
+          _isStepPermissionGranted = stepSuccess;
         });
       }
     } catch (_) {}
@@ -197,6 +202,46 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
+  Future<void> _requestStepPermission() async {
+    setState(() {
+      _isStepPermissionRequesting = true;
+    });
+
+    try {
+      final success = await context.read<KratosProvider>().requestStepPermission();
+      setState(() {
+        _isStepPermissionGranted = success;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Physical Activity Permission Granted! Auto step counting active.'
+                  : 'Step permission not granted. You can still log steps manually or enable it later.',
+            ),
+            backgroundColor: success ? KratosColors.primaryContainer : KratosColors.surfaceContainerHigh,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not request step permission: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isStepPermissionRequesting = false;
+        });
+      }
+    }
+  }
+
   Future<void> _finishOnboarding() async {
     _recalculateGoals();
 
@@ -288,7 +333,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _currentStep = index;
                   });
                   if (index == 2) {
-                    _checkAndAutoFetchDigitalWellbeing();
+                    _checkAndAutoFetchPermissions();
                   }
                 },
                 physics: const BouncingScrollPhysics(),
@@ -648,7 +693,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // --- STEP 3: Digital Wellbeing ---
+  // --- STEP 3: System Permissions & Integrations ---
   Widget _buildDigitalWellbeingStep() {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -656,7 +701,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'DIGITAL WELLBEING PERMISSION',
+            'DEVICE PERMISSIONS & INTEGRATIONS',
             style: TextStyle(
               fontFamily: 'JetBrains Mono',
               fontSize: 12,
@@ -667,7 +712,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Screen Discipline & Mindset',
+            'Automated Activity & Discipline',
             style: TextStyle(
               fontFamily: 'Geist',
               fontSize: 26,
@@ -678,7 +723,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Digital consumption directly impacts sleep architecture, focus stamina, and recovery. KRATOS syncs screen usage automatically.',
+            'Grant permissions so KRATOS can auto-detect your daily steps and screen time without requiring manual entry.',
             style: TextStyle(
               fontFamily: 'Geist',
               fontSize: 14,
@@ -686,14 +731,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
-          // Permission Request Card
+          // 1. Digital Wellbeing Permission Card
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: KratosColors.cardBackground,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _isPermissionGranted ? KratosColors.primaryContainer : KratosColors.cardBorder,
               ),
@@ -703,8 +748,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Row(
                   children: [
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
                         color: _isPermissionGranted
                             ? KratosColors.primaryContainer.withValues(alpha: 0.2)
@@ -714,10 +759,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       child: Icon(
                         _isPermissionGranted ? Icons.verified_user : Icons.phonelink_setup,
                         color: _isPermissionGranted ? KratosColors.primaryContainer : KratosColors.secondary,
-                        size: 26,
+                        size: 24,
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -725,19 +770,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           Text(
                             _isPermissionGranted
                                 ? 'Digital Wellbeing Connected'
-                                : 'Usage Stats Permission Required',
+                                : 'Usage Stats Permission',
                             style: const TextStyle(
                               fontFamily: 'Geist',
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: KratosColors.onSurface,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           Text(
                             _isPermissionGranted
-                                ? 'App usage data will sync automatically into your daily dashboard.'
-                                : 'Grant access to allow automatic daily screen-on time tracking.',
+                                ? 'App usage syncs automatically into daily dashboard.'
+                                : 'Grant access to track daily screen-on time.',
                             style: const TextStyle(
                               fontFamily: 'Geist',
                               fontSize: 12,
@@ -749,31 +794,128 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 42,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _isPermissionGranted
                           ? KratosColors.surfaceContainerHigh
                           : KratosColors.primaryContainer,
                       foregroundColor: _isPermissionGranted ? KratosColors.onSurface : Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _isPermissionRequesting ? null : _requestDigitalWellbeingPermission,
                     icon: _isPermissionRequesting
                         ? const SizedBox(
-                            width: 18,
-                            height: 18,
+                            width: 16,
+                            height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
                           )
-                        : Icon(_isPermissionGranted ? Icons.check : Icons.lock_open),
+                        : Icon(_isPermissionGranted ? Icons.check : Icons.lock_open, size: 18),
                     label: Text(
-                      _isPermissionGranted ? 'PERMISSIONS ACTIVE' : 'ALLOW DIGITAL WELLBEING PERMISSION',
+                      _isPermissionGranted ? 'PERMISSIONS ACTIVE' : 'ALLOW DIGITAL WELLBEING',
                       style: const TextStyle(
                         fontFamily: 'Geist',
-                        fontSize: 13,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // 2. Physical Activity & Step Counter Permission Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: KratosColors.cardBackground,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _isStepPermissionGranted ? KratosColors.primaryContainer : KratosColors.cardBorder,
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: _isStepPermissionGranted
+                            ? KratosColors.primaryContainer.withValues(alpha: 0.2)
+                            : KratosColors.surfaceContainerHigh,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _isStepPermissionGranted ? Icons.directions_walk : Icons.directions_walk_outlined,
+                        color: _isStepPermissionGranted ? KratosColors.primaryContainer : KratosColors.secondary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _isStepPermissionGranted
+                                ? 'Auto Step Counter Active'
+                                : 'Physical Activity Permission',
+                            style: const TextStyle(
+                              fontFamily: 'Geist',
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: KratosColors.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _isStepPermissionGranted
+                                ? 'Hardware pedometer counting live steps 24/7.'
+                                : 'Allow device pedometer to auto-detect steps.',
+                            style: const TextStyle(
+                              fontFamily: 'Geist',
+                              fontSize: 12,
+                              color: KratosColors.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 42,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isStepPermissionGranted
+                          ? KratosColors.surfaceContainerHigh
+                          : KratosColors.primaryContainer,
+                      foregroundColor: _isStepPermissionGranted ? KratosColors.onSurface : Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: _isStepPermissionRequesting ? null : _requestStepPermission,
+                    icon: _isStepPermissionRequesting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                          )
+                        : Icon(_isStepPermissionGranted ? Icons.check : Icons.directions_run, size: 18),
+                    label: Text(
+                      _isStepPermissionGranted ? 'STEP COUNTER CONNECTED' : 'ENABLE AUTO STEP TRACKER',
+                      style: const TextStyle(
+                        fontFamily: 'Geist',
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
