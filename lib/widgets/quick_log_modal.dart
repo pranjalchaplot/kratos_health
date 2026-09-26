@@ -61,10 +61,12 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
   String _cardioIntensity = 'Moderate';
   double _cardioDurationMins = 30;
   double _cardioDistanceKm = 5.0;
+  double _cardioSpeedMph = 6.0;
 
   // Activity - Exercise Strength Form
   final _exerciseNameController = TextEditingController(text: 'Bench Press');
   final double _exerciseDurationMins = 45;
+  bool _includeStrengthRest = true;
   final List<ExerciseSet> _exerciseSets = [
     ExerciseSet(setNumber: 1, reps: 10, weightKg: 60.0),
     ExerciseSet(setNumber: 2, reps: 10, weightKg: 60.0),
@@ -738,8 +740,15 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
 
   // --- Steps Sub-Mode ---
   Widget _buildStepsSubMode() {
-    final userWeight = context.read<KratosProvider>().userGoals.weightKg ?? 75.0;
-    final calcCalories = CalorieCalculatorService.calculateStepsCalories(_stepsCount.toInt(), userWeight);
+    final goals = context.read<KratosProvider>().userGoals;
+    final userWeight = goals.weightKg ?? 75.0;
+    final userBmr = CalorieCalculatorService.calculateBmr(goals).toDouble();
+    final calcCalories = CalorieCalculatorService.getStepCalories(
+      steps: _stepsCount.toInt(),
+      userWeightKg: userWeight,
+      userBmr: userBmr,
+      userHeightCm: goals.heightCm,
+    ).round();
 
     return Column(
       children: [
@@ -785,13 +794,25 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
 
   // --- Cardio Sub-Mode ---
   Widget _buildCardioSubMode() {
-    final userWeight = context.read<KratosProvider>().userGoals.weightKg ?? 75.0;
-    final calcCalories = CalorieCalculatorService.calculateCardioCalories(
-      cardioType: _cardioType,
-      intensity: _cardioIntensity,
-      durationMinutes: _cardioDurationMins.toInt(),
-      weightKg: userWeight,
-    );
+    final goals = context.read<KratosProvider>().userGoals;
+    final userWeight = goals.weightKg ?? 75.0;
+    final userBmr = CalorieCalculatorService.calculateBmr(goals).toDouble();
+
+    final isSpeedBased = _cardioType == 'Running' || _cardioType == 'Walking' || _cardioType == 'Cycling';
+
+    double effectiveSpeed = _cardioSpeedMph;
+    if (isSpeedBased && _cardioDistanceKm > 0 && _cardioDurationMins > 0) {
+      effectiveSpeed = double.parse(((_cardioDistanceKm / (_cardioDurationMins / 60.0)) / 1.60934).toStringAsFixed(1));
+    }
+
+    final calcCalories = CalorieCalculatorService.getCardioCalories(
+      exercise: _cardioType,
+      durationMin: _cardioDurationMins,
+      speedMph: isSpeedBased ? effectiveSpeed : null,
+      effort: !isSpeedBased ? _cardioIntensity : null,
+      userWeightKg: userWeight,
+      userBmr: userBmr,
+    ).round();
 
     return Column(
       children: [
@@ -816,28 +837,40 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         ),
         const SizedBox(height: 10),
 
-        // Intensity selector
-        Row(
-          children: ['Low', 'Moderate', 'High', 'Extreme'].map((intense) {
-            final isSelected = _cardioIntensity == intense;
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
-                child: ChoiceChip(
-                  label: Text(intense, style: const TextStyle(fontSize: 10)),
-                  selected: isSelected,
-                  selectedColor: KratosColors.secondary,
-                  backgroundColor: KratosColors.cardBackground,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.black : KratosColors.onSurface,
-                    fontWeight: FontWeight.bold,
+        if (isSpeedBased) ...[
+          // Speed Control Slider
+          _buildValueControl(
+            'Target Speed (mph)',
+            '${effectiveSpeed.toStringAsFixed(1)} mph',
+            _cardioSpeedMph,
+            1.0,
+            20.0,
+            (v) => setState(() => _cardioSpeedMph = v),
+          ),
+        ] else ...[
+          // Effort / Intensity selector
+          Row(
+            children: ['light', 'moderate', 'vigorous', 'max'].map((intense) {
+              final isSelected = _cardioIntensity.toLowerCase() == intense;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: ChoiceChip(
+                    label: Text(intense.toUpperCase(), style: const TextStyle(fontSize: 10)),
+                    selected: isSelected,
+                    selectedColor: KratosColors.secondary,
+                    backgroundColor: KratosColors.cardBackground,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.black : KratosColors.onSurface,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    onSelected: (_) => setState(() => _cardioIntensity = intense),
                   ),
-                  onSelected: (_) => setState(() => _cardioIntensity = intense),
                 ),
-              ),
-            );
-          }).toList(),
-        ),
+              );
+            }).toList(),
+          ),
+        ],
         const SizedBox(height: 8),
 
         Row(
@@ -878,7 +911,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         _buildSubmitButton('LOG CARDIO WORKOUT', KratosColors.secondary, () async {
           await context.read<KratosProvider>().logCardio(
                 cardioType: _cardioType,
-                intensity: _cardioIntensity,
+                intensity: isSpeedBased ? '${effectiveSpeed.toStringAsFixed(1)} mph' : _cardioIntensity,
                 durationMinutes: _cardioDurationMins.toInt(),
                 distanceKm: _cardioDistanceKm > 0 ? _cardioDistanceKm : null,
                 calories: calcCalories,
@@ -891,13 +924,36 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
 
   // --- Exercise Strength Sub-Mode (Workout Sets Manager) ---
   Widget _buildExerciseSubMode() {
-    final userWeight = context.read<KratosProvider>().userGoals.weightKg ?? 75.0;
+    final goals = context.read<KratosProvider>().userGoals;
+    final userWeight = goals.weightKg ?? 75.0;
+    final userBmr = CalorieCalculatorService.calculateBmr(goals).toDouble();
+
+    final exerciseName = _exerciseNameController.text.isEmpty ? 'Exercise' : _exerciseNameController.text;
     final calcCalories = CalorieCalculatorService.calculateExerciseCalories(
-      exerciseName: _exerciseNameController.text.isEmpty ? 'Exercise' : _exerciseNameController.text,
+      exerciseName: exerciseName,
       sets: _exerciseSets,
       durationMinutes: _exerciseDurationMins.toInt(),
       weightKg: userWeight,
+      userBmr: userBmr,
+      includeRest: _includeStrengthRest,
     );
+
+    final presetLifts = [
+      'Bench Press',
+      'Squat',
+      'Deadlift',
+      'Overhead Press',
+      'Pull-ups',
+      'Bicep Curl',
+      'Barbell Row',
+      'Lat Pulldown',
+      'Leg Press',
+      'Lunges',
+      'Hip Thrust',
+      'Romanian Deadlift',
+      'Dumbbell Shoulder Press',
+      'Dips',
+    ];
 
     return Column(
       children: [
@@ -919,19 +975,14 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               ),
             ),
             const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: KratosColors.cardBackground,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: KratosColors.cardBorder),
+            FilterChip(
+              label: Text(
+                _includeStrengthRest ? '+Rest (60s)' : 'No Rest',
+                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
               ),
-              child: Column(
-                children: [
-                  const Text('DUR (m)', style: TextStyle(fontSize: 10, color: KratosColors.onSecondaryContainer, fontWeight: FontWeight.bold)),
-                  Text('${_exerciseDurationMins.toInt()}m', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: KratosColors.primaryContainer)),
-                ],
-              ),
+              selected: _includeStrengthRest,
+              selectedColor: KratosColors.primaryContainer,
+              onSelected: (val) => setState(() => _includeStrengthRest = val),
             ),
           ],
         ),
@@ -942,7 +993,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: ['Bench Press', 'Squat', 'Deadlift', 'Overhead Press', 'Pull-ups', 'Bicep Curl'].map((name) {
+            children: presetLifts.map((name) {
               return Padding(
                 padding: const EdgeInsets.only(right: 6),
                 child: ChoiceChip(
