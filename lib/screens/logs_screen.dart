@@ -229,15 +229,19 @@ class _LogsScreenState extends State<LogsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      entry.title,
-                      style: const TextStyle(
-                        fontFamily: 'Geist',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: KratosColors.onSurface,
+                    Expanded(
+                      child: Text(
+                        entry.title,
+                        style: const TextStyle(
+                          fontFamily: 'Geist',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: KratosColors.onSurface,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
                       timeStr,
                       style: const TextStyle(

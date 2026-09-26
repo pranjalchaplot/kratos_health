@@ -40,8 +40,8 @@ class DailyLog {
     this.additionalSteps = 0,
     this.additionalWater = 0.0,
     this.additionalSleep = 0.0,
-    this.digitalHours = 4,
-    this.digitalMinutes = 12,
+    this.digitalHours = 0,
+    this.digitalMinutes = 0,
   }) : entries = entries ?? [];
 
   // Date key in format YYYY-MM-DD
@@ -201,14 +201,14 @@ class DailyLog {
       additionalSteps: (json['additionalSteps'] as num?)?.toInt() ?? 0,
       additionalWater: (json['additionalWater'] as num?)?.toDouble() ?? 0.0,
       additionalSleep: (json['additionalSleep'] as num?)?.toDouble() ?? 0.0,
-      digitalHours: (json['digitalHours'] as num?)?.toInt() ?? 4,
-      digitalMinutes: (json['digitalMinutes'] as num?)?.toInt() ?? 12,
+      digitalHours: (json['digitalHours'] as num?)?.toInt() ?? 0,
+      digitalMinutes: (json['digitalMinutes'] as num?)?.toInt() ?? 0,
     );
   }
 
-  // Create initial demo log for today if first launch
-  factory DailyLog.initialDemo(DateTime targetDate, UserGoals goals) {
-    final log = DailyLog(
+  // Create clean initial log with zero entries
+  factory DailyLog.empty(DateTime targetDate, UserGoals goals) {
+    return DailyLog(
       date: targetDate,
       caloriesGoal: goals.caloriesGoal,
       proteinGoal: goals.proteinGoal,
@@ -218,98 +218,9 @@ class DailyLog {
       waterGoal: goals.waterGoal,
       sleepGoal: goals.sleepGoal,
       digitalGoalHours: goals.digitalGoalHours,
-      digitalHours: 4,
-      digitalMinutes: 12,
+      digitalHours: 0,
+      digitalMinutes: 0,
     );
-
-    // Seed realistic sample entries
-    log.entries = [
-      LogEntry(
-        id: '1',
-        timestamp: targetDate.add(const Duration(hours: 8)),
-        type: LogType.meal,
-        title: 'Oatmeal & Protein Shake',
-        subtitle: 'Breakfast',
-        calories: 550,
-        protein: 42,
-        carbs: 65,
-        fats: 12,
-      ),
-      LogEntry(
-        id: '2',
-        timestamp: targetDate.add(const Duration(hours: 9)),
-        type: LogType.water,
-        title: 'Morning Water',
-        subtitle: '750ml Intake',
-        amount: 0.75,
-      ),
-      LogEntry(
-        id: '3',
-        timestamp: targetDate.add(const Duration(hours: 11)),
-        type: LogType.activity,
-        title: 'Morning Upper Body Workout',
-        subtitle: 'Hypertrophy Session',
-        calories: 420,
-        count: 3200,
-      ),
-      LogEntry(
-        id: '4',
-        timestamp: targetDate.add(const Duration(hours: 13)),
-        type: LogType.meal,
-        title: 'Grilled Chicken Bowl',
-        subtitle: 'Lunch',
-        calories: 780,
-        protein: 65,
-        carbs: 85,
-        fats: 18,
-      ),
-      LogEntry(
-        id: '5',
-        timestamp: targetDate.add(const Duration(hours: 14)),
-        type: LogType.water,
-        title: 'Afternoon Hydration',
-        subtitle: '1000ml Intake',
-        amount: 1.0,
-      ),
-      LogEntry(
-        id: '6',
-        timestamp: targetDate.add(const Duration(hours: 7)),
-        type: LogType.sleep,
-        title: 'Night Sleep',
-        subtitle: 'Deep Recovery',
-        amount: 7.5,
-      ),
-      LogEntry(
-        id: '7',
-        timestamp: targetDate.add(const Duration(hours: 17)),
-        type: LogType.activity,
-        title: 'Evening Walk',
-        subtitle: 'Cardio',
-        calories: 210,
-        count: 5232,
-      ),
-      LogEntry(
-        id: '8',
-        timestamp: targetDate.add(const Duration(hours: 18)),
-        type: LogType.meal,
-        title: 'Salmon & Quinoa',
-        subtitle: 'Dinner',
-        calories: 700,
-        protein: 35,
-        carbs: 60,
-        fats: 24,
-      ),
-      LogEntry(
-        id: '9',
-        timestamp: targetDate.add(const Duration(hours: 19)),
-        type: LogType.water,
-        title: 'Evening Hydration',
-        subtitle: '350ml Intake',
-        amount: 0.35,
-      ),
-    ];
-
-    return log;
   }
 
   String encode() => jsonEncode(toJson());

@@ -68,27 +68,27 @@ class DashboardData {
     );
   }
 
-  // Factory constructor for mock data fallback
-  factory DashboardData.mock() {
+  // Initial zeroed data fallback
+  factory DashboardData.empty() {
     return DashboardData(
-      streak: 12,
-      activeDayIndex: 2, // WED
-      caloriesBurned: 2450,
+      streak: 0,
+      activeDayIndex: 0,
+      caloriesBurned: 0,
       caloriesGoal: 3200,
-      protein: 142,
+      protein: 0,
       proteinGoal: 180,
-      carbs: 210,
+      carbs: 0,
       carbsGoal: 250,
-      fats: 54,
+      fats: 0,
       fatsGoal: 70,
-      steps: 8432,
+      steps: 0,
       stepsGoal: 10000,
-      water: 2.1,
+      water: 0.0,
       waterGoal: 3.5,
-      sleep: 7.5,
+      sleep: 0.0,
       sleepGoal: 8.5,
-      digitalHours: 4,
-      digitalMinutes: 12,
+      digitalHours: 0,
+      digitalMinutes: 0,
       digitalGoalHours: 10,
     );
   }

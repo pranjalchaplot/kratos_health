@@ -199,6 +199,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  side: const BorderSide(color: Colors.redAccent),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                onPressed: () async {
+                  await provider.clearAllData();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('All logged entries cleared!'),
+                        backgroundColor: Colors.redAccent,
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.delete_forever),
+                label: const Text(
+                  'CLEAR ALL LOGGED DATA',
+                  style: TextStyle(
+                    fontFamily: 'Geist',
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

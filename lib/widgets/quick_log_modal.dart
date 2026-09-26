@@ -139,7 +139,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: SizedBox(
-                height: 380,
+                height: 430,
                 child: TabBarView(
                   controller: _tabController,
                   children: [
@@ -228,22 +228,33 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           ),
         ),
         const SizedBox(height: 12),
-        // Category selection
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: ['Breakfast', 'Lunch', 'Dinner', 'Snack'].map((cat) {
-            final isSelected = _mealCategory == cat;
-            return ChoiceChip(
-              label: Text(cat),
-              selected: isSelected,
-              selectedColor: KratosColors.primaryContainer,
-              labelStyle: TextStyle(
-                color: isSelected ? KratosColors.background : KratosColors.onSurface,
-                fontWeight: FontWeight.bold,
-              ),
-              onSelected: (_) => setState(() => _mealCategory = cat),
-            );
-          }).toList(),
+        // Category selection (Horizontal scrollable chip strip)
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: ['Breakfast', 'Lunch', 'Dinner', 'Snack'].map((cat) {
+              final isSelected = _mealCategory == cat;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(cat),
+                  selected: isSelected,
+                  selectedColor: KratosColors.primaryContainer,
+                  backgroundColor: KratosColors.cardBackground,
+                  side: BorderSide(
+                    color: isSelected ? KratosColors.primaryContainer : KratosColors.cardBorder,
+                  ),
+                  labelStyle: TextStyle(
+                    fontFamily: 'JetBrains Mono',
+                    fontSize: 12,
+                    color: isSelected ? KratosColors.background : KratosColors.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  onSelected: (_) => setState(() => _mealCategory = cat),
+                ),
+              );
+            }).toList(),
+          ),
         ),
         const SizedBox(height: 16),
         // Macro Sliders Grid

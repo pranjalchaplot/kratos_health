@@ -25,7 +25,7 @@ class KratosProvider extends ChangeNotifier {
   DailyLog get currentLog {
     final key = _formatKey(_selectedDate);
     if (!_logsMap.containsKey(key)) {
-      _logsMap[key] = DailyLog.initialDemo(_selectedDate, _userGoals);
+      _logsMap[key] = DailyLog.empty(_selectedDate, _userGoals);
     }
     return _logsMap[key]!;
   }
@@ -33,23 +33,21 @@ class KratosProvider extends ChangeNotifier {
   // Active day index in week (0 for Mon, 6 for Sun)
   int get activeDayIndex => (_selectedDate.weekday - 1) % 7;
 
-  // Active streak calculation (consecutive days with activity)
+  // Active streak calculation (consecutive days with actual recorded activity)
   int get streak {
     int count = 0;
     DateTime checkDate = DateTime.now();
     while (true) {
       final key = _formatKey(checkDate);
       final log = _logsMap[key];
-      if (log != null && (log.entries.isNotEmpty || log.caloriesBurned > 0)) {
+      if (log != null && (log.entries.isNotEmpty || log.caloriesBurned > 0 || log.steps > 0 || log.water > 0 || log.sleep > 0)) {
         count++;
         checkDate = checkDate.subtract(const Duration(days: 1));
       } else {
-        // If checking past days and none exists yet, default to at least a streak of 12 for demo
-        if (count == 0) return 12;
         break;
       }
     }
-    return count > 0 ? count : 12;
+    return count;
   }
 
   KratosProvider() {
@@ -78,10 +76,10 @@ class KratosProvider extends ChangeNotifier {
         });
       }
 
-      // Ensure today has a log
+      // Ensure today has a clean log
       final todayKey = _formatKey(DateTime.now());
       if (!_logsMap.containsKey(todayKey)) {
-        _logsMap[todayKey] = DailyLog.initialDemo(DateTime.now(), _userGoals);
+        _logsMap[todayKey] = DailyLog.empty(DateTime.now(), _userGoals);
         await saveToPrefs();
       }
     } catch (e) {
@@ -132,7 +130,6 @@ class KratosProvider extends ChangeNotifier {
   }
 
   void selectDayByIndex(int dayIndex) {
-    // dayIndex 0..6 (Mon..Sun) relative to current week
     final now = DateTime.now();
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final targetDate = monday.add(Duration(days: dayIndex));
@@ -228,6 +225,16 @@ class KratosProvider extends ChangeNotifier {
   Future<void> updateGoals(UserGoals newGoals) async {
     _userGoals = newGoals;
     currentLog.applyGoals(newGoals);
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  Future<void> clearAllData() async {
+    _logsMap.clear();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('kratos_daily_logs');
+    final todayKey = _formatKey(DateTime.now());
+    _logsMap[todayKey] = DailyLog.empty(DateTime.now(), _userGoals);
     notifyListeners();
     await saveToPrefs();
   }
