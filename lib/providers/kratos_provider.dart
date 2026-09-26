@@ -118,6 +118,9 @@ class KratosProvider extends ChangeNotifier {
     currentLog.applyGoals(newGoals);
     notifyListeners();
     await saveToPrefs();
+    
+    // Automatically fetch Digital Wellbeing screen time data after onboarding
+    await syncScreenTimeFromDevice();
   }
 
   Future<void> resetOnboarding() async {

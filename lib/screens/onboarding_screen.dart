@@ -74,6 +74,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void initState() {
     super.initState();
     _recalculateGoals();
+    _checkAndAutoFetchDigitalWellbeing();
+  }
+
+  Future<void> _checkAndAutoFetchDigitalWellbeing() async {
+    try {
+      final success = await context.read<KratosProvider>().syncScreenTimeFromDevice();
+      if (mounted && success) {
+        setState(() {
+          _isPermissionGranted = true;
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -275,6 +287,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   setState(() {
                     _currentStep = index;
                   });
+                  if (index == 2) {
+                    _checkAndAutoFetchDigitalWellbeing();
+                  }
                 },
                 physics: const BouncingScrollPhysics(),
                 children: [
