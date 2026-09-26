@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../providers/kratos_provider.dart';
+import '../providers/soma_provider.dart';
 import '../models/dashboard_data.dart';
-import '../theme/kratos_theme.dart';
+import '../theme/soma_theme.dart';
 import '../widgets/week_calendar_strip.dart';
 import '../widgets/progress_rings.dart';
 import '../widgets/macro_progress_bar.dart';
@@ -12,7 +12,7 @@ import '../widgets/metric_card.dart';
 import '../widgets/quick_log_modal.dart';
 import '../widgets/bmr_info_dialog.dart';
 
-/// Main Dashboard Screen - KRATOS Fitness & Nutrition Ecosystem
+/// Main Dashboard Screen - SOMA Fitness & Nutrition Ecosystem
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -42,12 +42,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<KratosProvider>();
+    final provider = context.watch<SomaProvider>();
     final currentLog = provider.currentLog;
     final data = DashboardData.fromDailyLog(currentLog, provider.userGoals, provider.streak, provider.activeDayIndex);
 
     return Scaffold(
-      backgroundColor: KratosColors.background,
+      backgroundColor: SomaColors.background,
       body: CustomScrollView(
         slivers: [
           // App Bar
@@ -80,10 +80,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  SliverAppBar _buildAppBar(BuildContext context, KratosProvider provider) {
+  SliverAppBar _buildAppBar(BuildContext context, SomaProvider provider) {
     return SliverAppBar(
       pinned: true,
-      backgroundColor: KratosColors.background,
+      backgroundColor: SomaColors.background,
       surfaceTintColor: Colors.transparent,
       toolbarHeight: 64,
       title: Row(
@@ -98,23 +98,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: KratosColors.surfaceContainerHighest,
+                  color: SomaColors.surfaceContainerHighest,
                   width: 1,
                 ),
               ),
               child: ClipOval(
                 child: Container(
-                  color: KratosColors.surfaceContainerHigh,
+                  color: SomaColors.surfaceContainerHigh,
                   child: const Icon(
                     Icons.person,
-                    color: KratosColors.onSecondaryContainer,
+                    color: SomaColors.onSecondaryContainer,
                     size: 24,
                   ),
                 ),
               ),
             ),
           ),
-          // KRATOS title with Logo
+          // SOMA title with Logo
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -128,14 +128,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(width: 8),
               const Text(
-                'KRATOS',
+                'SOMA',
                 style: TextStyle(
                   fontFamily: 'Geist',
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                   height: 1.2,
                   letterSpacing: -0.48,
-                  color: KratosColors.onBackground,
+                  color: SomaColors.onBackground,
                 ),
               ),
             ],
@@ -147,7 +147,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               fontFamily: 'Geist',
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: KratosColors.primaryContainer,
+              color: SomaColors.primaryContainer,
             ),
           ),
         ],
@@ -156,7 +156,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         preferredSize: const Size.fromHeight(1),
         child: Container(
           height: 1,
-          color: KratosColors.surfaceContainerHighest,
+          color: SomaColors.surfaceContainerHighest,
         ),
       ),
     );
@@ -171,8 +171,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onTap: () => QuickLogModal.show(context, initialTabIndex: 2), // Live Calorie Burn tab
         child: Container(
           decoration: BoxDecoration(
-            color: KratosColors.cardBackground,
-            border: Border.all(color: KratosColors.cardBorder, width: 1),
+            color: SomaColors.cardBackground,
+            border: Border.all(color: SomaColors.cardBorder, width: 1),
             borderRadius: BorderRadius.circular(20),
           ),
           padding: const EdgeInsets.all(24),
@@ -237,7 +237,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.36,
-                        color: KratosColors.onSurface,
+                        color: SomaColors.onSurface,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -249,7 +249,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       padding: const EdgeInsets.all(2),
                       child: const Icon(
                         Icons.info_outline,
-                        color: KratosColors.primaryContainer,
+                        color: SomaColors.primaryContainer,
                         size: 18,
                       ),
                     ),
@@ -266,7 +266,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 fontWeight: FontWeight.w700,
                 height: 1.0,
                 letterSpacing: 1.2,
-                color: KratosColors.primaryContainer,
+                color: SomaColors.primaryContainer,
               ),
             ),
           ],
@@ -277,7 +277,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: const TextStyle(
             fontFamily: 'JetBrains Mono',
             fontSize: 11,
-            color: KratosColors.onSecondaryContainer,
+            color: SomaColors.onSecondaryContainer,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -286,27 +286,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
           label: 'PROTEIN',
           value: '${data.protein}g / ${data.proteinGoal}g',
           progress: data.proteinProgress,
-          barColor: KratosColors.primaryContainer,
+          barColor: SomaColors.primaryContainer,
         ),
         const SizedBox(height: 12),
         MacroProgressBar(
           label: 'CARBS',
           value: '${data.carbs}g / ${data.carbsGoal}g',
           progress: data.carbsProgress,
-          barColor: KratosColors.onSurface,
+          barColor: SomaColors.onSurface,
         ),
         const SizedBox(height: 12),
         MacroProgressBar(
           label: 'FATS',
           value: '${data.fats}g / ${data.fatsGoal}g',
           progress: data.fatsProgress,
-          barColor: KratosColors.secondary,
+          barColor: SomaColors.secondary,
         ),
       ],
     );
   }
 
-  Widget _buildMetricsGrid(BuildContext context, DashboardData data, KratosProvider provider) {
+  Widget _buildMetricsGrid(BuildContext context, DashboardData data, SomaProvider provider) {
     final formatCurrency = NumberFormat("#,##0", "en_US");
     
     return Padding(
@@ -372,7 +372,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  void _handleStepsTap(BuildContext context, DashboardData data, KratosProvider provider) {
+  void _handleStepsTap(BuildContext context, DashboardData data, SomaProvider provider) {
     if (provider.isStepPermissionGranted) {
       QuickLogModal.show(context, initialTabIndex: 2);
     } else {
@@ -380,11 +380,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  void _showStepPermissionDialog(BuildContext context, KratosProvider provider) {
+  void _showStepPermissionDialog(BuildContext context, SomaProvider provider) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: KratosColors.surfaceContainer,
+      backgroundColor: SomaColors.surfaceContainer,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -398,7 +398,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: KratosColors.surfaceContainerHighest,
+                  color: SomaColors.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -407,12 +407,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: KratosColors.primaryContainer.withValues(alpha: 0.15),
+                  color: SomaColors.primaryContainer.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.directions_walk,
-                  color: KratosColors.primaryContainer,
+                  color: SomaColors.primaryContainer,
                   size: 32,
                 ),
               ),
@@ -423,18 +423,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   fontFamily: 'Geist',
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: KratosColors.onSurface,
+                  color: SomaColors.onSurface,
                   letterSpacing: 0.5,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               const Text(
-                'You skipped granting Physical Activity permission during onboarding. Enable it now so KRATOS can auto-detect your daily steps in real time using your phone\'s hardware sensor.',
+                'You skipped granting Physical Activity permission during onboarding. Enable it now so SOMA can auto-detect your daily steps in real time using your phone\'s hardware sensor.',
                 style: TextStyle(
                   fontFamily: 'Geist',
                   fontSize: 14,
-                  color: KratosColors.secondary,
+                  color: SomaColors.secondary,
                   height: 1.4,
                 ),
                 textAlign: TextAlign.center,
@@ -445,7 +445,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 height: 50,
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: KratosColors.primaryContainer,
+                    backgroundColor: SomaColors.primaryContainer,
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -463,8 +463,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 : 'Permission was not granted. Ensure physical activity access is enabled in Settings.',
                           ),
                           backgroundColor: granted
-                              ? KratosColors.primaryContainer
-                              : KratosColors.surfaceContainerHigh,
+                              ? SomaColors.primaryContainer
+                              : SomaColors.surfaceContainerHigh,
                         ),
                       );
                     }
@@ -486,7 +486,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 height: 48,
                 child: TextButton(
                   style: TextButton.styleFrom(
-                    foregroundColor: KratosColors.secondary,
+                    foregroundColor: SomaColors.secondary,
                   ),
                   onPressed: () {
                     Navigator.pop(ctx);

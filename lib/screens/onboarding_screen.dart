@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/kratos_provider.dart';
+import '../providers/soma_provider.dart';
 import '../models/user_goals.dart';
-import '../theme/kratos_theme.dart';
+import '../theme/soma_theme.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -19,7 +19,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
   String _selectedFocus = 'Peak Athletic Performance';
 
   // Step 2: User Stats
-  final TextEditingController _nameController = TextEditingController(text: 'KRATOS Athlete');
+  final TextEditingController _nameController = TextEditingController(text: 'SOMA Athlete');
   final TextEditingController _weightController = TextEditingController(text: '75');
   final TextEditingController _heightController = TextEditingController(text: '178');
   final TextEditingController _ageController = TextEditingController(text: '24');
@@ -88,7 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
 
   Future<void> _checkAndAutoFetchPermissions() async {
     try {
-      final provider = context.read<KratosProvider>();
+      final provider = context.read<SomaProvider>();
       final screenTimeSuccess = await provider.syncScreenTimeFromDevice();
       final stepSuccess = await provider.syncStepTrackingFromDevice();
       if (mounted) {
@@ -176,7 +176,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
     });
 
     try {
-      final success = await context.read<KratosProvider>().syncScreenTimeFromDevice();
+      final success = await context.read<SomaProvider>().syncScreenTimeFromDevice();
       setState(() {
         _isPermissionGranted = success;
       });
@@ -188,7 +188,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                   ? 'Digital Wellbeing Permission Granted & Usage Synced!'
                   : 'Usage stats queried. Ensure permission is enabled in Android Settings.',
             ),
-            backgroundColor: success ? KratosColors.primaryContainer : KratosColors.surfaceContainerHigh,
+            backgroundColor: success ? SomaColors.primaryContainer : SomaColors.surfaceContainerHigh,
           ),
         );
       }
@@ -216,7 +216,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
     });
 
     try {
-      final success = await context.read<KratosProvider>().requestStepPermission();
+      final success = await context.read<SomaProvider>().requestStepPermission();
       setState(() {
         _isStepPermissionGranted = success;
       });
@@ -228,7 +228,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                   ? 'Physical Activity Permission Granted! Auto step counting active.'
                   : 'Step permission not granted. You can still log steps manually or enable it later.',
             ),
-            backgroundColor: success ? KratosColors.primaryContainer : KratosColors.surfaceContainerHigh,
+            backgroundColor: success ? SomaColors.primaryContainer : SomaColors.surfaceContainerHigh,
           ),
         );
       }
@@ -266,16 +266,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
       heightCm: double.tryParse(_heightController.text) ?? 178.0,
       age: int.tryParse(_ageController.text) ?? 24,
       primaryFocus: _selectedFocus,
-      userName: _nameController.text.trim().isEmpty ? 'KRATOS Athlete' : _nameController.text.trim(),
+      userName: _nameController.text.trim().isEmpty ? 'SOMA Athlete' : _nameController.text.trim(),
     );
 
-    await context.read<KratosProvider>().completeOnboarding(userGoals);
+    await context.read<SomaProvider>().completeOnboarding(userGoals);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: KratosColors.background,
+      backgroundColor: SomaColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -296,13 +296,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       ),
                       const SizedBox(width: 8),
                       const Text(
-                        'KRATOS',
+                        'SOMA',
                         style: TextStyle(
                           fontFamily: 'Geist',
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 2.0,
-                          color: KratosColors.primaryContainer,
+                          color: SomaColors.primaryContainer,
                         ),
                       ),
                     ],
@@ -314,7 +314,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       fontFamily: 'JetBrains Mono',
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: KratosColors.onSecondaryContainer,
+                      color: SomaColors.onSecondaryContainer,
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -333,8 +333,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       margin: EdgeInsets.only(right: index == 3 ? 0 : 8),
                       decoration: BoxDecoration(
                         color: index <= _currentStep
-                            ? KratosColors.primaryContainer
-                            : KratosColors.surfaceContainerHigh,
+                            ? SomaColors.primaryContainer
+                            : SomaColors.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -375,12 +375,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                   if (_currentStep > 0)
                     IconButton(
                       onPressed: _previousPage,
-                      icon: const Icon(Icons.arrow_back_ios_new, color: KratosColors.onSurface),
+                      icon: const Icon(Icons.arrow_back_ios_new, color: SomaColors.onSurface),
                       style: IconButton.styleFrom(
-                        backgroundColor: KratosColors.cardBackground,
+                        backgroundColor: SomaColors.cardBackground,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side: const BorderSide(color: KratosColors.cardBorder),
+                          side: const BorderSide(color: SomaColors.cardBorder),
                         ),
                         padding: const EdgeInsets.all(16),
                       ),
@@ -391,7 +391,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       height: 54,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: KratosColors.primaryContainer,
+                          backgroundColor: SomaColors.primaryContainer,
                           foregroundColor: Colors.black,
                           elevation: 4,
                           shape: RoundedRectangleBorder(
@@ -410,7 +410,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                         },
                         child: Text(
                           _currentStep == 3
-                              ? 'INITIALIZE KRATOS ENGINE'
+                              ? 'INITIALIZE SOMA ENGINE'
                               : 'CONTINUE TO NEXT STEP',
                           style: const TextStyle(
                             fontFamily: 'Geist',
@@ -444,7 +444,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               fontFamily: 'JetBrains Mono',
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: KratosColors.primaryContainer,
+              color: SomaColors.primaryContainer,
               letterSpacing: 1.5,
             ),
           ),
@@ -455,7 +455,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               fontFamily: 'Geist',
               fontSize: 26,
               fontWeight: FontWeight.w800,
-              color: KratosColors.onSurface,
+              color: SomaColors.onSurface,
               height: 1.2,
             ),
           ),
@@ -465,7 +465,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
             style: TextStyle(
               fontFamily: 'Geist',
               fontSize: 14,
-              color: KratosColors.secondary,
+              color: SomaColors.secondary,
               height: 1.4,
             ),
           ),
@@ -487,13 +487,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? KratosColors.primaryContainer.withValues(alpha: 0.1)
-                        : KratosColors.cardBackground,
+                        ? SomaColors.primaryContainer.withValues(alpha: 0.1)
+                        : SomaColors.cardBackground,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: isSelected
-                          ? KratosColors.primaryContainer
-                          : KratosColors.cardBorder,
+                          ? SomaColors.primaryContainer
+                          : SomaColors.cardBorder,
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -503,13 +503,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? KratosColors.primaryContainer
-                              : KratosColors.surfaceContainerHigh,
+                              ? SomaColors.primaryContainer
+                              : SomaColors.surfaceContainerHigh,
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           opt['icon'] as IconData,
-                          color: isSelected ? Colors.black : KratosColors.primaryContainer,
+                          color: isSelected ? Colors.black : SomaColors.primaryContainer,
                           size: 24,
                         ),
                       ),
@@ -525,8 +525,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 color: isSelected
-                                    ? KratosColors.primaryContainer
-                                    : KratosColors.onSurface,
+                                    ? SomaColors.primaryContainer
+                                    : SomaColors.onSurface,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -535,7 +535,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                               style: const TextStyle(
                                 fontFamily: 'Geist',
                                 fontSize: 12,
-                                color: KratosColors.secondary,
+                                color: SomaColors.secondary,
                               ),
                             ),
                           ],
@@ -544,7 +544,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       if (isSelected)
                         const Icon(
                           Icons.check_circle,
-                          color: KratosColors.primaryContainer,
+                          color: SomaColors.primaryContainer,
                         ),
                     ],
                   ),
@@ -570,7 +570,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               fontFamily: 'JetBrains Mono',
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: KratosColors.primaryContainer,
+              color: SomaColors.primaryContainer,
               letterSpacing: 1.5,
             ),
           ),
@@ -581,7 +581,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               fontFamily: 'Geist',
               fontSize: 26,
               fontWeight: FontWeight.w800,
-              color: KratosColors.onSurface,
+              color: SomaColors.onSurface,
               height: 1.2,
             ),
           ),
@@ -591,7 +591,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
             style: TextStyle(
               fontFamily: 'Geist',
               fontSize: 14,
-              color: KratosColors.secondary,
+              color: SomaColors.secondary,
             ),
           ),
           const SizedBox(height: 20),
@@ -624,7 +624,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               fontFamily: 'JetBrains Mono',
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: KratosColors.onSecondaryContainer,
+              color: SomaColors.onSecondaryContainer,
             ),
           ),
           const SizedBox(height: 8),
@@ -644,16 +644,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                     fontFamily: 'Geist',
                     fontSize: 12,
                     fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                    color: isSel ? Colors.black : KratosColors.onSurface,
+                    color: isSel ? Colors.black : SomaColors.onSurface,
                   ),
                 ),
                 selected: isSel,
-                selectedColor: KratosColors.primaryContainer,
-                backgroundColor: KratosColors.cardBackground,
+                selectedColor: SomaColors.primaryContainer,
+                backgroundColor: SomaColors.cardBackground,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
-                    color: isSel ? KratosColors.primaryContainer : KratosColors.cardBorder,
+                    color: isSel ? SomaColors.primaryContainer : SomaColors.cardBorder,
                   ),
                 ),
                 onSelected: (selected) {
@@ -673,16 +673,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: KratosColors.surfaceContainerHigh,
+              color: SomaColors.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: KratosColors.primaryContainer.withValues(alpha: 0.4)),
+              border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.4)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Row(
                   children: [
-                    Icon(Icons.auto_awesome, color: KratosColors.primaryContainer, size: 18),
+                    Icon(Icons.auto_awesome, color: SomaColors.primaryContainer, size: 18),
                     SizedBox(width: 8),
                     Text(
                       'RECOMMENDED BASELINE TARGETS',
@@ -690,7 +690,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                         fontFamily: 'JetBrains Mono',
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: KratosColors.primaryContainer,
+                        color: SomaColors.primaryContainer,
                         letterSpacing: 1.0,
                       ),
                     ),
@@ -727,7 +727,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               fontFamily: 'JetBrains Mono',
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: KratosColors.primaryContainer,
+              color: SomaColors.primaryContainer,
               letterSpacing: 1.5,
             ),
           ),
@@ -738,17 +738,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               fontFamily: 'Geist',
               fontSize: 26,
               fontWeight: FontWeight.w800,
-              color: KratosColors.onSurface,
+              color: SomaColors.onSurface,
               height: 1.2,
             ),
           ),
           const SizedBox(height: 8),
           const Text(
-            'Grant permissions so KRATOS can auto-detect your daily steps and screen time without requiring manual entry.',
+            'Grant permissions so SOMA can auto-detect your daily steps and screen time without requiring manual entry.',
             style: TextStyle(
               fontFamily: 'Geist',
               fontSize: 14,
-              color: KratosColors.secondary,
+              color: SomaColors.secondary,
               height: 1.4,
             ),
           ),
@@ -758,10 +758,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: KratosColors.cardBackground,
+              color: SomaColors.cardBackground,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: _isPermissionGranted ? KratosColors.primaryContainer : KratosColors.cardBorder,
+                color: _isPermissionGranted ? SomaColors.primaryContainer : SomaColors.cardBorder,
               ),
             ),
             child: Column(
@@ -773,13 +773,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       height: 44,
                       decoration: BoxDecoration(
                         color: _isPermissionGranted
-                            ? KratosColors.primaryContainer.withValues(alpha: 0.2)
-                            : KratosColors.surfaceContainerHigh,
+                            ? SomaColors.primaryContainer.withValues(alpha: 0.2)
+                            : SomaColors.surfaceContainerHigh,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         _isPermissionGranted ? Icons.verified_user : Icons.phonelink_setup,
-                        color: _isPermissionGranted ? KratosColors.primaryContainer : KratosColors.secondary,
+                        color: _isPermissionGranted ? SomaColors.primaryContainer : SomaColors.secondary,
                         size: 24,
                       ),
                     ),
@@ -796,7 +796,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                               fontFamily: 'Geist',
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: KratosColors.onSurface,
+                              color: SomaColors.onSurface,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -807,7 +807,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                             style: const TextStyle(
                               fontFamily: 'Geist',
                               fontSize: 12,
-                              color: KratosColors.secondary,
+                              color: SomaColors.secondary,
                             ),
                           ),
                         ],
@@ -822,9 +822,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _isPermissionGranted
-                          ? KratosColors.surfaceContainerHigh
-                          : KratosColors.primaryContainer,
-                      foregroundColor: _isPermissionGranted ? KratosColors.onSurface : Colors.black,
+                          ? SomaColors.surfaceContainerHigh
+                          : SomaColors.primaryContainer,
+                      foregroundColor: _isPermissionGranted ? SomaColors.onSurface : Colors.black,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _isPermissionRequesting ? null : _requestDigitalWellbeingPermission,
@@ -855,10 +855,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: KratosColors.cardBackground,
+              color: SomaColors.cardBackground,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: _isStepPermissionGranted ? KratosColors.primaryContainer : KratosColors.cardBorder,
+                color: _isStepPermissionGranted ? SomaColors.primaryContainer : SomaColors.cardBorder,
               ),
             ),
             child: Column(
@@ -870,13 +870,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       height: 44,
                       decoration: BoxDecoration(
                         color: _isStepPermissionGranted
-                            ? KratosColors.primaryContainer.withValues(alpha: 0.2)
-                            : KratosColors.surfaceContainerHigh,
+                            ? SomaColors.primaryContainer.withValues(alpha: 0.2)
+                            : SomaColors.surfaceContainerHigh,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         _isStepPermissionGranted ? Icons.directions_walk : Icons.directions_walk_outlined,
-                        color: _isStepPermissionGranted ? KratosColors.primaryContainer : KratosColors.secondary,
+                        color: _isStepPermissionGranted ? SomaColors.primaryContainer : SomaColors.secondary,
                         size: 24,
                       ),
                     ),
@@ -893,7 +893,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                               fontFamily: 'Geist',
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
-                              color: KratosColors.onSurface,
+                              color: SomaColors.onSurface,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -904,7 +904,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                             style: const TextStyle(
                               fontFamily: 'Geist',
                               fontSize: 12,
-                              color: KratosColors.secondary,
+                              color: SomaColors.secondary,
                             ),
                           ),
                         ],
@@ -919,9 +919,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _isStepPermissionGranted
-                          ? KratosColors.surfaceContainerHigh
-                          : KratosColors.primaryContainer,
-                      foregroundColor: _isStepPermissionGranted ? KratosColors.onSurface : Colors.black,
+                          ? SomaColors.surfaceContainerHigh
+                          : SomaColors.primaryContainer,
+                      foregroundColor: _isStepPermissionGranted ? SomaColors.onSurface : Colors.black,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _isStepPermissionRequesting ? null : _requestStepPermission,
@@ -953,7 +953,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               fontFamily: 'JetBrains Mono',
               fontSize: 11,
               fontWeight: FontWeight.bold,
-              color: KratosColors.onSecondaryContainer,
+              color: SomaColors.onSecondaryContainer,
             ),
           ),
           const SizedBox(height: 8),
@@ -961,13 +961,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: KratosColors.cardBackground,
+              color: SomaColors.cardBackground,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: KratosColors.cardBorder),
+              border: Border.all(color: SomaColors.cardBorder),
             ),
             child: Row(
               children: [
-                const Icon(Icons.screen_search_desktop, color: KratosColors.primaryContainer),
+                const Icon(Icons.screen_search_desktop, color: SomaColors.primaryContainer),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Slider(
@@ -975,8 +975,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                     min: 1,
                     max: 12,
                     divisions: 11,
-                    activeColor: KratosColors.primaryContainer,
-                    inactiveColor: KratosColors.surfaceContainerHigh,
+                    activeColor: SomaColors.primaryContainer,
+                    inactiveColor: SomaColors.surfaceContainerHigh,
                     label: '$_digitalLimitHours Hours',
                     onChanged: (val) {
                       setState(() {
@@ -991,7 +991,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                     fontFamily: 'JetBrains Mono',
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: KratosColors.primaryContainer,
+                    color: SomaColors.primaryContainer,
                   ),
                 ),
               ],
@@ -1005,7 +1005,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               style: TextStyle(
                 fontFamily: 'Geist',
                 fontSize: 12,
-                color: KratosColors.secondary,
+                color: SomaColors.secondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1017,7 +1017,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
 
   // --- STEP 4: Activation & Confirmation ---
   Widget _buildActivationStep() {
-    final name = _nameController.text.trim().isEmpty ? 'KRATOS Athlete' : _nameController.text.trim();
+    final name = _nameController.text.trim().isEmpty ? 'SOMA Athlete' : _nameController.text.trim();
     final weight = _weightController.text.trim();
     final height = _heightController.text.trim();
 
@@ -1032,7 +1032,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               fontFamily: 'JetBrains Mono',
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: KratosColors.primaryContainer,
+              color: SomaColors.primaryContainer,
               letterSpacing: 1.5,
             ),
           ),
@@ -1043,7 +1043,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               fontFamily: 'Geist',
               fontSize: 26,
               fontWeight: FontWeight.w800,
-              color: KratosColors.onSurface,
+              color: SomaColors.onSurface,
               height: 1.2,
             ),
           ),
@@ -1053,7 +1053,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
             style: TextStyle(
               fontFamily: 'Geist',
               fontSize: 14,
-              color: KratosColors.secondary,
+              color: SomaColors.secondary,
             ),
           ),
           const SizedBox(height: 20),
@@ -1062,12 +1062,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: KratosColors.cardBackground,
+              color: SomaColors.cardBackground,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: KratosColors.primaryContainer),
+              border: Border.all(color: SomaColors.primaryContainer),
               boxShadow: [
                 BoxShadow(
-                  color: KratosColors.primaryContainer.withValues(alpha: 0.08),
+                  color: SomaColors.primaryContainer.withValues(alpha: 0.08),
                   blurRadius: 16,
                   spreadRadius: 2,
                 ),
@@ -1078,7 +1078,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.shield, color: KratosColors.primaryContainer, size: 28),
+                    const Icon(Icons.shield, color: SomaColors.primaryContainer, size: 28),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1089,7 +1089,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                             fontFamily: 'Geist',
                             fontSize: 18,
                             fontWeight: FontWeight.w900,
-                            color: KratosColors.onSurface,
+                            color: SomaColors.onSurface,
                           ),
                         ),
                         Text(
@@ -1097,21 +1097,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                           style: const TextStyle(
                             fontFamily: 'JetBrains Mono',
                             fontSize: 11,
-                            color: KratosColors.primaryContainer,
+                            color: SomaColors.primaryContainer,
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                const Divider(color: KratosColors.cardBorder, height: 28),
+                const Divider(color: SomaColors.cardBorder, height: 28),
                 const Text(
                   'DAILY PERFORMANCE TARGETS',
                   style: TextStyle(
                     fontFamily: 'JetBrains Mono',
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: KratosColors.onSecondaryContainer,
+                    color: SomaColors.onSecondaryContainer,
                     letterSpacing: 1.0,
                   ),
                 ),
@@ -1136,14 +1136,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: KratosColors.primaryContainer),
+          Icon(icon, size: 16, color: SomaColors.primaryContainer),
           const SizedBox(width: 10),
           Text(
             label,
             style: const TextStyle(
               fontFamily: 'Geist',
               fontSize: 13,
-              color: KratosColors.secondary,
+              color: SomaColors.secondary,
             ),
           ),
           const Spacer(),
@@ -1153,7 +1153,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               fontFamily: 'JetBrains Mono',
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: KratosColors.onSurface,
+              color: SomaColors.onSurface,
             ),
           ),
         ],
@@ -1169,7 +1169,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           style: const TextStyle(
             fontFamily: 'Geist',
             fontSize: 11,
-            color: KratosColors.secondary,
+            color: SomaColors.secondary,
           ),
         ),
         const SizedBox(height: 2),
@@ -1179,7 +1179,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
             fontFamily: 'JetBrains Mono',
             fontSize: 13,
             fontWeight: FontWeight.bold,
-            color: KratosColors.onSurface,
+            color: SomaColors.onSurface,
           ),
         ),
       ],
@@ -1202,7 +1202,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
             fontFamily: 'JetBrains Mono',
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: KratosColors.onSecondaryContainer,
+            color: SomaColors.onSecondaryContainer,
           ),
         ),
         const SizedBox(height: 6),
@@ -1214,23 +1214,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
             fontFamily: 'Geist',
             fontSize: 15,
             fontWeight: FontWeight.bold,
-            color: KratosColors.onSurface,
+            color: SomaColors.onSurface,
           ),
           decoration: InputDecoration(
-            prefixIcon: icon != null ? Icon(icon, color: KratosColors.primaryContainer, size: 20) : null,
+            prefixIcon: icon != null ? Icon(icon, color: SomaColors.primaryContainer, size: 20) : null,
             filled: true,
-            fillColor: KratosColors.cardBackground,
+            fillColor: SomaColors.cardBackground,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: KratosColors.cardBorder),
+              borderSide: const BorderSide(color: SomaColors.cardBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: KratosColors.cardBorder),
+              borderSide: const BorderSide(color: SomaColors.cardBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: KratosColors.primaryContainer),
+              borderSide: const BorderSide(color: SomaColors.primaryContainer),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),

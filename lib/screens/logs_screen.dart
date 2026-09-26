@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../providers/kratos_provider.dart';
+import '../providers/soma_provider.dart';
 import '../models/log_entry.dart';
-import '../theme/kratos_theme.dart';
+import '../theme/soma_theme.dart';
 import '../widgets/quick_log_modal.dart';
 
 class LogsScreen extends StatefulWidget {
@@ -18,7 +18,7 @@ class _LogsScreenState extends State<LogsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<KratosProvider>();
+    final provider = context.watch<SomaProvider>();
     final currentLog = provider.currentLog;
     final dateStr = DateFormat('EEEE, MMM d, yyyy').format(provider.selectedDate);
 
@@ -34,9 +34,9 @@ class _LogsScreenState extends State<LogsScreen> {
     }
 
     return Scaffold(
-      backgroundColor: KratosColors.background,
+      backgroundColor: SomaColors.background,
       appBar: AppBar(
-        backgroundColor: KratosColors.background,
+        backgroundColor: SomaColors.background,
         elevation: 0,
         title: const Text(
           'ACTIVITY & NUTRITION LOGS',
@@ -45,13 +45,13 @@ class _LogsScreenState extends State<LogsScreen> {
             fontSize: 18,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.36,
-            color: KratosColors.onSurface,
+            color: SomaColors.onSurface,
           ),
         ),
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add, color: KratosColors.primaryContainer),
+            icon: const Icon(Icons.add, color: SomaColors.primaryContainer),
             onPressed: () => QuickLogModal.show(context),
           ),
         ],
@@ -63,15 +63,15 @@ class _LogsScreenState extends State<LogsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: KratosColors.cardBackground,
+              color: SomaColors.cardBackground,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: KratosColors.cardBorder),
+              border: Border.all(color: SomaColors.cardBorder),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.chevron_left, color: KratosColors.onSurface),
+                  icon: const Icon(Icons.chevron_left, color: SomaColors.onSurface),
                   onPressed: () {
                     provider.selectDate(provider.selectedDate.subtract(const Duration(days: 1)));
                   },
@@ -82,11 +82,11 @@ class _LogsScreenState extends State<LogsScreen> {
                     fontFamily: 'Geist',
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: KratosColors.primaryContainer,
+                    color: SomaColors.primaryContainer,
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.chevron_right, color: KratosColors.onSurface),
+                  icon: const Icon(Icons.chevron_right, color: SomaColors.onSurface),
                   onPressed: () {
                     provider.selectDate(provider.selectedDate.add(const Duration(days: 1)));
                   },
@@ -107,16 +107,16 @@ class _LogsScreenState extends State<LogsScreen> {
                   child: ChoiceChip(
                     label: Text(filter),
                     selected: isSelected,
-                    selectedColor: KratosColors.primaryContainer,
-                    backgroundColor: KratosColors.cardBackground,
+                    selectedColor: SomaColors.primaryContainer,
+                    backgroundColor: SomaColors.cardBackground,
                     side: BorderSide(
-                      color: isSelected ? KratosColors.primaryContainer : KratosColors.cardBorder,
+                      color: isSelected ? SomaColors.primaryContainer : SomaColors.cardBorder,
                     ),
                     labelStyle: TextStyle(
                       fontFamily: 'JetBrains Mono',
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? KratosColors.background : KratosColors.onSurface,
+                      color: isSelected ? SomaColors.background : SomaColors.onSurface,
                     ),
                     onSelected: (_) => setState(() => _selectedFilter = filter),
                   ),
@@ -135,7 +135,7 @@ class _LogsScreenState extends State<LogsScreen> {
                         Icon(
                           Icons.assignment_outlined,
                           size: 48,
-                          color: KratosColors.onSecondaryContainer.withValues(alpha: 0.5),
+                          color: SomaColors.onSecondaryContainer.withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -143,13 +143,13 @@ class _LogsScreenState extends State<LogsScreen> {
                           style: TextStyle(
                             fontFamily: 'Geist',
                             fontSize: 16,
-                            color: KratosColors.onSecondaryContainer,
+                            color: SomaColors.onSecondaryContainer,
                           ),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: KratosColors.primaryContainer,
+                            backgroundColor: SomaColors.primaryContainer,
                             foregroundColor: Colors.black,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
@@ -174,7 +174,7 @@ class _LogsScreenState extends State<LogsScreen> {
     );
   }
 
-  Widget _buildLogItem(BuildContext context, KratosProvider provider, LogEntry entry) {
+  Widget _buildLogItem(BuildContext context, SomaProvider provider, LogEntry entry) {
     IconData icon;
     Color iconColor;
 
@@ -185,11 +185,11 @@ class _LogsScreenState extends State<LogsScreen> {
         break;
       case LogType.meal:
         icon = Icons.restaurant;
-        iconColor = KratosColors.primaryContainer;
+        iconColor = SomaColors.primaryContainer;
         break;
       case LogType.activity:
         icon = Icons.fitness_center;
-        iconColor = KratosColors.secondary;
+        iconColor = SomaColors.secondary;
         break;
       case LogType.sleep:
         icon = Icons.bed;
@@ -207,9 +207,9 @@ class _LogsScreenState extends State<LogsScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: KratosColors.cardBackground,
+        color: SomaColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: KratosColors.cardBorder),
+        border: Border.all(color: SomaColors.cardBorder),
       ),
       child: Row(
         children: [
@@ -236,7 +236,7 @@ class _LogsScreenState extends State<LogsScreen> {
                           fontFamily: 'Geist',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: KratosColors.onSurface,
+                          color: SomaColors.onSurface,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -247,7 +247,7 @@ class _LogsScreenState extends State<LogsScreen> {
                       style: const TextStyle(
                         fontFamily: 'JetBrains Mono',
                         fontSize: 11,
-                        color: KratosColors.onSecondaryContainer,
+                        color: SomaColors.onSecondaryContainer,
                       ),
                     ),
                   ],
@@ -259,7 +259,7 @@ class _LogsScreenState extends State<LogsScreen> {
                     style: TextStyle(
                       fontFamily: 'Geist',
                       fontSize: 13,
-                      color: KratosColors.onSecondaryContainer,
+                      color: SomaColors.onSecondaryContainer,
                     ),
                   ),
                 if (entry.type == LogType.meal) ...[
@@ -305,7 +305,7 @@ class _LogsScreenState extends State<LogsScreen> {
         fontFamily: 'JetBrains Mono',
         fontSize: 10,
         fontWeight: FontWeight.w700,
-        color: KratosColors.primaryContainer,
+        color: SomaColors.primaryContainer,
       ),
     );
   }

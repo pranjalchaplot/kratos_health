@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/kratos_provider.dart';
+import '../providers/soma_provider.dart';
 import '../models/user_goals.dart';
 import '../services/calorie_calculator_service.dart';
-import '../theme/kratos_theme.dart';
+import '../theme/soma_theme.dart';
 import '../widgets/bmr_info_dialog.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -36,7 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final goals = context.read<KratosProvider>().userGoals;
+    final goals = context.read<SomaProvider>().userGoals;
     _caloriesController = TextEditingController(text: goals.caloriesGoal.toString());
     _proteinController = TextEditingController(text: goals.proteinGoal.toString());
     _carbsController = TextEditingController(text: goals.carbsGoal.toString());
@@ -92,22 +92,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       bmrFormula: _bmrFormula,
       customBmr: int.tryParse(_customBmrController.text),
       bodyFatPercentage: double.tryParse(_bodyFatController.text) ?? 15.0,
-      primaryFocus: context.read<KratosProvider>().userGoals.primaryFocus,
-      userName: context.read<KratosProvider>().userGoals.userName,
+      primaryFocus: context.read<SomaProvider>().userGoals.primaryFocus,
+      userName: context.read<SomaProvider>().userGoals.userName,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<KratosProvider>();
+    final provider = context.watch<SomaProvider>();
     final tempGoals = _buildTempGoalsFromInputs();
     final calculatedBmr = CalorieCalculatorService.calculateBmr(tempGoals);
     final hourlyBmr = CalorieCalculatorService.calculateHourlyBmr(tempGoals);
 
     return Scaffold(
-      backgroundColor: KratosColors.background,
+      backgroundColor: SomaColors.background,
       appBar: AppBar(
-        backgroundColor: KratosColors.background,
+        backgroundColor: SomaColors.background,
         elevation: 0,
         title: const Text(
           'PROFILE & GOALS',
@@ -116,7 +116,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontSize: 18,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.36,
-            color: KratosColors.onSurface,
+            color: SomaColors.onSurface,
           ),
         ),
         centerTitle: false,
@@ -130,9 +130,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: KratosColors.cardBackground,
+                color: SomaColors.cardBackground,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: KratosColors.cardBorder),
+                border: Border.all(color: SomaColors.cardBorder),
               ),
               child: Row(
                 children: [
@@ -141,10 +141,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     height: 56,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: KratosColors.primaryContainer.withValues(alpha: 0.2),
-                      border: Border.all(color: KratosColors.primaryContainer),
+                      color: SomaColors.primaryContainer.withValues(alpha: 0.2),
+                      border: Border.all(color: SomaColors.primaryContainer),
                     ),
-                    child: const Icon(Icons.person, color: KratosColors.primaryContainer, size: 32),
+                    child: const Icon(Icons.person, color: SomaColors.primaryContainer, size: 32),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -152,12 +152,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          provider.userGoals.userName ?? 'KRATOS Athlete',
+                          provider.userGoals.userName ?? 'SOMA Athlete',
                           style: const TextStyle(
                             fontFamily: 'Geist',
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
-                            color: KratosColors.onSurface,
+                            color: SomaColors.onSurface,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -166,7 +166,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: const TextStyle(
                             fontFamily: 'JetBrains Mono',
                             fontSize: 12,
-                            color: KratosColors.primaryContainer,
+                            color: SomaColors.primaryContainer,
                           ),
                         ),
                       ],
@@ -187,12 +187,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontFamily: 'JetBrains Mono',
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: KratosColors.onSecondaryContainer,
+                    color: SomaColors.onSecondaryContainer,
                     letterSpacing: 1.0,
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.info_outline, color: KratosColors.primaryContainer, size: 20),
+                  icon: const Icon(Icons.info_outline, color: SomaColors.primaryContainer, size: 20),
                   onPressed: () => BmrInfoDialog.show(context),
                 ),
               ],
@@ -203,9 +203,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: KratosColors.cardBackground,
+                color: SomaColors.cardBackground,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: KratosColors.primaryContainer.withValues(alpha: 0.4)),
+                border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.4)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -215,20 +215,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       const Text(
                         'AUTO RESTING BURN (BMR)',
-                        style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: FontWeight.bold, color: KratosColors.onSecondaryContainer),
+                        style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '$calculatedBmr kcal / day',
-                        style: const TextStyle(fontFamily: 'Geist', fontSize: 24, fontWeight: FontWeight.w800, color: KratosColors.primaryContainer),
+                        style: const TextStyle(fontFamily: 'Geist', fontSize: 24, fontWeight: FontWeight.w800, color: SomaColors.primaryContainer),
                       ),
                       Text(
                         '~${hourlyBmr.toStringAsFixed(1)} kcal/hr burnt simply by existing',
-                        style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, color: KratosColors.onSurface),
+                        style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, color: SomaColors.onSurface),
                       ),
                     ],
                   ),
-                  const Icon(Icons.local_fire_department, color: KratosColors.primaryContainer, size: 36),
+                  const Icon(Icons.local_fire_department, color: SomaColors.primaryContainer, size: 36),
                 ],
               ),
             ),
@@ -250,7 +250,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Sex / Gender', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: KratosColors.onSecondaryContainer)),
+                const Text('Sex / Gender', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
                 const SizedBox(height: 6),
                 Row(
                   children: [
@@ -269,16 +269,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('BMR Formula Choice', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: KratosColors.onSecondaryContainer)),
+                const Text('BMR Formula Choice', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   initialValue: _bmrFormula,
-                  dropdownColor: KratosColors.cardBackground,
-                  style: const TextStyle(color: KratosColors.onSurface, fontFamily: 'Geist', fontWeight: FontWeight.bold),
+                  dropdownColor: SomaColors.cardBackground,
+                  style: const TextStyle(color: SomaColors.onSurface, fontFamily: 'Geist', fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: KratosColors.cardBackground,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: KratosColors.cardBorder)),
+                    fillColor: SomaColors.cardBackground,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: SomaColors.cardBorder)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
                   items: const [
@@ -312,7 +312,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 fontFamily: 'JetBrains Mono',
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: KratosColors.onSecondaryContainer,
+                color: SomaColors.onSecondaryContainer,
                 letterSpacing: 1.2,
               ),
             ),
@@ -344,7 +344,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               height: 52,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: KratosColors.primaryContainer,
+                  backgroundColor: SomaColors.primaryContainer,
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
@@ -375,7 +375,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Target goals & BMR settings updated and saved!'),
-                        backgroundColor: KratosColors.primaryContainer,
+                        backgroundColor: SomaColors.primaryContainer,
                       ),
                     );
                   }
@@ -397,8 +397,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               height: 48,
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: KratosColors.primaryContainer,
-                  side: const BorderSide(color: KratosColors.primaryContainer),
+                  foregroundColor: SomaColors.primaryContainer,
+                  side: const BorderSide(color: SomaColors.primaryContainer),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 onPressed: () async {
@@ -461,12 +461,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'KRATOS PERFORMANCE ECOSYSTEM',
+                    'SOMA PERFORMANCE ECOSYSTEM',
                     style: TextStyle(
                       fontFamily: 'JetBrains Mono',
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: KratosColors.primaryContainer,
+                      color: SomaColors.primaryContainer,
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -476,7 +476,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: TextStyle(
                       fontFamily: 'JetBrains Mono',
                       fontSize: 11,
-                      color: KratosColors.onSecondaryContainer,
+                      color: SomaColors.onSecondaryContainer,
                     ),
                   ),
                 ],
@@ -493,13 +493,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return ChoiceChip(
       label: Text(label),
       selected: isSelected,
-      selectedColor: KratosColors.primaryContainer,
-      backgroundColor: KratosColors.cardBackground,
+      selectedColor: SomaColors.primaryContainer,
+      backgroundColor: SomaColors.cardBackground,
       labelStyle: TextStyle(
         fontFamily: 'JetBrains Mono',
         fontSize: 12,
         fontWeight: FontWeight.bold,
-        color: isSelected ? Colors.black : KratosColors.onSurface,
+        color: isSelected ? Colors.black : SomaColors.onSurface,
       ),
       onSelected: (_) => setState(() => _gender = key),
     );
@@ -515,7 +515,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontFamily: 'JetBrains Mono',
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: KratosColors.onSecondaryContainer,
+            color: SomaColors.onSecondaryContainer,
           ),
         ),
         const SizedBox(height: 6),
@@ -527,22 +527,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             fontFamily: 'Geist',
             fontSize: 15,
             fontWeight: FontWeight.bold,
-            color: KratosColors.onSurface,
+            color: SomaColors.onSurface,
           ),
           decoration: InputDecoration(
             filled: true,
-            fillColor: KratosColors.cardBackground,
+            fillColor: SomaColors.cardBackground,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: KratosColors.cardBorder),
+              borderSide: const BorderSide(color: SomaColors.cardBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: KratosColors.cardBorder),
+              borderSide: const BorderSide(color: SomaColors.cardBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: KratosColors.primaryContainer),
+              borderSide: const BorderSide(color: SomaColors.primaryContainer),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           ),

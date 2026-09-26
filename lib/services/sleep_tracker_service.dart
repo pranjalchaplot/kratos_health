@@ -3,7 +3,7 @@ import '../models/sleep_record.dart';
 import 'android_sleep_service.dart';
 import 'health_connect_sleep_service.dart';
 
-/// Unified Sleep Tracking Service for KRATOS.
+/// Unified Sleep Tracking Service for SOMA.
 /// 
 /// Primary Source: Android Sleep Segment API (Google Play Services)
 /// Secondary Source: Health Connect (Prepared for wearable integration, disabled by default)

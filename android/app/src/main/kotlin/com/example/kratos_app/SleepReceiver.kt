@@ -11,8 +11,8 @@ import com.google.android.gms.location.SleepSegmentEvent
 class SleepReceiver : BroadcastReceiver() {
 
     companion object {
-        private const val TAG = "KratosSleepReceiver"
-        const val PREFS_NAME = "kratos_sleep_prefs"
+        private const val TAG = "SomaSleepReceiver"
+        const val PREFS_NAME = "soma_sleep_prefs"
         const val KEY_LAST_START_TIME = "last_sleep_start_time"
         const val KEY_LAST_END_TIME = "last_sleep_end_time"
         const val KEY_LAST_DURATION_MINUTES = "last_sleep_duration_minutes"

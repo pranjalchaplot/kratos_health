@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import '../theme/kratos_theme.dart';
+﻿import 'package:flutter/material.dart';
+import '../theme/soma_theme.dart';
 
 /// Macro progress bar used in the Daily Summary card
 class MacroProgressBar extends StatelessWidget {
@@ -32,7 +32,7 @@ class MacroProgressBar extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 height: 1.0,
                 letterSpacing: 1.2,
-                color: KratosColors.onSurface,
+                color: SomaColors.onSurface,
               ),
             ),
             Text(
@@ -43,7 +43,7 @@ class MacroProgressBar extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 height: 1.0,
                 letterSpacing: 1.2,
-                color: KratosColors.onSurface,
+                color: SomaColors.onSurface,
               ),
             ),
           ],
@@ -53,7 +53,7 @@ class MacroProgressBar extends StatelessWidget {
           height: 8,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: KratosColors.surfaceContainerHigh,
+            color: SomaColors.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(9999),
           ),
           child: FractionallySizedBox(

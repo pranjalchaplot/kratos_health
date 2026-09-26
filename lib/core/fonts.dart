@@ -1,6 +1,6 @@
-/// Core Fonts export for the KRATOS app.
+/// Core Fonts export for the SOMA app.
 ///
-/// Provides access to [KratosFonts] and [AppFonts].
+/// Provides access to [SomaFonts] and [AppFonts].
 library;
 
-export '../theme/kratos_fonts.dart';
+export '../theme/soma_fonts.dart';

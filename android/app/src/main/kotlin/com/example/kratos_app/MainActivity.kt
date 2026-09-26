@@ -15,8 +15,8 @@ import io.flutter.plugin.common.MethodChannel
 import java.util.Calendar
 
 class MainActivity : FlutterActivity() {
-    private val CHANNEL = "com.kratos/sleep"
-    private val TAG = "KratosMainActivity"
+    private val CHANNEL = "com.soma/sleep"
+    private val TAG = "SomaMainActivity"
     private val SLEEP_REQUEST_CODE = 4210
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

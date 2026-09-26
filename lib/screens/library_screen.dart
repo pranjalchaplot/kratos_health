@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/kratos_provider.dart';
-import '../theme/kratos_theme.dart';
+import '../providers/soma_provider.dart';
+import '../theme/soma_theme.dart';
 
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<KratosProvider>();
+    final provider = context.watch<SomaProvider>();
     final log = provider.currentLog;
 
     return Scaffold(
-      backgroundColor: KratosColors.background,
+      backgroundColor: SomaColors.background,
       appBar: AppBar(
-        backgroundColor: KratosColors.background,
+        backgroundColor: SomaColors.background,
         elevation: 0,
         title: const Text(
           'ANALYTICS & INSIGHTS',
@@ -23,7 +23,7 @@ class LibraryScreen extends StatelessWidget {
             fontSize: 18,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.36,
-            color: KratosColors.onSurface,
+            color: SomaColors.onSurface,
           ),
         ),
         centerTitle: false,
@@ -39,14 +39,14 @@ class LibraryScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    KratosColors.primaryContainer.withValues(alpha: 0.2),
-                    KratosColors.cardBackground,
+                    SomaColors.primaryContainer.withValues(alpha: 0.2),
+                    SomaColors.cardBackground,
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: KratosColors.primaryContainer.withValues(alpha: 0.5)),
+                border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.5)),
               ),
               child: Row(
                 children: [
@@ -64,7 +64,7 @@ class LibraryScreen extends StatelessWidget {
                           fontFamily: 'Geist',
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
-                          color: KratosColors.primaryContainer,
+                          color: SomaColors.primaryContainer,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -73,7 +73,7 @@ class LibraryScreen extends StatelessWidget {
                         style: TextStyle(
                           fontFamily: 'Geist',
                           fontSize: 13,
-                          color: KratosColors.onSecondaryContainer,
+                          color: SomaColors.onSecondaryContainer,
                         ),
                       ),
                     ],
@@ -89,7 +89,7 @@ class LibraryScreen extends StatelessWidget {
                 fontFamily: 'JetBrains Mono',
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: KratosColors.onSecondaryContainer,
+                color: SomaColors.onSecondaryContainer,
                 letterSpacing: 1.2,
               ),
             ),
@@ -104,7 +104,7 @@ class LibraryScreen extends StatelessWidget {
                     '${log.caloriesBurned} / ${log.caloriesGoal}',
                     'kcal',
                     log.caloriesProgress,
-                    KratosColors.primaryContainer,
+                    SomaColors.primaryContainer,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -138,7 +138,7 @@ class LibraryScreen extends StatelessWidget {
                     '${log.steps} / ${log.stepsGoal}',
                     'Steps',
                     log.stepsProgress,
-                    KratosColors.secondary,
+                    SomaColors.secondary,
                   ),
                 ),
               ],
@@ -146,12 +146,12 @@ class LibraryScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
             const Text(
-              'KRATOS RECOMMENDATIONS',
+              'SOMA RECOMMENDATIONS',
               style: TextStyle(
                 fontFamily: 'JetBrains Mono',
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: KratosColors.onSecondaryContainer,
+                color: SomaColors.onSecondaryContainer,
                 letterSpacing: 1.2,
               ),
             ),
@@ -181,9 +181,9 @@ class LibraryScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: KratosColors.cardBackground,
+        color: SomaColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: KratosColors.cardBorder),
+        border: Border.all(color: SomaColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,7 +194,7 @@ class LibraryScreen extends StatelessWidget {
               fontFamily: 'JetBrains Mono',
               fontSize: 10,
               fontWeight: FontWeight.bold,
-              color: KratosColors.onSecondaryContainer,
+              color: SomaColors.onSecondaryContainer,
             ),
           ),
           const SizedBox(height: 8),
@@ -204,7 +204,7 @@ class LibraryScreen extends StatelessWidget {
               fontFamily: 'Geist',
               fontSize: 16,
               fontWeight: FontWeight.w800,
-              color: KratosColors.onSurface,
+              color: SomaColors.onSurface,
             ),
           ),
           Text(
@@ -212,13 +212,13 @@ class LibraryScreen extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Geist',
               fontSize: 11,
-              color: KratosColors.onSecondaryContainer,
+              color: SomaColors.onSecondaryContainer,
             ),
           ),
           const SizedBox(height: 12),
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: KratosColors.surfaceContainerHighest,
+            backgroundColor: SomaColors.surfaceContainerHighest,
             valueColor: AlwaysStoppedAnimation<Color>(color),
             minHeight: 4,
             borderRadius: BorderRadius.circular(2),
@@ -232,9 +232,9 @@ class LibraryScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: KratosColors.cardBackground,
+        color: SomaColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: KratosColors.cardBorder),
+        border: Border.all(color: SomaColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,7 +245,7 @@ class LibraryScreen extends StatelessWidget {
               fontFamily: 'Geist',
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: KratosColors.primaryContainer,
+              color: SomaColors.primaryContainer,
             ),
           ),
           const SizedBox(height: 6),
@@ -254,7 +254,7 @@ class LibraryScreen extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Geist',
               fontSize: 13,
-              color: KratosColors.onSecondaryContainer,
+              color: SomaColors.onSecondaryContainer,
               height: 1.4,
             ),
           ),

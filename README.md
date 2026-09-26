@@ -1,3 +1,3 @@
-# kratos_app
+# soma_app
 
-A new Flutter project.
+SOMA Performance & Fitness Ecosystem.

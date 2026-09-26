@@ -40,15 +40,15 @@ class StepTrackerService {
 
     final prefs = await SharedPreferences.getInstance();
     final todayKey = _formatTodayKey();
-    _baselineDate = prefs.getString('kratos_step_baseline_date');
-    _todayBaselineSteps = prefs.getInt('kratos_step_baseline_val') ?? -1;
+    _baselineDate = prefs.getString('soma_step_baseline_date') ?? prefs.getString('kratos_step_baseline_date');
+    _todayBaselineSteps = prefs.getInt('soma_step_baseline_val') ?? prefs.getInt('kratos_step_baseline_val') ?? -1;
 
     // Reset baseline if today is a new calendar day
     if (_baselineDate != todayKey) {
       _baselineDate = todayKey;
       _todayBaselineSteps = -1;
-      await prefs.setString('kratos_step_baseline_date', todayKey);
-      await prefs.setInt('kratos_step_baseline_val', -1);
+      await prefs.setString('soma_step_baseline_date', todayKey);
+      await prefs.setInt('soma_step_baseline_val', -1);
     }
 
     _stepSubscription?.cancel();
@@ -59,7 +59,7 @@ class StepTrackerService {
         // If baseline is not set or sensor was reset (e.g., after phone reboot)
         if (_todayBaselineSteps == -1 || currentSensorSteps < _todayBaselineSteps) {
           _todayBaselineSteps = currentSensorSteps;
-          await prefs.setInt('kratos_step_baseline_val', _todayBaselineSteps);
+          await prefs.setInt('soma_step_baseline_val', _todayBaselineSteps);
         }
 
         int stepsToday = currentSensorSteps - _todayBaselineSteps;

@@ -7,7 +7,7 @@ import '../models/sleep_record.dart';
 /// Does not require a smartwatch/wearable because the phone's sensors detect stillness,
 /// ambient light, screen off duration, and charging state.
 class AndroidSleepService {
-  static const MethodChannel _channel = MethodChannel('com.kratos/sleep');
+  static const MethodChannel _channel = MethodChannel('com.soma/sleep');
 
   /// Check if the required Activity Recognition runtime permission is granted.
   static Future<bool> isPermissionGranted() async {

@@ -1,11 +1,11 @@
 {
-    "name": "kratos_app",
-    "short_name": "kratos_app",
+    "name": "Soma",
+    "short_name": "Soma",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0a0a0c",
     "theme_color": "#0a0a0c",
-    "description": "A new Flutter project.",
+    "description": "SOMA Performance & Fitness Ecosystem",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

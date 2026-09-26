@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/kratos_provider.dart';
-import '../theme/kratos_theme.dart';
+import '../providers/soma_provider.dart';
+import '../theme/soma_theme.dart';
 import 'quick_log_modal.dart';
 
 /// Bottom navigation bar matching the Stitch design
-class KratosBottomNav extends StatelessWidget {
-  const KratosBottomNav({super.key});
+class SomaBottomNav extends StatelessWidget {
+  const SomaBottomNav({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<KratosProvider>();
+    final provider = context.watch<SomaProvider>();
     final currentIndex = provider.currentTabIndex;
 
     return Container(
       height: 80,
       decoration: const BoxDecoration(
-        color: KratosColors.surface,
+        color: SomaColors.surface,
         border: Border(
           top: BorderSide(
-            color: KratosColors.surfaceContainerHighest,
+            color: SomaColors.surfaceContainerHighest,
             width: 1,
           ),
         ),
@@ -72,15 +72,15 @@ class KratosBottomNav extends StatelessWidget {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: KratosColors.primaryContainer,
+            color: SomaColors.primaryContainer,
             shape: BoxShape.circle,
             border: Border.all(
-              color: KratosColors.surface,
+              color: SomaColors.surface,
               width: 4,
             ),
             boxShadow: [
               BoxShadow(
-                color: KratosColors.primaryContainer.withValues(alpha: 0.3),
+                color: SomaColors.primaryContainer.withValues(alpha: 0.3),
                 blurRadius: 16,
                 offset: const Offset(0, 4),
               ),
@@ -88,7 +88,7 @@ class KratosBottomNav extends StatelessWidget {
           ),
           child: const Icon(
             Icons.add,
-            color: KratosColors.background,
+            color: SomaColors.background,
             size: 30,
           ),
         ),
@@ -96,6 +96,9 @@ class KratosBottomNav extends StatelessWidget {
     );
   }
 }
+
+// Backwards compatibility alias
+typedef KratosBottomNav = SomaBottomNav;
 
 class _NavItem extends StatelessWidget {
   final IconData icon;
@@ -113,8 +116,8 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isActive
-        ? KratosColors.primaryContainer
-        : KratosColors.onSecondaryContainer;
+        ? SomaColors.primaryContainer
+        : SomaColors.onSecondaryContainer;
 
     return InkWell(
       onTap: onTap,
@@ -150,7 +153,7 @@ class _NavItem extends StatelessWidget {
                       width: 4,
                       height: 4,
                       decoration: const BoxDecoration(
-                        color: KratosColors.primaryContainer,
+                        color: SomaColors.primaryContainer,
                         shape: BoxShape.circle,
                       ),
                     ),

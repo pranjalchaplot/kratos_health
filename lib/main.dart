@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'theme/kratos_theme.dart';
-import 'providers/kratos_provider.dart';
+import 'theme/soma_theme.dart';
+import 'providers/soma_provider.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/logs_screen.dart';
@@ -15,41 +15,44 @@ void main() {
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: KratosColors.surface,
+    systemNavigationBarColor: SomaColors.surface,
     systemNavigationBarIconBrightness: Brightness.light,
   ));
   runApp(
     ChangeNotifierProvider(
-      create: (_) => KratosProvider(),
-      child: const KratosApp(),
+      create: (_) => SomaProvider(),
+      child: const SomaApp(),
     ),
   );
 }
 
-class KratosApp extends StatelessWidget {
-  const KratosApp({super.key});
+class SomaApp extends StatelessWidget {
+  const SomaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'KRATOS | Performance Ecosystem',
+      title: 'SOMA | Performance Ecosystem',
       debugShowCheckedModeBanner: false,
-      theme: KratosTheme.darkTheme,
+      theme: SomaTheme.darkTheme,
       home: const MainShell(),
     );
   }
 }
+
+// Backwards compatibility alias
+typedef KratosApp = SomaApp;
 
 class MainShell extends StatelessWidget {
   const MainShell({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<KratosProvider>();
+    final provider = context.watch<SomaProvider>();
 
     if (provider.isLoading) {
       return Scaffold(
-        backgroundColor: KratosColors.background,
+        backgroundColor: SomaColors.background,
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -63,13 +66,13 @@ class MainShell extends StatelessWidget {
                   errorBuilder: (context, error, stackTrace) => const Icon(
                     Icons.bolt,
                     size: 64,
-                    color: KratosColors.primaryContainer,
+                    color: SomaColors.primaryContainer,
                   ),
                 ),
               ),
               const SizedBox(height: 24),
               const CircularProgressIndicator(
-                color: KratosColors.primaryContainer,
+                color: SomaColors.primaryContainer,
               ),
             ],
           ),
@@ -100,7 +103,7 @@ class MainShell extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: KratosColors.background,
+      backgroundColor: SomaColors.background,
       body: Stack(
         children: [
           bodyWidget,
@@ -108,7 +111,7 @@ class MainShell extends StatelessWidget {
             bottom: 0,
             left: 0,
             right: 0,
-            child: KratosBottomNav(),
+            child: SomaBottomNav(),
           ),
         ],
       ),

@@ -1,6 +1,6 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
-import '../theme/kratos_theme.dart';
+import '../theme/soma_theme.dart';
 
 /// Custom painter for the concentric progress rings
 class ProgressRingsPainter extends CustomPainter {
@@ -27,7 +27,7 @@ class ProgressRingsPainter extends CustomPainter {
 
     // Draw outer progress (Electric Lime)
     final outerProgressPaint = Paint()
-      ..color = KratosColors.primaryContainer
+      ..color = SomaColors.primaryContainer
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
@@ -49,7 +49,7 @@ class ProgressRingsPainter extends CustomPainter {
 
     // Draw inner progress (White/on-surface)
     final innerProgressPaint = Paint()
-      ..color = KratosColors.onSurface
+      ..color = SomaColors.onSurface
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
@@ -111,7 +111,7 @@ class ProgressRings extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   height: 1.0,
                   letterSpacing: -0.48,
-                  color: KratosColors.onSurface,
+                  color: SomaColors.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
@@ -123,7 +123,7 @@ class ProgressRings extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   height: 1.0,
                   letterSpacing: 1.0,
-                  color: KratosColors.onSecondaryContainer,
+                  color: SomaColors.onSecondaryContainer,
                 ),
               ),
             ],

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:kratos_app/models/user_goals.dart';
-import 'package:kratos_app/models/exercise_set.dart';
-import 'package:kratos_app/services/calorie_calculator_service.dart';
+import 'package:soma_app/models/user_goals.dart';
+import 'package:soma_app/models/exercise_set.dart';
+import 'package:soma_app/services/calorie_calculator_service.dart';
 
 void main() {
   group('CalorieCalculatorService & Engine Tests', () {

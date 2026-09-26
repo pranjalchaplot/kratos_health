@@ -1,11 +1,11 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/exercise_set.dart';
-import '../providers/kratos_provider.dart';
+import '../providers/soma_provider.dart';
 import '../services/calorie_calculator_service.dart';
 import '../services/screen_time_service.dart';
-import '../theme/kratos_theme.dart';
+import '../theme/soma_theme.dart';
 import 'bmr_info_dialog.dart';
 
 class QuickLogModal extends StatefulWidget {
@@ -106,10 +106,10 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
     return Container(
       margin: EdgeInsets.only(top: 40, bottom: bottomPadding),
       decoration: const BoxDecoration(
-        color: KratosColors.surface,
+        color: SomaColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(
-          top: BorderSide(color: KratosColors.surfaceContainerHighest, width: 1),
+          top: BorderSide(color: SomaColors.surfaceContainerHighest, width: 1),
         ),
       ),
       child: Column(
@@ -121,7 +121,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: KratosColors.onSecondaryContainer.withValues(alpha: 0.4),
+              color: SomaColors.onSecondaryContainer.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -139,11 +139,11 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.36,
-                    color: KratosColors.onSurface,
+                    color: SomaColors.onSurface,
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.info_outline, color: KratosColors.primaryContainer),
+                  icon: const Icon(Icons.info_outline, color: SomaColors.primaryContainer),
                   onPressed: () => BmrInfoDialog.show(context),
                 ),
               ],
@@ -154,9 +154,9 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           TabBar(
             controller: _tabController,
             isScrollable: true,
-            indicatorColor: KratosColors.primaryContainer,
-            labelColor: KratosColors.primaryContainer,
-            unselectedLabelColor: KratosColors.onSecondaryContainer,
+            indicatorColor: SomaColors.primaryContainer,
+            labelColor: SomaColors.primaryContainer,
+            unselectedLabelColor: SomaColors.onSecondaryContainer,
             labelStyle: const TextStyle(
               fontFamily: 'JetBrains Mono',
               fontSize: 12,
@@ -171,7 +171,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               Tab(icon: Icon(Icons.phone_iphone_outlined, size: 18), text: 'DIGITAL'),
             ],
           ),
-          const Divider(color: KratosColors.surfaceContainerHighest, height: 1),
+          const Divider(color: SomaColors.surfaceContainerHighest, height: 1),
           // Tab Views
           Flexible(
             child: SingleChildScrollView(
@@ -199,7 +199,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
 
   // --- Live Calorie Burn Tab ---
   Widget _buildLiveBurnTab() {
-    final provider = context.watch<KratosProvider>();
+    final provider = context.watch<SomaProvider>();
     final goals = provider.userGoals;
     final log = provider.currentLog;
 
@@ -223,11 +223,11 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 fontFamily: 'JetBrains Mono',
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: KratosColors.onSecondaryContainer,
+                color: SomaColors.onSecondaryContainer,
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.info_outline, color: KratosColors.primaryContainer, size: 18),
+              icon: const Icon(Icons.info_outline, color: SomaColors.primaryContainer, size: 18),
               onPressed: () => BmrInfoDialog.show(context),
             ),
           ],
@@ -313,12 +313,12 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                KratosColors.primaryContainer.withValues(alpha: 0.2),
-                KratosColors.cardBackground,
+                SomaColors.primaryContainer.withValues(alpha: 0.2),
+                SomaColors.cardBackground,
               ],
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: KratosColors.primaryContainer.withValues(alpha: 0.5)),
+            border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.5)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -332,7 +332,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                       fontFamily: 'Geist',
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
-                      color: KratosColors.primaryContainer,
+                      color: SomaColors.primaryContainer,
                     ),
                   ),
                   Text(
@@ -340,12 +340,12 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                     style: const TextStyle(
                       fontFamily: 'Geist',
                       fontSize: 11,
-                      color: KratosColors.onSecondaryContainer,
+                      color: SomaColors.onSecondaryContainer,
                     ),
                   ),
                 ],
               ),
-              const Icon(Icons.local_fire_department, color: KratosColors.primaryContainer, size: 28),
+              const Icon(Icons.local_fire_department, color: SomaColors.primaryContainer, size: 28),
             ],
           ),
         ),
@@ -361,7 +361,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 fontFamily: 'JetBrains Mono',
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: KratosColors.onSecondaryContainer,
+                color: SomaColors.onSecondaryContainer,
               ),
             ),
             Text(
@@ -370,7 +370,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 fontFamily: 'JetBrains Mono',
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: KratosColors.primaryContainer,
+                color: SomaColors.primaryContainer,
               ),
             ),
           ],
@@ -381,8 +381,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           child: LinearProgressIndicator(
             value: (totalBurnPrecise / targetTdee).clamp(0.0, 1.0),
             minHeight: 8,
-            backgroundColor: KratosColors.surfaceContainerHighest,
-            color: KratosColors.primaryContainer,
+            backgroundColor: SomaColors.surfaceContainerHighest,
+            color: SomaColors.primaryContainer,
           ),
         ),
 
@@ -393,8 +393,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             Expanded(
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: KratosColors.secondary,
-                  side: const BorderSide(color: KratosColors.secondary),
+                  foregroundColor: SomaColors.secondary,
+                  side: const BorderSide(color: SomaColors.secondary),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -412,7 +412,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             Expanded(
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: KratosColors.primaryContainer,
+                  backgroundColor: SomaColors.primaryContainer,
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -445,7 +445,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             fontFamily: 'JetBrains Mono',
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: KratosColors.onSecondaryContainer,
+            color: SomaColors.onSecondaryContainer,
           ),
         ),
         const SizedBox(height: 12),
@@ -495,7 +495,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 style: IconButton.styleFrom(
                   foregroundColor: Colors.cyanAccent,
                   backgroundColor: Colors.cyanAccent.withValues(alpha: 0.15),
-                  disabledBackgroundColor: KratosColors.cardBackground,
+                  disabledBackgroundColor: SomaColors.cardBackground,
                 ),
               ),
               const SizedBox(width: 20),
@@ -516,7 +516,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                       fontFamily: 'JetBrains Mono',
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: KratosColors.onSecondaryContainer,
+                      color: SomaColors.onSecondaryContainer,
                     ),
                   ),
                 ],
@@ -544,7 +544,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             max: 16.0,
             divisions: 15,
             activeColor: Colors.cyanAccent,
-            inactiveColor: KratosColors.surfaceContainerHighest,
+            inactiveColor: SomaColors.surfaceContainerHighest,
             onChanged: (val) {
               setState(() {
                 _glassesCount = val.round();
@@ -568,7 +568,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               fontFamily: 'JetBrains Mono',
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: KratosColors.onSecondaryContainer,
+              color: SomaColors.onSecondaryContainer,
             ),
           ),
           const SizedBox(height: 8),
@@ -578,7 +578,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             max: 2.5,
             divisions: 24,
             activeColor: Colors.cyanAccent,
-            inactiveColor: KratosColors.surfaceContainerHighest,
+            inactiveColor: SomaColors.surfaceContainerHighest,
             onChanged: (val) {
               setState(() {
                 _waterAmount = val;
@@ -593,7 +593,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               ? '$_glassesCount ${_glassesCount == 1 ? 'glass' : 'glasses'} ($mlValue ml)'
               : '$mlValue ml (~${(_waterAmount / 0.25).toStringAsFixed(1)} glasses)';
 
-          await context.read<KratosProvider>().logWater(
+          await context.read<SomaProvider>().logWater(
                 _waterAmount,
                 customSubtitle: customSubtitle,
               );
@@ -609,12 +609,12 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
       children: [
         TextField(
           controller: _mealNameController,
-          style: const TextStyle(color: KratosColors.onSurface),
+          style: const TextStyle(color: SomaColors.onSurface),
           decoration: InputDecoration(
             labelText: 'Meal Name',
-            labelStyle: const TextStyle(color: KratosColors.onSecondaryContainer),
+            labelStyle: const TextStyle(color: SomaColors.onSecondaryContainer),
             filled: true,
-            fillColor: KratosColors.cardBackground,
+            fillColor: SomaColors.cardBackground,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
@@ -629,15 +629,15 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 child: ChoiceChip(
                   label: Text(cat),
                   selected: isSelected,
-                  selectedColor: KratosColors.primaryContainer,
-                  backgroundColor: KratosColors.cardBackground,
+                  selectedColor: SomaColors.primaryContainer,
+                  backgroundColor: SomaColors.cardBackground,
                   side: BorderSide(
-                    color: isSelected ? KratosColors.primaryContainer : KratosColors.cardBorder,
+                    color: isSelected ? SomaColors.primaryContainer : SomaColors.cardBorder,
                   ),
                   labelStyle: TextStyle(
                     fontFamily: 'JetBrains Mono',
                     fontSize: 12,
-                    color: isSelected ? KratosColors.background : KratosColors.onSurface,
+                    color: isSelected ? SomaColors.background : SomaColors.onSurface,
                     fontWeight: FontWeight.bold,
                   ),
                   onSelected: (_) => setState(() => _mealCategory = cat),
@@ -679,8 +679,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           ],
         ),
         const Spacer(),
-        _buildSubmitButton('SAVE MEAL LOG', KratosColors.primaryContainer, () async {
-          await context.read<KratosProvider>().logMeal(
+        _buildSubmitButton('SAVE MEAL LOG', SomaColors.primaryContainer, () async {
+          await context.read<SomaProvider>().logMeal(
                 name: _mealNameController.text.isEmpty ? 'Meal' : _mealNameController.text,
                 mealType: _mealCategory,
                 calories: _calories.toInt(),
@@ -708,16 +708,16 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 child: ChoiceChip(
                   label: Text(mode),
                   selected: isSelected,
-                  selectedColor: KratosColors.primaryContainer,
-                  backgroundColor: KratosColors.cardBackground,
+                  selectedColor: SomaColors.primaryContainer,
+                  backgroundColor: SomaColors.cardBackground,
                   side: BorderSide(
-                    color: isSelected ? KratosColors.primaryContainer : KratosColors.cardBorder,
+                    color: isSelected ? SomaColors.primaryContainer : SomaColors.cardBorder,
                   ),
                   labelStyle: TextStyle(
                     fontFamily: 'JetBrains Mono',
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.black : KratosColors.onSurface,
+                    color: isSelected ? Colors.black : SomaColors.onSurface,
                   ),
                   onSelected: (_) => setState(() => _activitySubMode = mode),
                 ),
@@ -740,7 +740,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
 
   // --- Steps Sub-Mode ---
   Widget _buildStepsSubMode() {
-    final goals = context.read<KratosProvider>().userGoals;
+    final goals = context.read<SomaProvider>().userGoals;
     final userWeight = goals.weightKg ?? 75.0;
     final userBmr = CalorieCalculatorService.calculateBmr(goals).toDouble();
     final calcCalories = CalorieCalculatorService.getStepCalories(
@@ -758,7 +758,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             fontFamily: 'Geist',
             fontSize: 40,
             fontWeight: FontWeight.w800,
-            color: KratosColors.secondary,
+            color: SomaColors.secondary,
           ),
         ),
         Text(
@@ -767,7 +767,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             fontFamily: 'JetBrains Mono',
             fontSize: 13,
             fontWeight: FontWeight.bold,
-            color: KratosColors.primaryContainer,
+            color: SomaColors.primaryContainer,
           ),
         ),
         const SizedBox(height: 12),
@@ -776,13 +776,13 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           min: 500,
           max: 25000,
           divisions: 49,
-          activeColor: KratosColors.secondary,
-          inactiveColor: KratosColors.surfaceContainerHighest,
+          activeColor: SomaColors.secondary,
+          inactiveColor: SomaColors.surfaceContainerHighest,
           onChanged: (val) => setState(() => _stepsCount = val),
         ),
         const Spacer(),
-        _buildSubmitButton('LOG STEPS ENTRY', KratosColors.secondary, () async {
-          await context.read<KratosProvider>().logSteps(
+        _buildSubmitButton('LOG STEPS ENTRY', SomaColors.secondary, () async {
+          await context.read<SomaProvider>().logSteps(
                 steps: _stepsCount.toInt(),
                 calories: calcCalories,
               );
@@ -794,7 +794,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
 
   // --- Cardio Sub-Mode ---
   Widget _buildCardioSubMode() {
-    final goals = context.read<KratosProvider>().userGoals;
+    final goals = context.read<SomaProvider>().userGoals;
     final userWeight = goals.weightKg ?? 75.0;
     final userBmr = CalorieCalculatorService.calculateBmr(goals).toDouble();
 
@@ -819,13 +819,13 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         // Cardio Type selector
         DropdownButtonFormField<String>(
           initialValue: _cardioType,
-          dropdownColor: KratosColors.cardBackground,
-          style: const TextStyle(color: KratosColors.onSurface, fontFamily: 'Geist', fontWeight: FontWeight.bold),
+          dropdownColor: SomaColors.cardBackground,
+          style: const TextStyle(color: SomaColors.onSurface, fontFamily: 'Geist', fontWeight: FontWeight.bold),
           decoration: InputDecoration(
             labelText: 'Cardio Type',
-            labelStyle: const TextStyle(color: KratosColors.onSecondaryContainer),
+            labelStyle: const TextStyle(color: SomaColors.onSecondaryContainer),
             filled: true,
-            fillColor: KratosColors.cardBackground,
+            fillColor: SomaColors.cardBackground,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
           items: ['Running', 'Cycling', 'Swimming', 'Rowing', 'HIIT', 'Walking', 'Stair Climber', 'Jump Rope'].map((type) {
@@ -858,10 +858,10 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                   child: ChoiceChip(
                     label: Text(intense.toUpperCase(), style: const TextStyle(fontSize: 10)),
                     selected: isSelected,
-                    selectedColor: KratosColors.secondary,
-                    backgroundColor: KratosColors.cardBackground,
+                    selectedColor: SomaColors.secondary,
+                    backgroundColor: SomaColors.cardBackground,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.black : KratosColors.onSurface,
+                      color: isSelected ? Colors.black : SomaColors.onSurface,
                       fontWeight: FontWeight.bold,
                     ),
                     onSelected: (_) => setState(() => _cardioIntensity = intense),
@@ -893,7 +893,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: KratosColors.primaryContainer.withValues(alpha: 0.15),
+            color: SomaColors.primaryContainer.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -902,14 +902,14 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               fontFamily: 'JetBrains Mono',
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: KratosColors.primaryContainer,
+              color: SomaColors.primaryContainer,
             ),
           ),
         ),
 
         const Spacer(),
-        _buildSubmitButton('LOG CARDIO WORKOUT', KratosColors.secondary, () async {
-          await context.read<KratosProvider>().logCardio(
+        _buildSubmitButton('LOG CARDIO WORKOUT', SomaColors.secondary, () async {
+          await context.read<SomaProvider>().logCardio(
                 cardioType: _cardioType,
                 intensity: isSpeedBased ? '${effectiveSpeed.toStringAsFixed(1)} mph' : _cardioIntensity,
                 durationMinutes: _cardioDurationMins.toInt(),
@@ -924,7 +924,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
 
   // --- Exercise Strength Sub-Mode (Workout Sets Manager) ---
   Widget _buildExerciseSubMode() {
-    final goals = context.read<KratosProvider>().userGoals;
+    final goals = context.read<SomaProvider>().userGoals;
     final userWeight = goals.weightKg ?? 75.0;
     final userBmr = CalorieCalculatorService.calculateBmr(goals).toDouble();
 
@@ -962,12 +962,12 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             Expanded(
               child: TextField(
                 controller: _exerciseNameController,
-                style: const TextStyle(color: KratosColors.onSurface, fontWeight: FontWeight.bold),
+                style: const TextStyle(color: SomaColors.onSurface, fontWeight: FontWeight.bold),
                 decoration: InputDecoration(
                   labelText: 'Exercise / Workout Name',
-                  labelStyle: const TextStyle(color: KratosColors.onSecondaryContainer),
+                  labelStyle: const TextStyle(color: SomaColors.onSecondaryContainer),
                   filled: true,
-                  fillColor: KratosColors.cardBackground,
+                  fillColor: SomaColors.cardBackground,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
@@ -981,7 +981,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
               ),
               selected: _includeStrengthRest,
-              selectedColor: KratosColors.primaryContainer,
+              selectedColor: SomaColors.primaryContainer,
               onSelected: (val) => setState(() => _includeStrengthRest = val),
             ),
           ],
@@ -999,10 +999,10 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 child: ChoiceChip(
                   label: Text(name, style: const TextStyle(fontSize: 10)),
                   selected: _exerciseNameController.text == name,
-                  selectedColor: KratosColors.primaryContainer,
-                  backgroundColor: KratosColors.cardBackground,
+                  selectedColor: SomaColors.primaryContainer,
+                  backgroundColor: SomaColors.cardBackground,
                   labelStyle: TextStyle(
-                    color: _exerciseNameController.text == name ? Colors.black : KratosColors.onSurface,
+                    color: _exerciseNameController.text == name ? Colors.black : SomaColors.onSurface,
                   ),
                   onSelected: (_) {
                     setState(() {
@@ -1020,8 +1020,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('WORKOUT SETS', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: KratosColors.onSecondaryContainer)),
-            Text('REPS × WEIGHT (KG)', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: KratosColors.onSecondaryContainer)),
+            Text('WORKOUT SETS', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
+            Text('REPS × WEIGHT (KG)', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
           ],
         ),
         const SizedBox(height: 6),
@@ -1036,9 +1036,9 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 margin: const EdgeInsets.only(bottom: 6),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: KratosColors.cardBackground,
+                  color: SomaColors.cardBackground,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: KratosColors.cardBorder),
+                  border: Border.all(color: SomaColors.cardBorder),
                 ),
                 child: Row(
                   children: [
@@ -1048,7 +1048,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                         fontFamily: 'JetBrains Mono',
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: KratosColors.primaryContainer,
+                        color: SomaColors.primaryContainer,
                       ),
                     ),
                     const Spacer(),
@@ -1056,7 +1056,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                     // Reps Stepper
                     Text('${setItem.reps} r', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, size: 18, color: KratosColors.onSecondaryContainer),
+                      icon: const Icon(Icons.remove_circle_outline, size: 18, color: SomaColors.onSecondaryContainer),
                       onPressed: setItem.reps > 1
                           ? () {
                               setState(() => setItem.reps--);
@@ -1064,7 +1064,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                           : null,
                     ),
                     IconButton(
-                      icon: const Icon(Icons.add_circle_outline, size: 18, color: KratosColors.primaryContainer),
+                      icon: const Icon(Icons.add_circle_outline, size: 18, color: SomaColors.primaryContainer),
                       onPressed: () {
                         setState(() => setItem.reps++);
                       },
@@ -1074,7 +1074,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                     // Weight Stepper
                     Text('${setItem.weightKg.toInt()} kg', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, size: 18, color: KratosColors.onSecondaryContainer),
+                      icon: const Icon(Icons.remove_circle_outline, size: 18, color: SomaColors.onSecondaryContainer),
                       onPressed: setItem.weightKg >= 2.5
                           ? () {
                               setState(() => setItem.weightKg -= 2.5);
@@ -1082,7 +1082,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                           : null,
                     ),
                     IconButton(
-                      icon: const Icon(Icons.add_circle_outline, size: 18, color: KratosColors.primaryContainer),
+                      icon: const Icon(Icons.add_circle_outline, size: 18, color: SomaColors.primaryContainer),
                       onPressed: () {
                         setState(() => setItem.weightKg += 2.5);
                       },
@@ -1119,8 +1119,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                   ));
                 });
               },
-              icon: const Icon(Icons.add, size: 16, color: KratosColors.primaryContainer),
-              label: const Text('ADD SET', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: KratosColors.primaryContainer)),
+              icon: const Icon(Icons.add, size: 16, color: SomaColors.primaryContainer),
+              label: const Text('ADD SET', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.primaryContainer)),
             ),
             Text(
               'Burn: $calcCalories kcal',
@@ -1128,15 +1128,15 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 fontFamily: 'JetBrains Mono',
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: KratosColors.primaryContainer,
+                color: SomaColors.primaryContainer,
               ),
             ),
           ],
         ),
 
         const SizedBox(height: 6),
-        _buildSubmitButton('LOG WORKOUT ENTRY', KratosColors.primaryContainer, () async {
-          await context.read<KratosProvider>().logExercise(
+        _buildSubmitButton('LOG WORKOUT ENTRY', SomaColors.primaryContainer, () async {
+          await context.read<SomaProvider>().logExercise(
                 exerciseName: _exerciseNameController.text.isEmpty ? 'Exercise' : _exerciseNameController.text,
                 sets: _exerciseSets,
                 durationMinutes: _exerciseDurationMins.toInt(),
@@ -1158,7 +1158,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             fontFamily: 'JetBrains Mono',
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: KratosColors.onSecondaryContainer,
+            color: SomaColors.onSecondaryContainer,
           ),
         ),
         const SizedBox(height: 24),
@@ -1177,12 +1177,12 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           max: 14.0,
           divisions: 26,
           activeColor: Colors.purpleAccent,
-          inactiveColor: KratosColors.surfaceContainerHighest,
+          inactiveColor: SomaColors.surfaceContainerHighest,
           onChanged: (v) => setState(() => _sleepHours = v),
         ),
         const Spacer(),
         _buildSubmitButton('RECORD SLEEP', Colors.purpleAccent, () async {
-          await context.read<KratosProvider>().logSleep(_sleepHours);
+          await context.read<SomaProvider>().logSleep(_sleepHours);
           if (mounted) Navigator.pop(context);
         }),
       ],
@@ -1199,7 +1199,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             fontFamily: 'JetBrains Mono',
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: KratosColors.onSecondaryContainer,
+            color: SomaColors.onSecondaryContainer,
           ),
         ),
         const SizedBox(height: 12),
@@ -1246,7 +1246,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         }),
         const Spacer(),
         _buildSubmitButton('UPDATE SCREEN TIME', Colors.amberAccent, () async {
-          await context.read<KratosProvider>().logDigital(_digitalHours.toInt(), _digitalMinutes.toInt());
+          await context.read<SomaProvider>().logDigital(_digitalHours.toInt(), _digitalMinutes.toInt());
           if (mounted) Navigator.pop(context);
         }),
       ],
@@ -1266,9 +1266,9 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.cyanAccent.withValues(alpha: 0.15) : KratosColors.cardBackground,
+          color: isSelected ? Colors.cyanAccent.withValues(alpha: 0.15) : SomaColors.cardBackground,
           border: Border.all(
-            color: isSelected ? Colors.cyanAccent : KratosColors.cardBorder,
+            color: isSelected ? Colors.cyanAccent : SomaColors.cardBorder,
             width: isSelected ? 1.5 : 1.0,
           ),
           borderRadius: BorderRadius.circular(20),
@@ -1279,7 +1279,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             Icon(
               icon,
               size: 16,
-              color: isSelected ? Colors.cyanAccent : KratosColors.onSecondaryContainer,
+              color: isSelected ? Colors.cyanAccent : SomaColors.onSecondaryContainer,
             ),
             const SizedBox(width: 6),
             Text(
@@ -1288,7 +1288,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 fontFamily: 'JetBrains Mono',
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? Colors.cyanAccent : KratosColors.onSecondaryContainer,
+                color: isSelected ? Colors.cyanAccent : SomaColors.onSecondaryContainer,
               ),
             ),
           ],
@@ -1304,16 +1304,16 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(color: KratosColors.onSecondaryContainer, fontSize: 11, fontWeight: FontWeight.bold)),
-            Text(valueDisplay, style: const TextStyle(color: KratosColors.onSurface, fontSize: 12, fontWeight: FontWeight.bold)),
+            Text(label, style: const TextStyle(color: SomaColors.onSecondaryContainer, fontSize: 11, fontWeight: FontWeight.bold)),
+            Text(valueDisplay, style: const TextStyle(color: SomaColors.onSurface, fontSize: 12, fontWeight: FontWeight.bold)),
           ],
         ),
         Slider(
           value: value.clamp(min, max),
           min: min,
           max: max,
-          activeColor: KratosColors.primaryContainer,
-          inactiveColor: KratosColors.surfaceContainerHighest,
+          activeColor: SomaColors.primaryContainer,
+          inactiveColor: SomaColors.surfaceContainerHighest,
           onChanged: onChanged,
         ),
       ],

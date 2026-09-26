@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/kratos_provider.dart';
+import '../providers/soma_provider.dart';
 import '../services/calorie_calculator_service.dart';
-import '../theme/kratos_theme.dart';
+import '../theme/soma_theme.dart';
 
 class BmrInfoDialog extends StatelessWidget {
   const BmrInfoDialog({super.key});
@@ -16,7 +16,7 @@ class BmrInfoDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<KratosProvider>();
+    final provider = context.watch<SomaProvider>();
     final goals = provider.userGoals;
 
     final bmr = CalorieCalculatorService.calculateBmr(goals);
@@ -46,7 +46,7 @@ class BmrInfoDialog extends StatelessWidget {
     }
 
     return Dialog(
-      backgroundColor: KratosColors.surface,
+      backgroundColor: SomaColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -61,7 +61,7 @@ class BmrInfoDialog extends StatelessWidget {
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.info_outline, color: KratosColors.primaryContainer, size: 24),
+                      Icon(Icons.info_outline, color: SomaColors.primaryContainer, size: 24),
                       SizedBox(width: 10),
                       Text(
                         'METRIC INFO & BMR',
@@ -69,18 +69,18 @@ class BmrInfoDialog extends StatelessWidget {
                           fontFamily: 'Geist',
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: KratosColors.onSurface,
+                          color: SomaColors.onSurface,
                         ),
                       ),
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: KratosColors.onSecondaryContainer),
+                    icon: const Icon(Icons.close, color: SomaColors.onSecondaryContainer),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-              const Divider(color: KratosColors.cardBorder, height: 24),
+              const Divider(color: SomaColors.cardBorder, height: 24),
 
               // BMR Banner
               Container(
@@ -88,12 +88,12 @@ class BmrInfoDialog extends StatelessWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      KratosColors.primaryContainer.withValues(alpha: 0.2),
-                      KratosColors.cardBackground,
+                      SomaColors.primaryContainer.withValues(alpha: 0.2),
+                      SomaColors.cardBackground,
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: KratosColors.primaryContainer.withValues(alpha: 0.5)),
+                  border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.5)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,7 +104,7 @@ class BmrInfoDialog extends StatelessWidget {
                         fontFamily: 'Geist',
                         fontSize: 28,
                         fontWeight: FontWeight.w800,
-                        color: KratosColors.primaryContainer,
+                        color: SomaColors.primaryContainer,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -114,14 +114,14 @@ class BmrInfoDialog extends StatelessWidget {
                         fontFamily: 'JetBrains Mono',
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: KratosColors.onSurface,
+                        color: SomaColors.onSurface,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: KratosColors.primaryContainer.withValues(alpha: 0.15),
+                        color: SomaColors.primaryContainer.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -130,7 +130,7 @@ class BmrInfoDialog extends StatelessWidget {
                           fontFamily: 'JetBrains Mono',
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: KratosColors.primaryContainer,
+                          color: SomaColors.primaryContainer,
                         ),
                       ),
                     ),
@@ -146,7 +146,7 @@ class BmrInfoDialog extends StatelessWidget {
                   fontFamily: 'JetBrains Mono',
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: KratosColors.onSecondaryContainer,
+                  color: SomaColors.onSecondaryContainer,
                   letterSpacing: 1.0,
                 ),
               ),
@@ -157,7 +157,7 @@ class BmrInfoDialog extends StatelessWidget {
                   fontFamily: 'Geist',
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: KratosColors.onSurface,
+                  color: SomaColors.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
@@ -166,7 +166,7 @@ class BmrInfoDialog extends StatelessWidget {
                 style: const TextStyle(
                   fontFamily: 'Geist',
                   fontSize: 13,
-                  color: KratosColors.onSecondaryContainer,
+                  color: SomaColors.onSecondaryContainer,
                   height: 1.3,
                 ),
               ),
@@ -179,7 +179,7 @@ class BmrInfoDialog extends StatelessWidget {
                   fontFamily: 'JetBrains Mono',
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: KratosColors.onSecondaryContainer,
+                  color: SomaColors.onSecondaryContainer,
                   letterSpacing: 1.0,
                 ),
               ),
@@ -202,9 +202,9 @@ class BmrInfoDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: KratosColors.cardBackground,
+                  color: SomaColors.cardBackground,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: KratosColors.cardBorder),
+                  border: Border.all(color: SomaColors.cardBorder),
                 ),
                 child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +215,7 @@ class BmrInfoDialog extends StatelessWidget {
                         fontFamily: 'Geist',
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: KratosColors.onSurface,
+                        color: SomaColors.onSurface,
                       ),
                     ),
                     SizedBox(height: 4),
@@ -226,7 +226,7 @@ class BmrInfoDialog extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: 'Geist',
                         fontSize: 12,
-                        color: KratosColors.onSecondaryContainer,
+                        color: SomaColors.onSecondaryContainer,
                         height: 1.4,
                       ),
                     ),
@@ -244,9 +244,9 @@ class BmrInfoDialog extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: KratosColors.cardBackground,
+        color: SomaColors.cardBackground,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: KratosColors.cardBorder),
+        border: Border.all(color: SomaColors.cardBorder),
       ),
       child: Text(
         '$label: $value',
@@ -254,7 +254,7 @@ class BmrInfoDialog extends StatelessWidget {
           fontFamily: 'JetBrains Mono',
           fontSize: 12,
           fontWeight: FontWeight.w700,
-          color: KratosColors.onSurface,
+          color: SomaColors.onSurface,
         ),
       ),
     );

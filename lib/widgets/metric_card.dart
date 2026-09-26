@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import '../theme/kratos_theme.dart';
+﻿import 'package:flutter/material.dart';
+import '../theme/soma_theme.dart';
 
 /// Metric card used in the 2x2 grid (Steps, Water, Sleep, Digital)
 class MetricCard extends StatelessWidget {
@@ -28,8 +28,8 @@ class MetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: KratosColors.cardBackground,
-        border: Border.all(color: KratosColors.cardBorder, width: 1),
+        color: SomaColors.cardBackground,
+        border: Border.all(color: SomaColors.cardBorder, width: 1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: AspectRatio(
@@ -63,13 +63,13 @@ class MetricCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       height: 1.0,
                       letterSpacing: 1.0,
-                      color: KratosColors.primaryContainer,
+                      color: SomaColors.primaryContainer,
                     ),
                   ),
                   const SizedBox(width: 4),
                   Icon(
                     icon,
-                    color: KratosColors.primaryContainer,
+                    color: SomaColors.primaryContainer,
                     size: 20,
                   ),
                 ],
@@ -85,7 +85,7 @@ class MetricCard extends StatelessWidget {
                 height: 4,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: KratosColors.surfaceContainerHigh,
+                  color: SomaColors.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(9999),
                 ),
                 child: FractionallySizedBox(
@@ -93,7 +93,7 @@ class MetricCard extends StatelessWidget {
                   widthFactor: progress.clamp(0.0, 1.0),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: KratosColors.primaryContainer,
+                      color: SomaColors.primaryContainer,
                       borderRadius: BorderRadius.circular(9999),
                     ),
                   ),
@@ -122,7 +122,7 @@ class MetricCard extends StatelessWidget {
               fontWeight: FontWeight.w800,
               letterSpacing: -1.44,
               fontStyle: FontStyle.italic,
-              color: KratosColors.onSurface,
+              color: SomaColors.onSurface,
             ),
           ),
           Text(
@@ -132,7 +132,7 @@ class MetricCard extends StatelessWidget {
               fontSize: 18,
               fontWeight: FontWeight.w800,
               fontStyle: FontStyle.italic,
-              color: KratosColors.onSurface,
+              color: SomaColors.onSurface,
             ),
           ),
           const SizedBox(width: 2),
@@ -144,7 +144,7 @@ class MetricCard extends StatelessWidget {
               fontWeight: FontWeight.w800,
               letterSpacing: -1.44,
               fontStyle: FontStyle.italic,
-              color: KratosColors.onSurface,
+              color: SomaColors.onSurface,
             ),
           ),
           Text(
@@ -154,7 +154,7 @@ class MetricCard extends StatelessWidget {
               fontSize: 18,
               fontWeight: FontWeight.w800,
               fontStyle: FontStyle.italic,
-              color: KratosColors.onSurface,
+              color: SomaColors.onSurface,
             ),
           ),
         ],
@@ -174,7 +174,7 @@ class MetricCard extends StatelessWidget {
             fontWeight: FontWeight.w800,
             letterSpacing: -1.44,
             fontStyle: FontStyle.italic,
-            color: KratosColors.onSurface,
+            color: SomaColors.onSurface,
           ),
         ),
         if (unit != null)
@@ -185,7 +185,7 @@ class MetricCard extends StatelessWidget {
               fontSize: 18,
               fontWeight: FontWeight.w800,
               fontStyle: FontStyle.italic,
-              color: KratosColors.onSurface,
+              color: SomaColors.onSurface,
             ),
           ),
       ],
