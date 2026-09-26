@@ -7,6 +7,7 @@ import '../models/user_goals.dart';
 import '../models/exercise_set.dart';
 import '../services/screen_time_service.dart';
 import '../services/step_tracker_service.dart';
+import '../services/sleep_tracker_service.dart';
 
 class KratosProvider extends ChangeNotifier {
   DateTime _selectedDate = DateTime.now();
@@ -16,6 +17,7 @@ class KratosProvider extends ChangeNotifier {
   bool _isLoading = true;
   bool _isOnboardingCompleted = false;
   bool _isStepPermissionGranted = false;
+  bool _isSleepTrackingActive = false;
 
   DateTime get selectedDate => _selectedDate;
   int get currentTabIndex => _currentTabIndex;
@@ -23,6 +25,7 @@ class KratosProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isOnboardingCompleted => _isOnboardingCompleted;
   bool get isStepPermissionGranted => _isStepPermissionGranted;
+  bool get isSleepTrackingActive => _isSleepTrackingActive;
 
   String _formatKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -95,6 +98,9 @@ class KratosProvider extends ChangeNotifier {
 
       // Sync & start step tracker listening if permission already granted
       await syncStepTrackingFromDevice();
+
+      // Sync & start sleep tracking from primary Android Sleep API
+      await syncSleepTrackingFromDevice();
     } catch (e) {
       debugPrint('Error loading saved data: $e');
     } finally {
@@ -126,9 +132,10 @@ class KratosProvider extends ChangeNotifier {
     notifyListeners();
     await saveToPrefs();
     
-    // Automatically fetch Digital Wellbeing & Step Tracking after onboarding
+    // Automatically fetch Digital Wellbeing, Steps & Sleep after onboarding
     await syncScreenTimeFromDevice();
     await syncStepTrackingFromDevice();
+    await syncSleepTrackingFromDevice();
   }
 
   Future<void> resetOnboarding() async {
@@ -387,6 +394,57 @@ class KratosProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Step permission request error: $e');
       return false;
+    }
+  }
+
+  Future<bool> syncSleepTrackingFromDevice() async {
+    try {
+      final granted = await SleepTrackerService.isPermissionGranted();
+      if (granted) {
+        _isSleepTrackingActive = await SleepTrackerService.startTracking();
+        final sleepRecord = await SleepTrackerService.getTodaySleep();
+        if (sleepRecord != null && sleepRecord.durationHours > 0) {
+          final todayKey = _formatKey(DateTime.now());
+          if (_logsMap.containsKey(todayKey)) {
+            final todayLog = _logsMap[todayKey]!;
+            if (todayLog.sleep == 0 || todayLog.additionalSleep == 0) {
+              todayLog.additionalSleep = sleepRecord.durationHours;
+              await saveToPrefs();
+              notifyListeners();
+            }
+          }
+          return true;
+        }
+      }
+    } catch (e) {
+      debugPrint('Sleep tracking sync failed: $e');
+    }
+    return false;
+  }
+
+  Future<bool> requestSleepPermission() async {
+    try {
+      final granted = await SleepTrackerService.requestPermission();
+      if (granted) {
+        await syncSleepTrackingFromDevice();
+      }
+      notifyListeners();
+      return granted;
+    } catch (e) {
+      debugPrint('Sleep permission request error: $e');
+      return false;
+    }
+  }
+
+  Future<void> simulateSleepForTesting([double hours = 7.5]) async {
+    final record = await SleepTrackerService.simulateSleep(hours: hours);
+    if (record != null) {
+      final todayKey = _formatKey(DateTime.now());
+      if (_logsMap.containsKey(todayKey)) {
+        _logsMap[todayKey]!.additionalSleep = record.durationHours;
+        await saveToPrefs();
+        notifyListeners();
+      }
     }
   }
 
