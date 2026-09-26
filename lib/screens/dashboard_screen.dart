@@ -114,17 +114,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          // KRATOS title
-          const Text(
-            'KRATOS',
-            style: TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
-              letterSpacing: -0.48,
-              color: KratosColors.onBackground,
-            ),
+          // KRATOS title with Logo
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.asset(
+                  'asset/icon_data/playstore.png',
+                  width: 24,
+                  height: 24,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'KRATOS',
+                style: TextStyle(
+                  fontFamily: 'Geist',
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                  letterSpacing: -0.48,
+                  color: KratosColors.onBackground,
+                ),
+              ),
+            ],
           ),
           // Streak
           Text(

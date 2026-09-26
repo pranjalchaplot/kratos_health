@@ -447,6 +447,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 36),
+            Center(
+              child: Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(
+                      'asset/icon_data/playstore.png',
+                      width: 36,
+                      height: 36,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'KRATOS PERFORMANCE ECOSYSTEM',
+                    style: TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: KratosColors.primaryContainer,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Version 0.1.0 • Build 1',
+                    style: TextStyle(
+                      fontFamily: 'JetBrains Mono',
+                      fontSize: 11,
+                      color: KratosColors.onSecondaryContainer,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

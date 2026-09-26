@@ -276,15 +276,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
                 children: [
-                  Text(
-                    'KRATOS',
-                    style: TextStyle(
-                      fontFamily: 'Geist',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2.0,
-                      color: KratosColors.primaryContainer,
-                    ),
+                  Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.asset(
+                          'asset/icon_data/playstore.png',
+                          width: 24,
+                          height: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'KRATOS',
+                        style: TextStyle(
+                          fontFamily: 'Geist',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.0,
+                          color: KratosColors.primaryContainer,
+                        ),
+                      ),
+                    ],
                   ),
                   const Spacer(),
                   Text(

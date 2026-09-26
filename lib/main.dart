@@ -48,11 +48,30 @@ class MainShell extends StatelessWidget {
     final provider = context.watch<KratosProvider>();
 
     if (provider.isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: KratosColors.background,
         body: Center(
-          child: CircularProgressIndicator(
-            color: KratosColors.primaryContainer,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset(
+                  'asset/icon_data/playstore.png',
+                  width: 72,
+                  height: 72,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.bolt,
+                    size: 64,
+                    color: KratosColors.primaryContainer,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              const CircularProgressIndicator(
+                color: KratosColors.primaryContainer,
+              ),
+            ],
           ),
         ),
       );
