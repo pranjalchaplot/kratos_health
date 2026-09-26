@@ -13,6 +13,10 @@ class UserGoals {
   double? weightKg;
   double? heightCm;
   int? age;
+  String? gender; // 'male', 'female', 'neutral'
+  String bmrFormula; // 'mifflin', 'harris', 'katch', 'cunningham', 'custom'
+  int? customBmr;
+  double? bodyFatPercentage;
   String? primaryFocus;
   String? userName;
 
@@ -25,9 +29,13 @@ class UserGoals {
     this.waterGoal = 3.5,
     this.sleepGoal = 8.5,
     this.digitalGoalHours = 10,
-    this.weightKg,
-    this.heightCm,
-    this.age,
+    this.weightKg = 75.0,
+    this.heightCm = 178.0,
+    this.age = 25,
+    this.gender = 'male',
+    this.bmrFormula = 'mifflin',
+    this.customBmr,
+    this.bodyFatPercentage = 15.0,
     this.primaryFocus,
     this.userName,
   });
@@ -45,6 +53,10 @@ class UserGoals {
       'weightKg': weightKg,
       'heightCm': heightCm,
       'age': age,
+      'gender': gender,
+      'bmrFormula': bmrFormula,
+      'customBmr': customBmr,
+      'bodyFatPercentage': bodyFatPercentage,
       'primaryFocus': primaryFocus,
       'userName': userName,
     };
@@ -60,9 +72,13 @@ class UserGoals {
       waterGoal: (json['waterGoal'] as num?)?.toDouble() ?? 3.5,
       sleepGoal: (json['sleepGoal'] as num?)?.toDouble() ?? 8.5,
       digitalGoalHours: (json['digitalGoalHours'] as num?)?.toInt() ?? 10,
-      weightKg: (json['weightKg'] as num?)?.toDouble(),
-      heightCm: (json['heightCm'] as num?)?.toDouble(),
-      age: (json['age'] as num?)?.toInt(),
+      weightKg: (json['weightKg'] as num?)?.toDouble() ?? 75.0,
+      heightCm: (json['heightCm'] as num?)?.toDouble() ?? 178.0,
+      age: (json['age'] as num?)?.toInt() ?? 25,
+      gender: json['gender'] as String? ?? 'male',
+      bmrFormula: json['bmrFormula'] as String? ?? 'mifflin',
+      customBmr: (json['customBmr'] as num?)?.toInt(),
+      bodyFatPercentage: (json['bodyFatPercentage'] as num?)?.toDouble() ?? 15.0,
       primaryFocus: json['primaryFocus'] as String?,
       userName: json['userName'] as String?,
     );

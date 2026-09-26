@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/daily_log.dart';
 import '../models/log_entry.dart';
 import '../models/user_goals.dart';
+import '../models/exercise_set.dart';
 import '../services/screen_time_service.dart';
 import '../services/step_tracker_service.dart';
 
@@ -223,6 +224,25 @@ class KratosProvider extends ChangeNotifier {
     await saveToPrefs();
   }
 
+  Future<void> logSteps({
+    required int steps,
+    required int calories,
+  }) async {
+    final entry = LogEntry(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      timestamp: DateTime.now(),
+      type: LogType.activity,
+      title: 'Daily Steps',
+      subtitle: '$steps steps',
+      calories: calories,
+      count: steps,
+      activityCategory: 'steps',
+    );
+    currentLog.entries.insert(0, entry);
+    notifyListeners();
+    await saveToPrefs();
+  }
+
   Future<void> logActivity({
     required String title,
     required int steps,
@@ -236,6 +256,60 @@ class KratosProvider extends ChangeNotifier {
       subtitle: '$steps steps',
       calories: calories,
       count: steps,
+      activityCategory: 'steps',
+    );
+    currentLog.entries.insert(0, entry);
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  Future<void> logCardio({
+    required String cardioType,
+    required String intensity,
+    required int durationMinutes,
+    double? distanceKm,
+    required int calories,
+  }) async {
+    final distStr = distanceKm != null && distanceKm > 0 ? ' • ${distanceKm.toStringAsFixed(1)} km' : '';
+    final entry = LogEntry(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      timestamp: DateTime.now(),
+      type: LogType.activity,
+      title: '$cardioType Cardio',
+      subtitle: '$durationMinutes mins ($intensity)$distStr',
+      calories: calories,
+      activityCategory: 'cardio',
+      cardioType: cardioType,
+      intensity: intensity,
+      durationMinutes: durationMinutes,
+      distanceKm: distanceKm,
+    );
+    currentLog.entries.insert(0, entry);
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  Future<void> logExercise({
+    required String exerciseName,
+    required List<ExerciseSet> sets,
+    required int durationMinutes,
+    required int calories,
+  }) async {
+    final totalReps = sets.fold(0, (sum, s) => sum + s.reps);
+    final maxWeight = sets.fold(0.0, (max, s) => s.weightKg > max ? s.weightKg : max);
+    final maxWeightStr = maxWeight % 1 == 0 ? maxWeight.toInt().toString() : maxWeight.toStringAsFixed(1);
+    
+    final entry = LogEntry(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      timestamp: DateTime.now(),
+      type: LogType.activity,
+      title: exerciseName,
+      subtitle: '${sets.length} sets • $totalReps total reps (Max: ${maxWeightStr}kg)',
+      calories: calories,
+      activityCategory: 'exercise',
+      exerciseName: exerciseName,
+      sets: sets,
+      durationMinutes: durationMinutes,
     );
     currentLog.entries.insert(0, entry);
     notifyListeners();

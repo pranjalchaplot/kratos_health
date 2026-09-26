@@ -49,15 +49,17 @@ class DailyLog {
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
   // Dynamic getters calculated from entries + additions
-  int get caloriesBurned {
+  int get activeCaloriesBurned {
     int total = additionalCalories;
     for (var entry in entries) {
-      if (entry.type == LogType.meal || entry.type == LogType.activity) {
+      if (entry.type == LogType.activity) {
         total += entry.calories;
       }
     }
     return total;
   }
+
+  int get caloriesBurned => activeCaloriesBurned;
 
   int get protein {
     int total = 0;

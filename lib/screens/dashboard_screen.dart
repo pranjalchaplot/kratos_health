@@ -9,6 +9,7 @@ import '../widgets/progress_rings.dart';
 import '../widgets/macro_progress_bar.dart';
 import '../widgets/metric_card.dart';
 import '../widgets/quick_log_modal.dart';
+import '../widgets/bmr_info_dialog.dart';
 
 /// Main Dashboard Screen - KRATOS Fitness & Nutrition Ecosystem
 class DashboardScreen extends StatelessWidget {
@@ -18,7 +19,7 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<KratosProvider>();
     final currentLog = provider.currentLog;
-    final data = DashboardData.fromDailyLog(currentLog, provider.streak, provider.activeDayIndex);
+    final data = DashboardData.fromDailyLog(currentLog, provider.userGoals, provider.streak, provider.activeDayIndex);
 
     return Scaffold(
       backgroundColor: KratosColors.background,
@@ -128,7 +129,7 @@ class DashboardScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GestureDetector(
-        onTap: () => QuickLogModal.show(context, initialTabIndex: 1), // Meal tab
+        onTap: () => QuickLogModal.show(context, initialTabIndex: 2), // Live Calorie Burn tab
         child: Container(
           decoration: BoxDecoration(
             color: KratosColors.cardBackground,
@@ -148,10 +149,10 @@ class DashboardScreen extends StatelessWidget {
                           calorieProgress: data.caloriesProgress,
                           activityProgress: data.caloriesProgress,
                           centerValue: formatCurrency.format(data.caloriesBurned),
-                          centerLabel: 'KCAL BURNED',
+                          centerLabel: 'ACTIVE KCAL',
                         ),
                         const SizedBox(width: 24),
-                        Expanded(child: _buildMacrosSection(data)),
+                        Expanded(child: _buildMacrosSection(context, data)),
                       ],
                     );
                   }
@@ -161,10 +162,10 @@ class DashboardScreen extends StatelessWidget {
                         calorieProgress: data.caloriesProgress,
                         activityProgress: data.caloriesProgress,
                         centerValue: formatCurrency.format(data.caloriesBurned),
-                        centerLabel: 'KCAL BURNED',
+                        centerLabel: 'ACTIVE KCAL',
                       ),
                       const SizedBox(height: 20),
-                      _buildMacrosSection(data),
+                      _buildMacrosSection(context, data),
                     ],
                   );
                 },
@@ -176,7 +177,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMacrosSection(DashboardData data) {
+  Widget _buildMacrosSection(BuildContext context, DashboardData data) {
     final goalPercent = (data.caloriesProgress * 100).round();
     
     return Column(
@@ -184,7 +185,7 @@ class DashboardScreen extends StatelessWidget {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Row(
@@ -203,10 +204,16 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
-                    Icons.north_east,
-                    color: KratosColors.primaryContainer,
-                    size: 14,
+                  GestureDetector(
+                    onTap: () => BmrInfoDialog.show(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      child: const Icon(
+                        Icons.info_outline,
+                        color: KratosColors.primaryContainer,
+                        size: 18,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -224,6 +231,16 @@ class DashboardScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '+${data.bmrBurntSoFar} kcal BMR Resting (${data.totalCaloriesBurned} total)',
+          style: const TextStyle(
+            fontFamily: 'JetBrains Mono',
+            fontSize: 11,
+            color: KratosColors.onSecondaryContainer,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 16),
         MacroProgressBar(

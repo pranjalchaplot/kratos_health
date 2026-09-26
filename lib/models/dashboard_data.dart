@@ -1,10 +1,15 @@
 import 'daily_log.dart';
+import 'user_goals.dart';
+import '../services/calorie_calculator_service.dart';
 
 /// Adapter class that bridges DailyLog to the Dashboard UI components
 class DashboardData {
   final int streak;
   final int activeDayIndex;
-  final int caloriesBurned;
+  final int caloriesBurned; // Active calories
+  final int bmrBurntSoFar;
+  final int bmrDaily;
+  final int totalCaloriesBurned;
   final int caloriesGoal;
   final int protein;
   final int proteinGoal;
@@ -26,6 +31,9 @@ class DashboardData {
     required this.streak,
     required this.activeDayIndex,
     required this.caloriesBurned,
+    required this.bmrBurntSoFar,
+    required this.bmrDaily,
+    required this.totalCaloriesBurned,
     required this.caloriesGoal,
     required this.protein,
     required this.proteinGoal,
@@ -44,11 +52,19 @@ class DashboardData {
     required this.digitalGoalHours,
   });
 
-  factory DashboardData.fromDailyLog(DailyLog log, int streak, int activeDayIndex) {
+  factory DashboardData.fromDailyLog(DailyLog log, UserGoals goals, int streak, int activeDayIndex) {
+    final activeBurn = log.activeCaloriesBurned;
+    final bmrSoFar = CalorieCalculatorService.calculateBmrBurntSoFar(goals, log.date);
+    final bmrFull = CalorieCalculatorService.calculateBmr(goals);
+    final totalBurn = activeBurn + bmrSoFar;
+
     return DashboardData(
       streak: streak,
       activeDayIndex: activeDayIndex,
-      caloriesBurned: log.caloriesBurned,
+      caloriesBurned: activeBurn,
+      bmrBurntSoFar: bmrSoFar,
+      bmrDaily: bmrFull,
+      totalCaloriesBurned: totalBurn,
       caloriesGoal: log.caloriesGoal,
       protein: log.protein,
       proteinGoal: log.proteinGoal,
@@ -74,6 +90,9 @@ class DashboardData {
       streak: 0,
       activeDayIndex: 0,
       caloriesBurned: 0,
+      bmrBurntSoFar: 0,
+      bmrDaily: 1800,
+      totalCaloriesBurned: 0,
       caloriesGoal: 3200,
       protein: 0,
       proteinGoal: 180,

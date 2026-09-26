@@ -273,6 +273,16 @@ class _LogsScreenState extends State<LogsScreen> {
                       _buildMacroBadge('FAT', '${entry.fats}g'),
                     ],
                   ),
+                ] else if (entry.type == LogType.activity) ...[
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 12,
+                    children: [
+                      _buildMacroBadge('ACTIVE BURN', '${entry.calories} kcal'),
+                      if (entry.activityCategory != null)
+                        _buildMacroBadge('TYPE', entry.activityCategory!.toUpperCase()),
+                    ],
+                  ),
                 ],
               ],
             ),

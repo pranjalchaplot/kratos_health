@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/exercise_set.dart';
 import '../providers/kratos_provider.dart';
+import '../services/calorie_calculator_service.dart';
 import '../services/screen_time_service.dart';
 import '../theme/kratos_theme.dart';
+import 'bmr_info_dialog.dart';
 
 class QuickLogModal extends StatefulWidget {
   final int initialTabIndex;
@@ -38,11 +41,6 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
   double _carbs = 50;
   double _fats = 15;
 
-  // Activity Form
-  final _activityNameController = TextEditingController(text: 'Workout Session');
-  double _activitySteps = 3000;
-  double _activityCalories = 250;
-
   // Sleep Form
   double _sleepHours = 8.0;
 
@@ -50,13 +48,34 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
   double _digitalHours = 4.0;
   double _digitalMinutes = 30.0;
 
+  // Activity Master Switch: 'STEPS', 'CARDIO', 'EXERCISE'
+  String _activitySubMode = 'EXERCISE';
+
+  // Activity - Steps Form
+  double _stepsCount = 5000;
+
+  // Activity - Cardio Form
+  String _cardioType = 'Running';
+  String _cardioIntensity = 'Moderate';
+  double _cardioDurationMins = 30;
+  double _cardioDistanceKm = 5.0;
+
+  // Activity - Exercise Strength Form
+  final _exerciseNameController = TextEditingController(text: 'Bench Press');
+  final double _exerciseDurationMins = 45;
+  final List<ExerciseSet> _exerciseSets = [
+    ExerciseSet(setNumber: 1, reps: 10, weightKg: 60.0),
+    ExerciseSet(setNumber: 2, reps: 10, weightKg: 60.0),
+    ExerciseSet(setNumber: 3, reps: 10, weightKg: 60.0),
+  ];
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 5,
+      length: 6,
       vsync: this,
-      initialIndex: widget.initialTabIndex.clamp(0, 4),
+      initialIndex: widget.initialTabIndex.clamp(0, 5),
     );
   }
 
@@ -64,7 +83,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
   void dispose() {
     _tabController.dispose();
     _mealNameController.dispose();
-    _activityNameController.dispose();
+    _exerciseNameController.dispose();
     super.dispose();
   }
 
@@ -73,7 +92,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
     return Container(
-      margin: EdgeInsets.only(top: 60, bottom: bottomPadding),
+      margin: EdgeInsets.only(top: 40, bottom: bottomPadding),
       decoration: const BoxDecoration(
         color: KratosColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -95,14 +114,14 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             ),
           ),
           const SizedBox(height: 16),
-          // Title
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
+          // Title Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'LOG ACTIVITY',
+                const Text(
+                  'LOG ACTIVITY & VITAL METRICS',
                   style: TextStyle(
                     fontFamily: 'Geist',
                     fontSize: 18,
@@ -111,11 +130,14 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                     color: KratosColors.onSurface,
                   ),
                 ),
-                Icon(Icons.add_circle, color: KratosColors.primaryContainer, size: 24),
+                IconButton(
+                  icon: const Icon(Icons.info_outline, color: KratosColors.primaryContainer),
+                  onPressed: () => BmrInfoDialog.show(context),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           // Tab bar
           TabBar(
             controller: _tabController,
@@ -131,6 +153,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             tabs: const [
               Tab(icon: Icon(Icons.water_drop_outlined, size: 18), text: 'WATER'),
               Tab(icon: Icon(Icons.restaurant_outlined, size: 18), text: 'MEAL'),
+              Tab(icon: Icon(Icons.local_fire_department, size: 18), text: 'BURN'),
               Tab(icon: Icon(Icons.fitness_center_outlined, size: 18), text: 'ACTIVITY'),
               Tab(icon: Icon(Icons.bed_outlined, size: 18), text: 'SLEEP'),
               Tab(icon: Icon(Icons.phone_iphone_outlined, size: 18), text: 'DIGITAL'),
@@ -142,12 +165,13 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: SizedBox(
-                height: 430,
+                height: 480,
                 child: TabBarView(
                   controller: _tabController,
                   children: [
                     _buildWaterTab(),
                     _buildMealTab(),
+                    _buildLiveBurnTab(),
                     _buildActivityTab(),
                     _buildSleepTab(),
                     _buildDigitalTab(),
@@ -158,6 +182,219 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           ),
         ],
       ),
+    );
+  }
+
+  // --- Live Calorie Burn Tab ---
+  Widget _buildLiveBurnTab() {
+    final provider = context.watch<KratosProvider>();
+    final goals = provider.userGoals;
+    final log = provider.currentLog;
+
+    final activeBurn = log.activeCaloriesBurned;
+    final bmrSoFar = CalorieCalculatorService.calculateBmrBurntSoFar(goals, provider.selectedDate);
+    final hourlyBmr = CalorieCalculatorService.calculateHourlyBmr(goals);
+    final bmrDaily = CalorieCalculatorService.calculateBmr(goals);
+    final totalBurn = activeBurn + bmrSoFar;
+
+    final targetTdee = (bmrDaily * 1.3).round(); // Target TDEE estimate
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'LIVE DAILY CALORIE BURN',
+              style: TextStyle(
+                fontFamily: 'JetBrains Mono',
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: KratosColors.onSecondaryContainer,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.info_outline, color: KratosColors.primaryContainer, size: 18),
+              onPressed: () => BmrInfoDialog.show(context),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Hero Card
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                KratosColors.primaryContainer.withValues(alpha: 0.2),
+                KratosColors.cardBackground,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: KratosColors.primaryContainer.withValues(alpha: 0.5)),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$totalBurn kcal',
+                        style: const TextStyle(
+                          fontFamily: 'Geist',
+                          fontSize: 34,
+                          fontWeight: FontWeight.w800,
+                          color: KratosColors.primaryContainer,
+                        ),
+                      ),
+                      const Text(
+                        'Total Energy Expended Today',
+                        style: TextStyle(
+                          fontFamily: 'Geist',
+                          fontSize: 12,
+                          color: KratosColors.onSecondaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: KratosColors.primaryContainer.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.local_fire_department, color: KratosColors.primaryContainer, size: 28),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: KratosColors.cardBorder),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildBurnSubStat('ACTIVE BURN', '$activeBurn kcal', KratosColors.secondary),
+                  Container(width: 1, height: 32, color: KratosColors.cardBorder),
+                  _buildBurnSubStat('RESTING (BMR)', '$bmrSoFar kcal', Colors.orangeAccent),
+                  Container(width: 1, height: 32, color: KratosColors.cardBorder),
+                  _buildBurnSubStat('HOURLY RATE', '~${hourlyBmr.toStringAsFixed(1)}/hr', KratosColors.onSurface),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+        // Target TDEE Progress
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'TDEE Target ($targetTdee kcal)',
+              style: const TextStyle(
+                fontFamily: 'JetBrains Mono',
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: KratosColors.onSecondaryContainer,
+              ),
+            ),
+            Text(
+              '${((totalBurn / targetTdee) * 100).round()}%',
+              style: const TextStyle(
+                fontFamily: 'JetBrains Mono',
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: KratosColors.primaryContainer,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(
+            value: (totalBurn / targetTdee).clamp(0.0, 1.0),
+            minHeight: 8,
+            backgroundColor: KratosColors.surfaceContainerHighest,
+            color: KratosColors.primaryContainer,
+          ),
+        ),
+
+        const Spacer(),
+        // Quick Action Buttons
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: KratosColors.secondary,
+                  side: const BorderSide(color: KratosColors.secondary),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _activitySubMode = 'CARDIO';
+                  });
+                  _tabController.animateTo(3); // Switch to Activity Tab
+                },
+                icon: const Icon(Icons.directions_run, size: 18),
+                label: const Text('LOG CARDIO', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: KratosColors.primaryContainer,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () {
+                  setState(() {
+                    _activitySubMode = 'EXERCISE';
+                  });
+                  _tabController.animateTo(3); // Switch to Activity Tab
+                },
+                icon: const Icon(Icons.fitness_center, size: 18),
+                label: const Text('LOG WORKOUT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBurnSubStat(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Geist',
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'JetBrains Mono',
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            color: KratosColors.onSecondaryContainer,
+          ),
+        ),
+      ],
     );
   }
 
@@ -177,7 +414,6 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           ),
         ),
         const SizedBox(height: 12),
-        // Mode Selector: Glasses vs ML
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -208,7 +444,6 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         ),
         const SizedBox(height: 16),
         if (_isGlassesMode) ...[
-          // Glasses Display with Stepper
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -282,41 +517,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               });
             },
           ),
-          const SizedBox(height: 12),
-          // Glasses Preset Buttons
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: [
-              _buildPresetChip('1 Glass (250ml)', () {
-                setState(() {
-                  _glassesCount = 1;
-                  _waterAmount = 0.25;
-                });
-              }),
-              _buildPresetChip('2 Glasses (500ml)', () {
-                setState(() {
-                  _glassesCount = 2;
-                  _waterAmount = 0.50;
-                });
-              }),
-              _buildPresetChip('3 Glasses (750ml)', () {
-                setState(() {
-                  _glassesCount = 3;
-                  _waterAmount = 0.75;
-                });
-              }),
-              _buildPresetChip('4 Glasses (1.0L)', () {
-                setState(() {
-                  _glassesCount = 4;
-                  _waterAmount = 1.00;
-                });
-              }),
-            ],
-          ),
         ] else ...[
-          // ML Display
           Text(
             '$mlValue ml',
             style: const TextStyle(
@@ -350,39 +551,6 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               });
             },
           ),
-          const SizedBox(height: 12),
-          // ML Preset Buttons
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            alignment: WrapAlignment.center,
-            children: [
-              _buildPresetChip('+ 250 ml', () {
-                setState(() {
-                  _waterAmount = 0.25;
-                  _glassesCount = 1;
-                });
-              }),
-              _buildPresetChip('+ 500 ml', () {
-                setState(() {
-                  _waterAmount = 0.50;
-                  _glassesCount = 2;
-                });
-              }),
-              _buildPresetChip('+ 750 ml', () {
-                setState(() {
-                  _waterAmount = 0.75;
-                  _glassesCount = 3;
-                });
-              }),
-              _buildPresetChip('+ 1.0 L', () {
-                setState(() {
-                  _waterAmount = 1.00;
-                  _glassesCount = 4;
-                });
-              }),
-            ],
-          ),
         ],
         const Spacer(),
         _buildSubmitButton('LOG WATER INTAKE', Colors.cyanAccent, () async {
@@ -397,49 +565,6 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           if (mounted) Navigator.pop(context);
         }),
       ],
-    );
-  }
-
-  Widget _buildUnitToggleChip({
-    required IconData icon,
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.cyanAccent.withValues(alpha: 0.15) : KratosColors.cardBackground,
-          border: Border.all(
-            color: isSelected ? Colors.cyanAccent : KratosColors.cardBorder,
-            width: isSelected ? 1.5 : 1.0,
-          ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.cyanAccent : KratosColors.onSecondaryContainer,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'JetBrains Mono',
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? Colors.cyanAccent : KratosColors.onSecondaryContainer,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -459,7 +584,6 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           ),
         ),
         const SizedBox(height: 12),
-        // Category selection (Horizontal scrollable chip strip)
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -488,7 +612,6 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           ),
         ),
         const SizedBox(height: 16),
-        // Macro Sliders Grid
         Row(
           children: [
             Expanded(
@@ -536,35 +659,404 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
     );
   }
 
-  // --- Activity Tab ---
+  // --- Activity Master Tab (Steps / Cardio / Exercise Strength) ---
   Widget _buildActivityTab() {
     return Column(
       children: [
-        TextField(
-          controller: _activityNameController,
-          style: const TextStyle(color: KratosColors.onSurface),
+        // Mode selector chips: STEPS | CARDIO | EXERCISE
+        Row(
+          children: ['EXERCISE', 'CARDIO', 'STEPS'].map((mode) {
+            final isSelected = _activitySubMode == mode;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: ChoiceChip(
+                  label: Text(mode),
+                  selected: isSelected,
+                  selectedColor: KratosColors.primaryContainer,
+                  backgroundColor: KratosColors.cardBackground,
+                  side: BorderSide(
+                    color: isSelected ? KratosColors.primaryContainer : KratosColors.cardBorder,
+                  ),
+                  labelStyle: TextStyle(
+                    fontFamily: 'JetBrains Mono',
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.black : KratosColors.onSurface,
+                  ),
+                  onSelected: (_) => setState(() => _activitySubMode = mode),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 12),
+
+        Expanded(
+          child: _activitySubMode == 'STEPS'
+              ? _buildStepsSubMode()
+              : _activitySubMode == 'CARDIO'
+                  ? _buildCardioSubMode()
+                  : _buildExerciseSubMode(),
+        ),
+      ],
+    );
+  }
+
+  // --- Steps Sub-Mode ---
+  Widget _buildStepsSubMode() {
+    final userWeight = context.read<KratosProvider>().userGoals.weightKg ?? 75.0;
+    final calcCalories = CalorieCalculatorService.calculateStepsCalories(_stepsCount.toInt(), userWeight);
+
+    return Column(
+      children: [
+        Text(
+          '${_stepsCount.toInt()} Steps',
+          style: const TextStyle(
+            fontFamily: 'Geist',
+            fontSize: 40,
+            fontWeight: FontWeight.w800,
+            color: KratosColors.secondary,
+          ),
+        ),
+        Text(
+          'Estimated Active Burn: $calcCalories kcal',
+          style: const TextStyle(
+            fontFamily: 'JetBrains Mono',
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: KratosColors.primaryContainer,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Slider(
+          value: _stepsCount,
+          min: 500,
+          max: 25000,
+          divisions: 49,
+          activeColor: KratosColors.secondary,
+          inactiveColor: KratosColors.surfaceContainerHighest,
+          onChanged: (val) => setState(() => _stepsCount = val),
+        ),
+        const Spacer(),
+        _buildSubmitButton('LOG STEPS ENTRY', KratosColors.secondary, () async {
+          await context.read<KratosProvider>().logSteps(
+                steps: _stepsCount.toInt(),
+                calories: calcCalories,
+              );
+          if (mounted) Navigator.pop(context);
+        }),
+      ],
+    );
+  }
+
+  // --- Cardio Sub-Mode ---
+  Widget _buildCardioSubMode() {
+    final userWeight = context.read<KratosProvider>().userGoals.weightKg ?? 75.0;
+    final calcCalories = CalorieCalculatorService.calculateCardioCalories(
+      cardioType: _cardioType,
+      intensity: _cardioIntensity,
+      durationMinutes: _cardioDurationMins.toInt(),
+      weightKg: userWeight,
+    );
+
+    return Column(
+      children: [
+        // Cardio Type selector
+        DropdownButtonFormField<String>(
+          initialValue: _cardioType,
+          dropdownColor: KratosColors.cardBackground,
+          style: const TextStyle(color: KratosColors.onSurface, fontFamily: 'Geist', fontWeight: FontWeight.bold),
           decoration: InputDecoration(
-            labelText: 'Activity / Workout Name',
+            labelText: 'Cardio Type',
             labelStyle: const TextStyle(color: KratosColors.onSecondaryContainer),
             filled: true,
             fillColor: KratosColors.cardBackground,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
+          items: ['Running', 'Cycling', 'Swimming', 'Rowing', 'HIIT', 'Walking', 'Stair Climber', 'Jump Rope'].map((type) {
+            return DropdownMenuItem(value: type, child: Text(type));
+          }).toList(),
+          onChanged: (val) {
+            if (val != null) setState(() => _cardioType = val);
+          },
         ),
-        const SizedBox(height: 16),
-        _buildValueControl('Steps Taken', '${_activitySteps.toInt()} steps', _activitySteps, 500, 20000, (v) {
-          setState(() => _activitySteps = v);
-        }),
-        const SizedBox(height: 12),
-        _buildValueControl('Estimated Calories Burned', '${_activityCalories.toInt()} kcal', _activityCalories, 50, 1200, (v) {
-          setState(() => _activityCalories = v);
-        }),
+        const SizedBox(height: 10),
+
+        // Intensity selector
+        Row(
+          children: ['Low', 'Moderate', 'High', 'Extreme'].map((intense) {
+            final isSelected = _cardioIntensity == intense;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: ChoiceChip(
+                  label: Text(intense, style: const TextStyle(fontSize: 10)),
+                  selected: isSelected,
+                  selectedColor: KratosColors.secondary,
+                  backgroundColor: KratosColors.cardBackground,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.black : KratosColors.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  onSelected: (_) => setState(() => _cardioIntensity = intense),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 8),
+
+        Row(
+          children: [
+            Expanded(
+              child: _buildValueControl('Duration', '${_cardioDurationMins.toInt()} mins', _cardioDurationMins, 5, 180, (v) {
+                setState(() => _cardioDurationMins = v);
+              }),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildValueControl('Distance (km)', '${_cardioDistanceKm.toStringAsFixed(1)} km', _cardioDistanceKm, 0.0, 42.0, (v) {
+                setState(() => _cardioDistanceKm = v);
+              }),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: KratosColors.primaryContainer.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            'Estimated Calorie Burn: $calcCalories kcal',
+            style: const TextStyle(
+              fontFamily: 'JetBrains Mono',
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: KratosColors.primaryContainer,
+            ),
+          ),
+        ),
+
         const Spacer(),
-        _buildSubmitButton('LOG ACTIVITY', KratosColors.secondary, () async {
-          await context.read<KratosProvider>().logActivity(
-                title: _activityNameController.text.isEmpty ? 'Activity' : _activityNameController.text,
-                steps: _activitySteps.toInt(),
-                calories: _activityCalories.toInt(),
+        _buildSubmitButton('LOG CARDIO WORKOUT', KratosColors.secondary, () async {
+          await context.read<KratosProvider>().logCardio(
+                cardioType: _cardioType,
+                intensity: _cardioIntensity,
+                durationMinutes: _cardioDurationMins.toInt(),
+                distanceKm: _cardioDistanceKm > 0 ? _cardioDistanceKm : null,
+                calories: calcCalories,
+              );
+          if (mounted) Navigator.pop(context);
+        }),
+      ],
+    );
+  }
+
+  // --- Exercise Strength Sub-Mode (Workout Sets Manager) ---
+  Widget _buildExerciseSubMode() {
+    final userWeight = context.read<KratosProvider>().userGoals.weightKg ?? 75.0;
+    final calcCalories = CalorieCalculatorService.calculateExerciseCalories(
+      exerciseName: _exerciseNameController.text.isEmpty ? 'Exercise' : _exerciseNameController.text,
+      sets: _exerciseSets,
+      durationMinutes: _exerciseDurationMins.toInt(),
+      weightKg: userWeight,
+    );
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _exerciseNameController,
+                style: const TextStyle(color: KratosColors.onSurface, fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
+                  labelText: 'Exercise / Workout Name',
+                  labelStyle: const TextStyle(color: KratosColors.onSecondaryContainer),
+                  filled: true,
+                  fillColor: KratosColors.cardBackground,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: KratosColors.cardBackground,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: KratosColors.cardBorder),
+              ),
+              child: Column(
+                children: [
+                  const Text('DUR (m)', style: TextStyle(fontSize: 10, color: KratosColors.onSecondaryContainer, fontWeight: FontWeight.bold)),
+                  Text('${_exerciseDurationMins.toInt()}m', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: KratosColors.primaryContainer)),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+
+        // Quick Preset Exercise Chips
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: ['Bench Press', 'Squat', 'Deadlift', 'Overhead Press', 'Pull-ups', 'Bicep Curl'].map((name) {
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: ChoiceChip(
+                  label: Text(name, style: const TextStyle(fontSize: 10)),
+                  selected: _exerciseNameController.text == name,
+                  selectedColor: KratosColors.primaryContainer,
+                  backgroundColor: KratosColors.cardBackground,
+                  labelStyle: TextStyle(
+                    color: _exerciseNameController.text == name ? Colors.black : KratosColors.onSurface,
+                  ),
+                  onSelected: (_) {
+                    setState(() {
+                      _exerciseNameController.text = name;
+                    });
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+        // Sets Manager Table Header
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('WORKOUT SETS', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: KratosColors.onSecondaryContainer)),
+            Text('REPS × WEIGHT (KG)', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: KratosColors.onSecondaryContainer)),
+          ],
+        ),
+        const SizedBox(height: 6),
+
+        // Dynamic Sets List
+        Expanded(
+          child: ListView.builder(
+            itemCount: _exerciseSets.length,
+            itemBuilder: (context, index) {
+              final setItem = _exerciseSets[index];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: KratosColors.cardBackground,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: KratosColors.cardBorder),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      'SET ${index + 1}',
+                      style: const TextStyle(
+                        fontFamily: 'JetBrains Mono',
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: KratosColors.primaryContainer,
+                      ),
+                    ),
+                    const Spacer(),
+
+                    // Reps Stepper
+                    Text('${setItem.reps} r', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline, size: 18, color: KratosColors.onSecondaryContainer),
+                      onPressed: setItem.reps > 1
+                          ? () {
+                              setState(() => setItem.reps--);
+                            }
+                          : null,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline, size: 18, color: KratosColors.primaryContainer),
+                      onPressed: () {
+                        setState(() => setItem.reps++);
+                      },
+                    ),
+
+                    const SizedBox(width: 8),
+                    // Weight Stepper
+                    Text('${setItem.weightKg.toInt()} kg', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline, size: 18, color: KratosColors.onSecondaryContainer),
+                      onPressed: setItem.weightKg >= 2.5
+                          ? () {
+                              setState(() => setItem.weightKg -= 2.5);
+                            }
+                          : null,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline, size: 18, color: KratosColors.primaryContainer),
+                      onPressed: () {
+                        setState(() => setItem.weightKg += 2.5);
+                      },
+                    ),
+
+                    if (_exerciseSets.length > 1)
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                        onPressed: () {
+                          setState(() {
+                            _exerciseSets.removeAt(index);
+                          });
+                        },
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  final lastWeight = _exerciseSets.isNotEmpty ? _exerciseSets.last.weightKg : 60.0;
+                  final lastReps = _exerciseSets.isNotEmpty ? _exerciseSets.last.reps : 10;
+                  _exerciseSets.add(ExerciseSet(
+                    setNumber: _exerciseSets.length + 1,
+                    reps: lastReps,
+                    weightKg: lastWeight,
+                  ));
+                });
+              },
+              icon: const Icon(Icons.add, size: 16, color: KratosColors.primaryContainer),
+              label: const Text('ADD SET', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: KratosColors.primaryContainer)),
+            ),
+            Text(
+              'Burn: $calcCalories kcal',
+              style: const TextStyle(
+                fontFamily: 'JetBrains Mono',
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: KratosColors.primaryContainer,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 6),
+        _buildSubmitButton('LOG WORKOUT ENTRY', KratosColors.primaryContainer, () async {
+          await context.read<KratosProvider>().logExercise(
+                exerciseName: _exerciseNameController.text.isEmpty ? 'Exercise' : _exerciseNameController.text,
+                sets: _exerciseSets,
+                durationMinutes: _exerciseDurationMins.toInt(),
+                calories: calcCalories,
               );
           if (mounted) Navigator.pop(context);
         }),
@@ -655,12 +1147,6 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                   SnackBar(content: Text('Synced screen time from device: ${duration.inHours}h ${duration.inMinutes % 60}m')),
                 );
               }
-            } else {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Could not fetch usage stats. Ensure Usage Access permission is granted in Android settings.')),
-                );
-              }
             }
           },
           icon: const Icon(Icons.sync, size: 16),
@@ -684,6 +1170,49 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
   }
 
   // --- Helpers ---
+  Widget _buildUnitToggleChip({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.cyanAccent.withValues(alpha: 0.15) : KratosColors.cardBackground,
+          border: Border.all(
+            color: isSelected ? Colors.cyanAccent : KratosColors.cardBorder,
+            width: isSelected ? 1.5 : 1.0,
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.cyanAccent : KratosColors.onSecondaryContainer,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'JetBrains Mono',
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? Colors.cyanAccent : KratosColors.onSecondaryContainer,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildValueControl(String label, String valueDisplay, double value, double min, double max, ValueChanged<double> onChanged) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -691,8 +1220,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(color: KratosColors.onSecondaryContainer, fontSize: 12, fontWeight: FontWeight.bold)),
-            Text(valueDisplay, style: const TextStyle(color: KratosColors.onSurface, fontSize: 13, fontWeight: FontWeight.bold)),
+            Text(label, style: const TextStyle(color: KratosColors.onSecondaryContainer, fontSize: 11, fontWeight: FontWeight.bold)),
+            Text(valueDisplay, style: const TextStyle(color: KratosColors.onSurface, fontSize: 12, fontWeight: FontWeight.bold)),
           ],
         ),
         Slider(
@@ -707,45 +1236,22 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
     );
   }
 
-  Widget _buildPresetChip(String text, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: KratosColors.cardBackground,
-          border: Border.all(color: KratosColors.cardBorder),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: KratosColors.onSurface,
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildSubmitButton(String label, Color color, VoidCallback onPressed) {
     return SizedBox(
       width: double.infinity,
-      height: 52,
+      height: 48,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: Colors.black,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
         onPressed: onPressed,
         child: Text(
           label,
           style: const TextStyle(
             fontFamily: 'Geist',
-            fontSize: 16,
+            fontSize: 15,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.5,
           ),
