@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'theme/kratos_theme.dart';
+import 'providers/kratos_provider.dart';
 import 'screens/dashboard_screen.dart';
-import 'models/dashboard_data.dart';
+import 'screens/logs_screen.dart';
+import 'screens/library_screen.dart';
+import 'screens/profile_screen.dart';
+import 'widgets/bottom_nav.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,7 +17,12 @@ void main() {
     systemNavigationBarColor: KratosColors.surface,
     systemNavigationBarIconBrightness: Brightness.light,
   ));
-  runApp(const KratosApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => KratosProvider(),
+      child: const KratosApp(),
+    ),
+  );
 }
 
 class KratosApp extends StatelessWidget {
@@ -20,15 +30,64 @@ class KratosApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Generate mock data representing the dynamic state
-    final dashboardData = DashboardData.mock();
-
     return MaterialApp(
-      title: 'KRATOS | Performance Dashboard',
+      title: 'KRATOS | Performance Ecosystem',
       debugShowCheckedModeBanner: false,
       theme: KratosTheme.darkTheme,
-      home: DashboardScreen(data: dashboardData),
+      home: const MainShell(),
     );
   }
 }
 
+class MainShell extends StatelessWidget {
+  const MainShell({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<KratosProvider>();
+
+    if (provider.isLoading) {
+      return const Scaffold(
+        backgroundColor: KratosColors.background,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: KratosColors.primaryContainer,
+          ),
+        ),
+      );
+    }
+
+    Widget bodyWidget;
+    switch (provider.currentTabIndex) {
+      case 0:
+        bodyWidget = const DashboardScreen();
+        break;
+      case 1:
+        bodyWidget = const LogsScreen();
+        break;
+      case 3:
+        bodyWidget = const LibraryScreen();
+        break;
+      case 4:
+        bodyWidget = const ProfileScreen();
+        break;
+      default:
+        bodyWidget = const DashboardScreen();
+    }
+
+    return Scaffold(
+      backgroundColor: KratosColors.background,
+      body: Stack(
+        children: [
+          bodyWidget,
+          const Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: KratosBottomNav(),
+          ),
+        ],
+      ),
+    );
+  }
+}

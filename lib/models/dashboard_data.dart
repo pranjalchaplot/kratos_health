@@ -1,3 +1,6 @@
+import 'daily_log.dart';
+
+/// Adapter class that bridges DailyLog to the Dashboard UI components
 class DashboardData {
   final int streak;
   final int activeDayIndex;
@@ -41,7 +44,31 @@ class DashboardData {
     required this.digitalGoalHours,
   });
 
-  // Factory constructor for mock data
+  factory DashboardData.fromDailyLog(DailyLog log, int streak, int activeDayIndex) {
+    return DashboardData(
+      streak: streak,
+      activeDayIndex: activeDayIndex,
+      caloriesBurned: log.caloriesBurned,
+      caloriesGoal: log.caloriesGoal,
+      protein: log.protein,
+      proteinGoal: log.proteinGoal,
+      carbs: log.carbs,
+      carbsGoal: log.carbsGoal,
+      fats: log.fats,
+      fatsGoal: log.fatsGoal,
+      steps: log.steps,
+      stepsGoal: log.stepsGoal,
+      water: log.water,
+      waterGoal: log.waterGoal,
+      sleep: log.sleep,
+      sleepGoal: log.sleepGoal,
+      digitalHours: log.digitalHours,
+      digitalMinutes: log.digitalMinutes,
+      digitalGoalHours: log.digitalGoalHours,
+    );
+  }
+
+  // Factory constructor for mock data fallback
   factory DashboardData.mock() {
     return DashboardData(
       streak: 12,
@@ -66,17 +93,17 @@ class DashboardData {
     );
   }
 
-  double get caloriesProgress => (caloriesBurned / caloriesGoal).clamp(0.0, 1.0);
-  double get proteinProgress => (protein / proteinGoal).clamp(0.0, 1.0);
-  double get carbsProgress => (carbs / carbsGoal).clamp(0.0, 1.0);
-  double get fatsProgress => (fats / fatsGoal).clamp(0.0, 1.0);
-  double get stepsProgress => (steps / stepsGoal).clamp(0.0, 1.0);
-  double get waterProgress => (water / waterGoal).clamp(0.0, 1.0);
-  double get sleepProgress => (sleep / sleepGoal).clamp(0.0, 1.0);
+  double get caloriesProgress => caloriesGoal > 0 ? (caloriesBurned / caloriesGoal).clamp(0.0, 1.0) : 0.0;
+  double get proteinProgress => proteinGoal > 0 ? (protein / proteinGoal).clamp(0.0, 1.0) : 0.0;
+  double get carbsProgress => carbsGoal > 0 ? (carbs / carbsGoal).clamp(0.0, 1.0) : 0.0;
+  double get fatsProgress => fatsGoal > 0 ? (fats / fatsGoal).clamp(0.0, 1.0) : 0.0;
+  double get stepsProgress => stepsGoal > 0 ? (steps / stepsGoal).clamp(0.0, 1.0) : 0.0;
+  double get waterProgress => waterGoal > 0 ? (water / waterGoal).clamp(0.0, 1.0) : 0.0;
+  double get sleepProgress => sleepGoal > 0 ? (sleep / sleepGoal).clamp(0.0, 1.0) : 0.0;
   
   double get digitalProgress {
     final totalMinutes = (digitalHours * 60) + digitalMinutes;
     final goalMinutes = digitalGoalHours * 60;
-    return (totalMinutes / goalMinutes).clamp(0.0, 1.0);
+    return goalMinutes > 0 ? (totalMinutes / goalMinutes).clamp(0.0, 1.0) : 0.0;
   }
 }

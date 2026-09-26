@@ -1,68 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../providers/kratos_provider.dart';
+import '../models/dashboard_data.dart';
 import '../theme/kratos_theme.dart';
 import '../widgets/week_calendar_strip.dart';
 import '../widgets/progress_rings.dart';
 import '../widgets/macro_progress_bar.dart';
 import '../widgets/metric_card.dart';
-import '../widgets/bottom_nav.dart';
-import '../models/dashboard_data.dart';
+import '../widgets/quick_log_modal.dart';
 
 /// Main Dashboard Screen - KRATOS Fitness & Nutrition Ecosystem
-class DashboardScreen extends StatefulWidget {
-  final DashboardData data;
+class DashboardScreen extends StatelessWidget {
+  const DashboardScreen({super.key});
 
-  const DashboardScreen({super.key, required this.data});
-
-  @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<KratosProvider>();
+    final currentLog = provider.currentLog;
+    final data = DashboardData.fromDailyLog(currentLog, provider.streak, provider.activeDayIndex);
+
     return Scaffold(
       backgroundColor: KratosColors.background,
-      body: Stack(
-        children: [
-          // Main scrollable content
-          CustomScrollView(
-            slivers: [
-              // App Bar
-              _buildAppBar(),
-              // Content
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 8),
-                    // Week Calendar Strip
-                    WeekCalendarStrip(activeIndex: widget.data.activeDayIndex),
-                    const SizedBox(height: 24),
-                    // Daily Summary Card
-                    _buildDailySummaryCard(),
-                    const SizedBox(height: 16),
-                    // Metrics Grid
-                    _buildMetricsGrid(),
-                    // Bottom padding for nav bar
-                    const SizedBox(height: 100),
-                  ],
+      body: CustomScrollView(
+        slivers: [
+          // App Bar
+          _buildAppBar(context, provider),
+          // Content
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                // Week Calendar Strip with interactive selection
+                WeekCalendarStrip(
+                  activeIndex: provider.activeDayIndex,
+                  onDaySelected: (index) {
+                    provider.selectDayByIndex(index);
+                  },
                 ),
-              ),
-            ],
-          ),
-          // Bottom Navigation
-          const Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: KratosBottomNav(currentIndex: 0),
+                const SizedBox(height: 24),
+                // Daily Summary Card
+                _buildDailySummaryCard(context, data),
+                const SizedBox(height: 16),
+                // Metrics Grid
+                _buildMetricsGrid(context, data),
+                // Bottom padding for nav bar
+                const SizedBox(height: 100),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  SliverAppBar _buildAppBar() {
+  SliverAppBar _buildAppBar(BuildContext context, KratosProvider provider) {
     return SliverAppBar(
       pinned: true,
       backgroundColor: KratosColors.background,
@@ -71,24 +63,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Profile avatar
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: KratosColors.surfaceContainerHighest,
-                width: 1,
+          // Profile avatar (tapping goes to profile tab)
+          GestureDetector(
+            onTap: () => provider.setTab(4),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: KratosColors.surfaceContainerHighest,
+                  width: 1,
+                ),
               ),
-            ),
-            child: ClipOval(
-              child: Container(
-                color: KratosColors.surfaceContainerHigh,
-                child: const Icon(
-                  Icons.person,
-                  color: KratosColors.onSecondaryContainer,
-                  size: 24,
+              child: ClipOval(
+                child: Container(
+                  color: KratosColors.surfaceContainerHigh,
+                  child: const Icon(
+                    Icons.person,
+                    color: KratosColors.onSecondaryContainer,
+                    size: 24,
+                  ),
                 ),
               ),
             ),
@@ -107,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           // Streak
           Text(
-            '${widget.data.streak}🔥',
+            '${provider.streak}🔥',
             style: const TextStyle(
               fontFamily: 'Geist',
               fontSize: 18,
@@ -127,67 +122,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildDailySummaryCard() {
+  Widget _buildDailySummaryCard(BuildContext context, DashboardData data) {
     final formatCurrency = NumberFormat("#,##0", "en_US");
     
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: KratosColors.cardBackground,
-          border: Border.all(color: KratosColors.cardBorder, width: 1),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            // Progress Rings + Macros side by side on wider screens
-            LayoutBuilder(
-              builder: (context, constraints) {
-                if (constraints.maxWidth > 400) {
-                  // Side by side layout
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+      child: GestureDetector(
+        onTap: () => QuickLogModal.show(context, initialTabIndex: 1), // Meal tab
+        child: Container(
+          decoration: BoxDecoration(
+            color: KratosColors.cardBackground,
+            border: Border.all(color: KratosColors.cardBorder, width: 1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth > 400) {
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        ProgressRings(
+                          calorieProgress: data.caloriesProgress,
+                          activityProgress: data.caloriesProgress,
+                          centerValue: formatCurrency.format(data.caloriesBurned),
+                          centerLabel: 'KCAL BURNED',
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(child: _buildMacrosSection(data)),
+                      ],
+                    );
+                  }
+                  return Column(
                     children: [
                       ProgressRings(
-                        calorieProgress: widget.data.caloriesProgress,
-                        activityProgress: widget.data.caloriesProgress,
-                        centerValue: formatCurrency.format(widget.data.caloriesBurned),
+                        calorieProgress: data.caloriesProgress,
+                        activityProgress: data.caloriesProgress,
+                        centerValue: formatCurrency.format(data.caloriesBurned),
                         centerLabel: 'KCAL BURNED',
                       ),
-                      const SizedBox(width: 24),
-                      Expanded(child: _buildMacrosSection()),
+                      const SizedBox(height: 20),
+                      _buildMacrosSection(data),
                     ],
                   );
-                }
-                // Stacked layout for mobile
-                return Column(
-                  children: [
-                    ProgressRings(
-                      calorieProgress: widget.data.caloriesProgress,
-                      activityProgress: widget.data.caloriesProgress,
-                      centerValue: formatCurrency.format(widget.data.caloriesBurned),
-                      centerLabel: 'KCAL BURNED',
-                    ),
-                    const SizedBox(height: 20),
-                    _buildMacrosSection(),
-                  ],
-                );
-              },
-            ),
-          ],
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMacrosSection() {
-    final goalPercent = (widget.data.caloriesProgress * 100).round();
+  Widget _buildMacrosSection(DashboardData data) {
+    final goalPercent = (data.caloriesProgress * 100).round();
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header row
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -209,7 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  Icon(
+                  const Icon(
                     Icons.north_east,
                     color: KratosColors.primaryContainer,
                     size: 14,
@@ -232,32 +226,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 16),
-        // Macro bars
         MacroProgressBar(
           label: 'PROTEIN',
-          value: '${widget.data.protein}g / ${widget.data.proteinGoal}g',
-          progress: widget.data.proteinProgress,
+          value: '${data.protein}g / ${data.proteinGoal}g',
+          progress: data.proteinProgress,
           barColor: KratosColors.primaryContainer,
         ),
         const SizedBox(height: 12),
         MacroProgressBar(
           label: 'CARBS',
-          value: '${widget.data.carbs}g / ${widget.data.carbsGoal}g',
-          progress: widget.data.carbsProgress,
+          value: '${data.carbs}g / ${data.carbsGoal}g',
+          progress: data.carbsProgress,
           barColor: KratosColors.onSurface,
         ),
         const SizedBox(height: 12),
         MacroProgressBar(
           label: 'FATS',
-          value: '${widget.data.fats}g / ${widget.data.fatsGoal}g',
-          progress: widget.data.fatsProgress,
+          value: '${data.fats}g / ${data.fatsGoal}g',
+          progress: data.fatsProgress,
           barColor: KratosColors.secondary,
         ),
       ],
     );
   }
 
-  Widget _buildMetricsGrid() {
+  Widget _buildMetricsGrid(BuildContext context, DashboardData data) {
     final formatCurrency = NumberFormat("#,##0", "en_US");
     
     return Padding(
@@ -269,42 +262,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          // Steps Card
-          MetricCard(
-            label: 'STEPS TODAY',
-            value: formatCurrency.format(widget.data.steps),
-            percentage: '${(widget.data.stepsProgress * 100).round()}%',
-            progress: widget.data.stepsProgress,
-            icon: Icons.directions_walk,
+          // Steps Card (taps open Activity tab)
+          GestureDetector(
+            onTap: () => QuickLogModal.show(context, initialTabIndex: 2),
+            child: MetricCard(
+              label: 'STEPS TODAY',
+              value: formatCurrency.format(data.steps),
+              percentage: '${(data.stepsProgress * 100).round()}%',
+              progress: data.stepsProgress,
+              icon: Icons.directions_walk,
+            ),
           ),
-          // Water Card
-          MetricCard(
-            label: 'WATER',
-            value: widget.data.water.toStringAsFixed(1),
-            unit: 'L',
-            percentage: '${(widget.data.waterProgress * 100).round()}%',
-            progress: widget.data.waterProgress,
-            icon: Icons.water_drop,
+          // Water Card (taps open Water tab)
+          GestureDetector(
+            onTap: () => QuickLogModal.show(context, initialTabIndex: 0),
+            child: MetricCard(
+              label: 'WATER',
+              value: data.water.toStringAsFixed(1),
+              unit: 'L',
+              percentage: '${(data.waterProgress * 100).round()}%',
+              progress: data.waterProgress,
+              icon: Icons.water_drop,
+            ),
           ),
-          // Sleep Card
-          MetricCard(
-            label: 'SLEEP',
-            value: widget.data.sleep.toStringAsFixed(1),
-            unit: 'h',
-            percentage: '${(widget.data.sleepProgress * 100).round()}%',
-            progress: widget.data.sleepProgress,
-            icon: Icons.bed,
+          // Sleep Card (taps open Sleep tab)
+          GestureDetector(
+            onTap: () => QuickLogModal.show(context, initialTabIndex: 3),
+            child: MetricCard(
+              label: 'SLEEP',
+              value: data.sleep.toStringAsFixed(1),
+              unit: 'h',
+              percentage: '${(data.sleepProgress * 100).round()}%',
+              progress: data.sleepProgress,
+              icon: Icons.bed,
+            ),
           ),
-          // Digital Wellbeing Card
-          MetricCard(
-            label: 'DIGITAL',
-            value: '${widget.data.digitalHours}',
-            unit: 'h',
-            secondaryValue: '${widget.data.digitalMinutes}',
-            secondaryUnit: 'm',
-            percentage: '${(widget.data.digitalProgress * 100).round()}%',
-            progress: widget.data.digitalProgress,
-            icon: Icons.phone_iphone,
+          // Digital Wellbeing Card (taps open Digital tab)
+          GestureDetector(
+            onTap: () => QuickLogModal.show(context, initialTabIndex: 4),
+            child: MetricCard(
+              label: 'DIGITAL',
+              value: '${data.digitalHours}',
+              unit: 'h',
+              secondaryValue: '${data.digitalMinutes}',
+              secondaryUnit: 'm',
+              percentage: '${(data.digitalProgress * 100).round()}%',
+              progress: data.digitalProgress,
+              icon: Icons.phone_iphone,
+            ),
           ),
         ],
       ),
