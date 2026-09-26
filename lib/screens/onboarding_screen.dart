@@ -11,7 +11,7 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBindingObserver {
   final PageController _pageController = PageController();
   int _currentStep = 0;
 
@@ -75,8 +75,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _recalculateGoals();
-    _checkAndAutoFetchPermissions();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _currentStep == 2) {
+      _checkAndAutoFetchPermissions();
+    }
   }
 
   Future<void> _checkAndAutoFetchPermissions() async {
@@ -95,6 +102,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     _nameController.dispose();
     _weightController.dispose();
