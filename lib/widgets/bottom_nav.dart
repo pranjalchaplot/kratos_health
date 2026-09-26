@@ -1,10 +1,12 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/soma_provider.dart';
 import '../theme/soma_theme.dart';
 import 'quick_log_modal.dart';
 
-/// Bottom navigation bar matching the Stitch design
+/// Elite Bottom Navigation Bar for SOMA with obsidian glass styling and micro-haptics
 class SomaBottomNav extends StatelessWidget {
   const SomaBottomNav({super.key});
 
@@ -12,85 +14,107 @@ class SomaBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<SomaProvider>();
     final currentIndex = provider.currentTabIndex;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      height: 80,
-      decoration: const BoxDecoration(
-        color: SomaColors.surface,
-        border: Border(
+      padding: EdgeInsets.only(bottom: bottomInset > 0 ? bottomInset * 0.5 : 8, top: 8),
+      decoration: BoxDecoration(
+        color: SomaColors.background.withValues(alpha: 0.88),
+        border: const Border(
           top: BorderSide(
-            color: SomaColors.surfaceContainerHighest,
+            color: SomaColors.cardBorder,
             width: 1,
           ),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Dashboard
-          _NavItem(
-            icon: Icons.grid_view_rounded,
-            label: 'DASHBOARD',
-            isActive: currentIndex == 0,
-            onTap: () => provider.setTab(0),
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Dashboard Tab
+                _NavItem(
+                  icon: Icons.grid_view_rounded,
+                  label: 'DASHBOARD',
+                  isActive: currentIndex == 0,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    provider.setTab(0);
+                  },
+                ),
+                // Logs Tab
+                _NavItem(
+                  icon: Icons.receipt_long_rounded,
+                  label: 'LOGS',
+                  isActive: currentIndex == 1,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    provider.setTab(1);
+                  },
+                ),
+                // Center Quick Log Floating Action Button
+                _buildFAB(context),
+                // Analytics Tab
+                _NavItem(
+                  icon: Icons.query_stats_rounded,
+                  label: 'ANALYTICS',
+                  isActive: currentIndex == 3,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    provider.setTab(3);
+                  },
+                ),
+                // Profile Tab
+                _NavItem(
+                  icon: Icons.account_circle_outlined,
+                  label: 'PROFILE',
+                  isActive: currentIndex == 4,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    provider.setTab(4);
+                  },
+                ),
+              ],
+            ),
           ),
-          // Logs
-          _NavItem(
-            icon: Icons.assignment_outlined,
-            label: 'LOGS',
-            isActive: currentIndex == 1,
-            onTap: () => provider.setTab(1),
-          ),
-          // Center FAB
-          _buildFAB(context),
-          // Library / Analytics
-          _NavItem(
-            icon: Icons.analytics_outlined,
-            label: 'ANALYTICS',
-            isActive: currentIndex == 3,
-            onTap: () => provider.setTab(3),
-          ),
-          // Profile
-          _NavItem(
-            icon: Icons.account_circle_outlined,
-            label: 'PROFILE',
-            isActive: currentIndex == 4,
-            onTap: () => provider.setTab(4),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildFAB(BuildContext context) {
-    return Transform.translate(
-      offset: const Offset(0, -16),
-      child: GestureDetector(
-        onTap: () => QuickLogModal.show(context),
-        child: Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: SomaColors.primaryContainer,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: SomaColors.surface,
-              width: 4,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: SomaColors.primaryContainer.withValues(alpha: 0.3),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.add,
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        QuickLogModal.show(context);
+      },
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: SomaColors.primaryContainer,
+          shape: BoxShape.circle,
+          border: Border.all(
             color: SomaColors.background,
-            size: 30,
+            width: 2.5,
           ),
+          boxShadow: const [
+            BoxShadow(
+              color: SomaColors.primaryGlow,
+              blurRadius: 18,
+              spreadRadius: 2,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.add,
+          color: SomaColors.onPrimary,
+          size: 26,
         ),
       ),
     );
@@ -115,50 +139,38 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive
-        ? SomaColors.primaryContainer
-        : SomaColors.onSecondaryContainer;
+    final activeColor = SomaColors.primaryContainer;
+    final inactiveColor = SomaColors.onSecondaryContainer;
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? SomaColors.surfaceContainerHigh.withValues(alpha: 0.6) : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 4),
-            Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.center,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontFamily: 'JetBrains Mono',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    height: 1.0,
-                    letterSpacing: 0.5,
-                    color: color,
-                  ),
-                ),
-                // Active dot indicator
-                if (isActive)
-                  Positioned(
-                    bottom: -8,
-                    child: Container(
-                      width: 4,
-                      height: 4,
-                      decoration: const BoxDecoration(
-                        color: SomaColors.primaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
+            Icon(
+              icon,
+              color: isActive ? activeColor : inactiveColor,
+              size: 22,
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: SomaFonts.mono(
+                fontSize: 9.5,
+                fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+                letterSpacing: 0.6,
+                color: isActive ? activeColor : inactiveColor,
+              ),
             ),
           ],
         ),

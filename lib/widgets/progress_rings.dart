@@ -1,11 +1,11 @@
-﻿import 'dart:math';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../theme/soma_theme.dart';
 
-/// Custom painter for the concentric progress rings
+/// Custom painter for the concentric progress rings with sleek finish
 class ProgressRingsPainter extends CustomPainter {
-  final double calorieProgress; // 0.0 to 1.0
-  final double activityProgress; // 0.0 to 1.0
+  final double calorieProgress; // 0.0 to 1.0+
+  final double activityProgress; // 0.0 to 1.0+
 
   ProgressRingsPainter({
     required this.calorieProgress,
@@ -15,52 +15,56 @@ class ProgressRingsPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final outerRadius = size.width / 2 - 6;
-    final innerRadius = outerRadius - 20;
+    final outerRadius = size.width / 2 - 8;
+    final innerRadius = outerRadius - 18;
 
     // Draw outer track
     final outerTrackPaint = Paint()
-      ..color = const Color(0xFF2A2A2A)
+      ..color = SomaColors.surfaceContainerHigh
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 12;
+      ..strokeWidth = 10;
     canvas.drawCircle(center, outerRadius, outerTrackPaint);
 
     // Draw outer progress (Electric Lime)
-    final outerProgressPaint = Paint()
-      ..color = SomaColors.primaryContainer
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 12
-      ..strokeCap = StrokeCap.round;
-    final outerSweepAngle = 2 * pi * calorieProgress;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: outerRadius),
-      -pi / 2,
-      outerSweepAngle,
-      false,
-      outerProgressPaint,
-    );
+    if (calorieProgress > 0) {
+      final outerProgressPaint = Paint()
+        ..color = SomaColors.primaryContainer
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 10
+        ..strokeCap = StrokeCap.round;
+      final outerSweepAngle = 2 * pi * calorieProgress.clamp(0.0, 1.0);
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: outerRadius),
+        -pi / 2,
+        outerSweepAngle,
+        false,
+        outerProgressPaint,
+      );
+    }
 
     // Draw inner track
     final innerTrackPaint = Paint()
-      ..color = const Color(0xFF2A2A2A)
+      ..color = SomaColors.surfaceContainerHigh
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 12;
+      ..strokeWidth = 10;
     canvas.drawCircle(center, innerRadius, innerTrackPaint);
 
-    // Draw inner progress (White/on-surface)
-    final innerProgressPaint = Paint()
-      ..color = SomaColors.onSurface
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 12
-      ..strokeCap = StrokeCap.round;
-    final innerSweepAngle = 2 * pi * activityProgress;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: innerRadius),
-      -pi / 2,
-      innerSweepAngle,
-      false,
-      innerProgressPaint,
-    );
+    // Draw inner progress (Pure white / light neutral)
+    if (activityProgress > 0) {
+      final innerProgressPaint = Paint()
+        ..color = SomaColors.onSurface
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 10
+        ..strokeCap = StrokeCap.round;
+      final innerSweepAngle = 2 * pi * activityProgress.clamp(0.0, 1.0);
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: innerRadius),
+        -pi / 2,
+        innerSweepAngle,
+        false,
+        innerProgressPaint,
+      );
+    }
   }
 
   @override
@@ -88,13 +92,13 @@ class ProgressRings extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 160,
-      height: 160,
+      width: 156,
+      height: 156,
       child: Stack(
         alignment: Alignment.center,
         children: [
           CustomPaint(
-            size: const Size(160, 160),
+            size: const Size(156, 156),
             painter: ProgressRingsPainter(
               calorieProgress: calorieProgress,
               activityProgress: activityProgress,
@@ -105,25 +109,22 @@ class ProgressRings extends StatelessWidget {
             children: [
               Text(
                 centerValue,
-                style: const TextStyle(
-                  fontFamily: 'Geist',
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
+                style: SomaFonts.display(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
                   height: 1.0,
-                  letterSpacing: -0.48,
+                  letterSpacing: -0.8,
                   color: SomaColors.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 centerLabel,
-                style: const TextStyle(
-                  fontFamily: 'JetBrains Mono',
-                  fontSize: 10,
+                style: SomaFonts.mono(
+                  fontSize: 9.5,
                   fontWeight: FontWeight.w700,
-                  height: 1.0,
-                  letterSpacing: 1.0,
-                  color: SomaColors.onSecondaryContainer,
+                  letterSpacing: 1.2,
+                  color: SomaColors.primaryContainer,
                 ),
               ),
             ],

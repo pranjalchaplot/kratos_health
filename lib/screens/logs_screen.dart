@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/soma_provider.dart';
@@ -20,6 +21,7 @@ class _LogsScreenState extends State<LogsScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<SomaProvider>();
     final currentLog = provider.currentLog;
+    final isToday = DateUtils.isSameDay(provider.selectedDate, DateTime.now());
     final dateStr = DateFormat('EEEE, MMM d, yyyy').format(provider.selectedDate);
 
     List<LogEntry> entries = currentLog.entries;
@@ -38,21 +40,33 @@ class _LogsScreenState extends State<LogsScreen> {
       appBar: AppBar(
         backgroundColor: SomaColors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'ACTIVITY & NUTRITION LOGS',
-          style: TextStyle(
-            fontFamily: 'Geist',
+          style: SomaFonts.display(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            letterSpacing: -0.36,
+            letterSpacing: -0.3,
             color: SomaColors.onSurface,
           ),
         ),
         centerTitle: false,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: SomaColors.primaryContainer),
-            onPressed: () => QuickLogModal.show(context),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: const BoxDecoration(
+                  color: SomaColors.primaryContainer,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.add, color: SomaColors.onPrimary, size: 18),
+              ),
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                QuickLogModal.show(context);
+              },
+            ),
           ),
         ],
       ),
@@ -60,8 +74,8 @@ class _LogsScreenState extends State<LogsScreen> {
         children: [
           // Date Selector Header
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
               color: SomaColors.cardBackground,
               borderRadius: BorderRadius.circular(16),
@@ -71,23 +85,46 @@ class _LogsScreenState extends State<LogsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.chevron_left, color: SomaColors.onSurface),
+                  icon: const Icon(Icons.chevron_left_rounded, color: SomaColors.onSurface, size: 22),
                   onPressed: () {
+                    HapticFeedback.selectionClick();
                     provider.selectDate(provider.selectedDate.subtract(const Duration(days: 1)));
                   },
                 ),
-                Text(
-                  dateStr,
-                  style: const TextStyle(
-                    fontFamily: 'Geist',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: SomaColors.primaryContainer,
+                GestureDetector(
+                  onTap: () {
+                    if (!isToday) {
+                      HapticFeedback.selectionClick();
+                      provider.selectDate(DateTime.now());
+                    }
+                  },
+                  child: Column(
+                    children: [
+                      Text(
+                        dateStr,
+                        style: SomaFonts.primary(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: SomaColors.onSurface,
+                        ),
+                      ),
+                      if (isToday)
+                        Text(
+                          'TODAY',
+                          style: SomaFonts.mono(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.0,
+                            color: SomaColors.primaryContainer,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.chevron_right, color: SomaColors.onSurface),
+                  icon: const Icon(Icons.chevron_right_rounded, color: SomaColors.onSurface, size: 22),
                   onPressed: () {
+                    HapticFeedback.selectionClick();
                     provider.selectDate(provider.selectedDate.add(const Duration(days: 1)));
                   },
                 ),
@@ -95,30 +132,41 @@ class _LogsScreenState extends State<LogsScreen> {
             ),
           ),
 
-          // Filter Chips
+          // Filter Chips Row
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: ['ALL', 'MEALS', 'WATER', 'ACTIVITY', 'SLEEP'].map((filter) {
                 final isSelected = _selectedFilter == filter;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(filter),
-                    selected: isSelected,
-                    selectedColor: SomaColors.primaryContainer,
-                    backgroundColor: SomaColors.cardBackground,
-                    side: BorderSide(
-                      color: isSelected ? SomaColors.primaryContainer : SomaColors.cardBorder,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _selectedFilter = filter);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: isSelected ? SomaColors.primaryContainer : SomaColors.cardBackground,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected ? SomaColors.primaryContainer : SomaColors.cardBorder,
+                        ),
+                      ),
+                      child: Text(
+                        filter,
+                        style: SomaFonts.mono(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.8,
+                          color: isSelected ? SomaColors.onPrimary : SomaColors.onSurface,
+                        ),
+                      ),
                     ),
-                    labelStyle: TextStyle(
-                      fontFamily: 'JetBrains Mono',
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? SomaColors.background : SomaColors.onSurface,
-                    ),
-                    onSelected: (_) => setState(() => _selectedFilter = filter),
                   ),
                 );
               }).toList(),
@@ -129,39 +177,68 @@ class _LogsScreenState extends State<LogsScreen> {
           Expanded(
             child: entries.isEmpty
                 ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.assignment_outlined,
-                          size: 48,
-                          color: SomaColors.onSecondaryContainer.withValues(alpha: 0.5),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'No logs recorded for this day.',
-                          style: TextStyle(
-                            fontFamily: 'Geist',
-                            fontSize: 16,
-                            color: SomaColors.onSecondaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: SomaColors.surfaceContainerHigh,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.receipt_long_rounded,
+                              size: 32,
+                              color: SomaColors.onSecondaryContainer,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: SomaColors.primaryContainer,
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No logs recorded for this day',
+                            style: SomaFonts.primary(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: SomaColors.onSurface,
+                            ),
                           ),
-                          onPressed: () => QuickLogModal.show(context),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add Entry'),
-                        ),
-                      ],
+                          const SizedBox(height: 6),
+                          Text(
+                            'Tap the button below or the + icon in the navbar to log your meals, hydration, workouts, or sleep.',
+                            style: SomaFonts.primary(
+                              fontSize: 13,
+                              color: SomaColors.onSecondaryContainer,
+                              height: 1.4,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: SomaColors.primaryContainer,
+                              foregroundColor: Colors.black,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            ),
+                            onPressed: () {
+                              HapticFeedback.lightImpact();
+                              QuickLogModal.show(context);
+                            },
+                            icon: const Icon(Icons.add_rounded, size: 18),
+                            label: Text(
+                              'ADD NEW ENTRY',
+                              style: SomaFonts.mono(fontSize: 12, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 100),
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 120),
                     itemCount: entries.length,
                     itemBuilder: (context, index) {
                       final entry = entries[index];
@@ -180,48 +257,49 @@ class _LogsScreenState extends State<LogsScreen> {
 
     switch (entry.type) {
       case LogType.water:
-        icon = Icons.water_drop;
-        iconColor = Colors.cyanAccent;
+        icon = Icons.water_drop_rounded;
+        iconColor = SomaColors.accentCyan;
         break;
       case LogType.meal:
-        icon = Icons.restaurant;
+        icon = Icons.restaurant_rounded;
         iconColor = SomaColors.primaryContainer;
         break;
       case LogType.activity:
-        icon = Icons.fitness_center;
-        iconColor = SomaColors.secondary;
+        icon = Icons.fitness_center_rounded;
+        iconColor = SomaColors.accentCoral;
         break;
       case LogType.sleep:
-        icon = Icons.bed;
-        iconColor = Colors.purpleAccent;
+        icon = Icons.bedtime_rounded;
+        iconColor = SomaColors.accentPurple;
         break;
       case LogType.digital:
-        icon = Icons.phone_iphone;
-        iconColor = Colors.amberAccent;
+        icon = Icons.phone_iphone_rounded;
+        iconColor = SomaColors.accentAmber;
         break;
     }
 
     final timeStr = DateFormat('h:mm a').format(entry.timestamp);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: SomaColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: SomaColors.cardBorder),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
+              color: iconColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: iconColor, size: 22),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,9 +310,8 @@ class _LogsScreenState extends State<LogsScreen> {
                     Expanded(
                       child: Text(
                         entry.title,
-                        style: const TextStyle(
-                          fontFamily: 'Geist',
-                          fontSize: 16,
+                        style: SomaFonts.primary(
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
                           color: SomaColors.onSurface,
                         ),
@@ -244,52 +321,55 @@ class _LogsScreenState extends State<LogsScreen> {
                     const SizedBox(width: 8),
                     Text(
                       timeStr,
-                      style: const TextStyle(
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: 11,
+                      style: SomaFonts.mono(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
                         color: SomaColors.onSecondaryContainer,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                if (entry.subtitle != null)
+                if (entry.subtitle != null) ...[
+                  const SizedBox(height: 3),
                   Text(
                     entry.subtitle!,
-                    style: TextStyle(
-                      fontFamily: 'Geist',
-                      fontSize: 13,
+                    style: SomaFonts.primary(
+                      fontSize: 12.5,
                       color: SomaColors.onSecondaryContainer,
                     ),
                   ),
+                ],
                 if (entry.type == LogType.meal) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Wrap(
-                    spacing: 12,
+                    spacing: 8,
+                    runSpacing: 4,
                     children: [
-                      _buildMacroBadge('CAL', '${entry.calories} kcal'),
-                      _buildMacroBadge('PRO', '${entry.protein}g'),
-                      _buildMacroBadge('CARB', '${entry.carbs}g'),
-                      _buildMacroBadge('FAT', '${entry.fats}g'),
+                      _buildMacroBadge('CAL', '${entry.calories} kcal', SomaColors.primaryContainer),
+                      _buildMacroBadge('PRO', '${entry.protein}g', SomaColors.onSurface),
+                      _buildMacroBadge('CARB', '${entry.carbs}g', SomaColors.secondary),
+                      _buildMacroBadge('FAT', '${entry.fats}g', SomaColors.secondary),
                     ],
                   ),
                 ] else if (entry.type == LogType.activity) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Wrap(
-                    spacing: 12,
+                    spacing: 8,
                     children: [
-                      _buildMacroBadge('ACTIVE BURN', '${entry.calories} kcal'),
+                      _buildMacroBadge('BURN', '${entry.calories} kcal', SomaColors.accentCoral),
                       if (entry.activityCategory != null)
-                        _buildMacroBadge('TYPE', entry.activityCategory!.toUpperCase()),
+                        _buildMacroBadge('TYPE', entry.activityCategory!.toUpperCase(), SomaColors.primaryContainer),
                     ],
                   ),
                 ],
               ],
             ),
           ),
+          const SizedBox(width: 4),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.white38, size: 20),
+            icon: const Icon(Icons.delete_outline_rounded, color: Colors.white30, size: 18),
             onPressed: () {
+              HapticFeedback.lightImpact();
               provider.deleteLogEntry(entry.id);
             },
           ),
@@ -298,14 +378,20 @@ class _LogsScreenState extends State<LogsScreen> {
     );
   }
 
-  Widget _buildMacroBadge(String label, String val) {
-    return Text(
-      '$label: $val',
-      style: const TextStyle(
-        fontFamily: 'JetBrains Mono',
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        color: SomaColors.primaryContainer,
+  Widget _buildMacroBadge(String label, String val, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: SomaColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        '$label: $val',
+        style: SomaFonts.mono(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
       ),
     );
   }

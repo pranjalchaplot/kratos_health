@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/soma_provider.dart';
@@ -12,7 +13,7 @@ import '../widgets/metric_card.dart';
 import '../widgets/quick_log_modal.dart';
 import '../widgets/bmr_info_dialog.dart';
 
-/// Main Dashboard Screen - SOMA Fitness & Nutrition Ecosystem
+/// Main Dashboard Screen - SOMA Performance & Fitness Ecosystem
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -44,34 +45,83 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<SomaProvider>();
     final currentLog = provider.currentLog;
-    final data = DashboardData.fromDailyLog(currentLog, provider.userGoals, provider.streak, provider.activeDayIndex);
+    final data = DashboardData.fromDailyLog(
+      currentLog,
+      provider.userGoals,
+      provider.streak,
+      provider.activeDayIndex,
+    );
 
     return Scaffold(
       backgroundColor: SomaColors.background,
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
           // App Bar
           _buildAppBar(context, provider),
+
           // Content
           SliverToBoxAdapter(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                // Week Calendar Strip with interactive selection
+
+                // Week Calendar Strip with interactive date selection
                 WeekCalendarStrip(
                   activeIndex: provider.activeDayIndex,
                   onDaySelected: (index) {
                     provider.selectDayByIndex(index);
                   },
                 ),
-                const SizedBox(height: 24),
+
+                const SizedBox(height: 16),
+
+                // Quick Action Shortcuts Bar
+                _buildQuickActionsRow(context),
+
+                const SizedBox(height: 16),
+
                 // Daily Summary Card
                 _buildDailySummaryCard(context, data),
+
                 const SizedBox(height: 16),
-                // Metrics Grid
+
+                // Section Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'BIOMETRIC TELEMETRY',
+                        style: SomaFonts.mono(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.0,
+                          color: SomaColors.onSecondaryContainer,
+                        ),
+                      ),
+                      Text(
+                        'LIVE SENSORS',
+                        style: SomaFonts.mono(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: SomaColors.primaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // Metrics Grid (2x2)
                 _buildMetricsGrid(context, data, provider),
+
                 // Bottom padding for nav bar
-                const SizedBox(height: 100),
+                const SizedBox(height: 120),
               ],
             ),
           ),
@@ -81,6 +131,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   SliverAppBar _buildAppBar(BuildContext context, SomaProvider provider) {
+    final athleteName = provider.userGoals.userName ?? 'Athlete';
+
     return SliverAppBar(
       pinned: true,
       backgroundColor: SomaColors.background,
@@ -89,65 +141,101 @@ class _DashboardScreenState extends State<DashboardScreen> {
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Profile avatar (tapping goes to profile tab)
+          // Profile avatar & Greeting
           GestureDetector(
-            onTap: () => provider.setTab(4),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: SomaColors.surfaceContainerHighest,
-                  width: 1,
-                ),
-              ),
-              child: ClipOval(
-                child: Container(
-                  color: SomaColors.surfaceContainerHigh,
-                  child: const Icon(
-                    Icons.person,
-                    color: SomaColors.onSecondaryContainer,
-                    size: 24,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              provider.setTab(4);
+            },
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: SomaColors.primaryContainer.withValues(alpha: 0.4),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: ClipOval(
+                    child: Container(
+                      color: SomaColors.surfaceContainerHigh,
+                      child: const Icon(
+                        Icons.person,
+                        color: SomaColors.primaryContainer,
+                        size: 20,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: SomaColors.primaryContainer,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          'SOMA ACTIVE',
+                          style: SomaFonts.mono(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.8,
+                            color: SomaColors.primaryContainer,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      athleteName,
+                      style: SomaFonts.primary(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: SomaColors.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          // SOMA title with Logo
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: Image.asset(
-                  'asset/icon_data/playstore.png',
-                  width: 24,
-                  height: 24,
-                ),
+
+          // Streak Flame Pill
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: SomaColors.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: SomaColors.primaryContainer.withValues(alpha: 0.3),
+                width: 1,
               ),
-              const SizedBox(width: 8),
-              const Text(
-                'SOMA',
-                style: TextStyle(
-                  fontFamily: 'Geist',
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  height: 1.2,
-                  letterSpacing: -0.48,
-                  color: SomaColors.onBackground,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('🔥', style: TextStyle(fontSize: 13)),
+                const SizedBox(width: 4),
+                Text(
+                  '${provider.streak}D',
+                  style: SomaFonts.mono(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: SomaColors.primaryContainer,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          // Streak
-          Text(
-            '${provider.streak}🔥',
-            style: const TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: SomaColors.primaryContainer,
+              ],
             ),
           ),
         ],
@@ -156,7 +244,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
         preferredSize: const Size.fromHeight(1),
         child: Container(
           height: 1,
-          color: SomaColors.surfaceContainerHighest,
+          color: SomaColors.cardBorder,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsRow(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: [
+            _buildActionChip(
+              icon: Icons.restaurant_rounded,
+              label: '+ MEAL',
+              color: SomaColors.primaryContainer,
+              onTap: () => QuickLogModal.show(context, initialTabIndex: 1),
+            ),
+            const SizedBox(width: 8),
+            _buildActionChip(
+              icon: Icons.water_drop_rounded,
+              label: '+ WATER',
+              color: SomaColors.accentCyan,
+              onTap: () => QuickLogModal.show(context, initialTabIndex: 0),
+            ),
+            const SizedBox(width: 8),
+            _buildActionChip(
+              icon: Icons.fitness_center_rounded,
+              label: '+ WORKOUT',
+              color: SomaColors.accentCoral,
+              onTap: () => QuickLogModal.show(context, initialTabIndex: 2),
+            ),
+            const SizedBox(width: 8),
+            _buildActionChip(
+              icon: Icons.bedtime_rounded,
+              label: '+ SLEEP',
+              color: SomaColors.accentPurple,
+              onTap: () => QuickLogModal.show(context, initialTabIndex: 3),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: SomaColors.cardBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: SomaColors.cardBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: SomaFonts.mono(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+                color: SomaColors.onSurface,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -164,18 +331,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildDailySummaryCard(BuildContext context, DashboardData data) {
     final formatCurrency = NumberFormat("#,##0", "en_US");
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GestureDetector(
-        onTap: () => QuickLogModal.show(context, initialTabIndex: 2), // Live Calorie Burn tab
+        onTap: () {
+          HapticFeedback.lightImpact();
+          QuickLogModal.show(context, initialTabIndex: 2); // Live Calorie Burn tab
+        },
         child: Container(
           decoration: BoxDecoration(
             color: SomaColors.cardBackground,
             border: Border.all(color: SomaColors.cardBorder, width: 1),
             borderRadius: BorderRadius.circular(20),
           ),
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           child: Column(
             children: [
               LayoutBuilder(
@@ -218,7 +388,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildMacrosSection(BuildContext context, DashboardData data) {
     final goalPercent = (data.caloriesProgress * 100).round();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -229,28 +399,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Expanded(
               child: Row(
                 children: [
-                  const Flexible(
+                  Flexible(
                     child: Text(
-                      'DAILY SUMMARY',
-                      style: TextStyle(
-                        fontFamily: 'Geist',
-                        fontSize: 18,
+                      'DAILY METABOLIC BURN',
+                      style: SomaFonts.display(
+                        fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: -0.36,
+                        letterSpacing: -0.2,
                         color: SomaColors.onSurface,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 6),
                   GestureDetector(
-                    onTap: () => BmrInfoDialog.show(context),
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      BmrInfoDialog.show(context);
+                    },
                     child: Container(
-                      padding: const EdgeInsets.all(2),
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: SomaColors.primaryContainer.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
                       child: const Icon(
                         Icons.info_outline,
                         color: SomaColors.primaryContainer,
-                        size: 18,
+                        size: 14,
                       ),
                     ),
                   ),
@@ -258,25 +434,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              '$goalPercent% OF GOAL',
-              style: const TextStyle(
-                fontFamily: 'JetBrains Mono',
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                height: 1.0,
-                letterSpacing: 1.2,
-                color: SomaColors.primaryContainer,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: SomaColors.primaryContainer.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '$goalPercent% OF GOAL',
+                style: SomaFonts.mono(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.8,
+                  color: SomaColors.primaryContainer,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
           'Active: ${data.caloriesBurned} kcal • Resting BMR: ${data.bmrBurntSoFar} kcal',
-          style: const TextStyle(
-            fontFamily: 'JetBrains Mono',
-            fontSize: 11,
+          style: SomaFonts.mono(
+            fontSize: 10.5,
             color: SomaColors.onSecondaryContainer,
             fontWeight: FontWeight.w600,
           ),
@@ -308,63 +488,79 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildMetricsGrid(BuildContext context, DashboardData data, SomaProvider provider) {
     final formatCurrency = NumberFormat("#,##0", "en_US");
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GridView.count(
         crossAxisCount: 2,
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
+        mainAxisSpacing: 14,
+        crossAxisSpacing: 14,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          // Steps Card (taps open prompt if permission missed, else open Activity tab)
+          // Steps Card
           GestureDetector(
-            onTap: () => _handleStepsTap(context, data, provider),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              _handleStepsTap(context, data, provider);
+            },
             child: MetricCard(
               label: 'STEPS TODAY',
               value: formatCurrency.format(data.steps),
               percentage: '${(data.stepsProgress * 100).round()}%',
               progress: data.stepsProgress,
-              icon: Icons.directions_walk,
+              icon: Icons.directions_walk_rounded,
+              accentColor: SomaColors.primaryContainer,
             ),
           ),
-          // Water Card (taps open Water tab)
+          // Water Card
           GestureDetector(
-            onTap: () => QuickLogModal.show(context, initialTabIndex: 0),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              QuickLogModal.show(context, initialTabIndex: 0);
+            },
             child: MetricCard(
-              label: 'WATER',
+              label: 'HYDRATION',
               value: data.water.toStringAsFixed(1),
               unit: 'L',
               percentage: '${(data.waterProgress * 100).round()}%',
               progress: data.waterProgress,
-              icon: Icons.water_drop,
+              icon: Icons.water_drop_rounded,
+              accentColor: SomaColors.accentCyan,
             ),
           ),
-          // Sleep Card (taps open Sleep tab)
+          // Sleep Card
           GestureDetector(
-            onTap: () => QuickLogModal.show(context, initialTabIndex: 3),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              QuickLogModal.show(context, initialTabIndex: 3);
+            },
             child: MetricCard(
-              label: 'SLEEP',
+              label: 'SLEEP REST',
               value: data.sleep.toStringAsFixed(1),
               unit: 'h',
               percentage: '${(data.sleepProgress * 100).round()}%',
               progress: data.sleepProgress,
-              icon: Icons.bed,
+              icon: Icons.bedtime_rounded,
+              accentColor: SomaColors.accentPurple,
             ),
           ),
-          // Digital Wellbeing Card (taps open Digital tab)
+          // Digital Wellbeing Card
           GestureDetector(
-            onTap: () => QuickLogModal.show(context, initialTabIndex: 4),
+            onTap: () {
+              HapticFeedback.lightImpact();
+              QuickLogModal.show(context, initialTabIndex: 4);
+            },
             child: MetricCard(
-              label: 'DIGITAL',
+              label: 'DIGITAL USE',
               value: '${data.digitalHours}',
               unit: 'h',
               secondaryValue: '${data.digitalMinutes}',
               secondaryUnit: 'm',
               percentage: '${(data.digitalProgress * 100).round()}%',
               progress: data.digitalProgress,
-              icon: Icons.phone_iphone,
+              icon: Icons.phone_iphone_rounded,
+              accentColor: SomaColors.accentAmber,
             ),
           ),
         ],
@@ -384,7 +580,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: SomaColors.surfaceContainer,
+      backgroundColor: SomaColors.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -411,28 +607,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.directions_walk,
+                  Icons.directions_walk_rounded,
                   color: SomaColors.primaryContainer,
                   size: 32,
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'ENABLE AUTO STEP TRACKING',
-                style: TextStyle(
-                  fontFamily: 'Geist',
-                  fontSize: 20,
+              Text(
+                'ENABLE REAL-TIME STEP TRACKING',
+                style: SomaFonts.display(
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: SomaColors.onSurface,
-                  letterSpacing: 0.5,
+                  letterSpacing: 0.2,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              const Text(
-                'You skipped granting Physical Activity permission during onboarding. Enable it now so SOMA can auto-detect your daily steps in real time using your phone\'s hardware sensor.',
-                style: TextStyle(
-                  fontFamily: 'Geist',
+              Text(
+                'Enable physical activity permission so SOMA can automatically record daily steps in real-time using your device hardware pedometer sensor.',
+                style: SomaFonts.primary(
                   fontSize: 14,
                   color: SomaColors.secondary,
                   height: 1.4,
@@ -448,7 +642,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     backgroundColor: SomaColors.primaryContainer,
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
                   onPressed: () async {
@@ -459,7 +653,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         SnackBar(
                           content: Text(
                             granted
-                                ? 'Physical Activity permission granted! Auto step tracking active.'
+                                ? 'Physical Activity permission granted! Step tracking active.'
                                 : 'Permission was not granted. Ensure physical activity access is enabled in Settings.',
                           ),
                           backgroundColor: granted
@@ -470,17 +664,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     }
                   },
                   icon: const Icon(Icons.check_circle_outline, size: 20),
-                  label: const Text(
-                    'GRANT STEP PERMISSION',
-                    style: TextStyle(
-                      fontFamily: 'Geist',
-                      fontSize: 14,
+                  label: Text(
+                    'GRANT SENSOR PERMISSION',
+                    style: SomaFonts.mono(
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -492,11 +685,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Navigator.pop(ctx);
                     QuickLogModal.show(context, initialTabIndex: 2);
                   },
-                  child: const Text(
+                  child: Text(
                     'LOG STEPS MANUALLY INSTEAD',
-                    style: TextStyle(
-                      fontFamily: 'Geist',
-                      fontSize: 13,
+                    style: SomaFonts.mono(
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../theme/soma_theme.dart';
 
-/// Metric card used in the 2x2 grid (Steps, Water, Sleep, Digital)
+/// Metric card used in the 2x2 telemetry grid (Steps, Water, Sleep, Digital)
 class MetricCard extends StatelessWidget {
   final String label;
   final String value;
@@ -9,8 +9,9 @@ class MetricCard extends StatelessWidget {
   final String? secondaryValue;
   final String? secondaryUnit;
   final String percentage;
-  final double progress; // 0.0 to 1.0
+  final double progress; // 0.0 to 1.0+
   final IconData icon;
+  final Color? accentColor;
 
   const MetricCard({
     super.key,
@@ -22,85 +23,100 @@ class MetricCard extends StatelessWidget {
     required this.percentage,
     required this.progress,
     required this.icon,
+    this.accentColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color = accentColor ?? SomaColors.primaryContainer;
+
     return Container(
       decoration: BoxDecoration(
         color: SomaColors.cardBackground,
         border: Border.all(color: SomaColors.cardBorder, width: 1),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: AspectRatio(
-        aspectRatio: 1,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top row: Label, Percentage, Icon
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: const TextStyle(
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        height: 1.0,
-                        letterSpacing: 1.0,
-                        color: Color(0x99B6B5B4), // on-secondary-container/70
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Top row: Icon badge, Label, and Percentage
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        icon,
+                        color: color,
+                        size: 16,
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    Text(
+                      label,
+                      style: SomaFonts.mono(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                        color: SomaColors.onSecondaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  Text(
+                  child: Text(
                     percentage,
-                    style: const TextStyle(
-                      fontFamily: 'JetBrains Mono',
-                      fontSize: 11,
+                    style: SomaFonts.mono(
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      height: 1.0,
-                      letterSpacing: 1.0,
-                      color: SomaColors.primaryContainer,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    icon,
-                    color: SomaColors.primaryContainer,
-                    size: 20,
-                  ),
-                ],
-              ),
-              // Center: Big value
-              Expanded(
-                child: Center(
-                  child: _buildValueText(),
-                ),
-              ),
-              // Bottom: Progress bar
-              Container(
-                height: 4,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: SomaColors.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(9999),
-                ),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: progress.clamp(0.0, 1.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: SomaColors.primaryContainer,
-                      borderRadius: BorderRadius.circular(9999),
+                      color: color,
                     ),
                   ),
                 ),
+              ],
+            ),
+
+            const Spacer(),
+
+            // Center: Value display with Tabular numerals
+            _buildValueText(),
+
+            const Spacer(),
+
+            // Bottom: Progress track
+            Container(
+              height: 4,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: SomaColors.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(999),
               ),
-            ],
-          ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: progress.clamp(0.0, 1.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -110,51 +126,42 @@ class MetricCard extends StatelessWidget {
     if (secondaryValue != null) {
       // Two-part value like "4h 12m"
       return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
           Text(
             value,
-            style: const TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 36,
+            style: SomaFonts.display(
+              fontSize: 28,
               fontWeight: FontWeight.w800,
-              letterSpacing: -1.44,
-              fontStyle: FontStyle.italic,
+              letterSpacing: -0.8,
               color: SomaColors.onSurface,
             ),
           ),
           Text(
             unit ?? '',
-            style: const TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              fontStyle: FontStyle.italic,
-              color: SomaColors.onSurface,
+            style: SomaFonts.mono(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: SomaColors.onSecondaryContainer,
             ),
           ),
-          const SizedBox(width: 2),
+          const SizedBox(width: 4),
           Text(
             secondaryValue!,
-            style: const TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 36,
+            style: SomaFonts.display(
+              fontSize: 28,
               fontWeight: FontWeight.w800,
-              letterSpacing: -1.44,
-              fontStyle: FontStyle.italic,
+              letterSpacing: -0.8,
               color: SomaColors.onSurface,
             ),
           ),
           Text(
             secondaryUnit ?? '',
-            style: const TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              fontStyle: FontStyle.italic,
-              color: SomaColors.onSurface,
+            style: SomaFonts.mono(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: SomaColors.onSecondaryContainer,
             ),
           ),
         ],
@@ -162,32 +169,29 @@ class MetricCard extends StatelessWidget {
     }
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
         Text(
           value,
-          style: const TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 36,
+          style: SomaFonts.display(
+            fontSize: 28,
             fontWeight: FontWeight.w800,
-            letterSpacing: -1.44,
-            fontStyle: FontStyle.italic,
+            letterSpacing: -0.8,
             color: SomaColors.onSurface,
           ),
         ),
-        if (unit != null)
+        if (unit != null) ...[
+          const SizedBox(width: 2),
           Text(
             unit!,
-            style: const TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              fontStyle: FontStyle.italic,
-              color: SomaColors.onSurface,
+            style: SomaFonts.mono(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: SomaColors.onSecondaryContainer,
             ),
           ),
+        ],
       ],
     );
   }

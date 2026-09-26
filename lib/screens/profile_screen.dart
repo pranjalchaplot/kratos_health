@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/soma_provider.dart';
 import '../models/user_goals.dart';
@@ -109,26 +110,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         backgroundColor: SomaColors.background,
         elevation: 0,
-        title: const Text(
-          'PROFILE & GOALS',
-          style: TextStyle(
-            fontFamily: 'Geist',
+        title: Text(
+          'PROFILE & METRICS',
+          style: SomaFonts.display(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            letterSpacing: -0.36,
+            letterSpacing: -0.3,
             color: SomaColors.onSurface,
           ),
         ),
         centerTitle: false,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 12, bottom: 100),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 120),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // User Header Card
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: SomaColors.cardBackground,
                 borderRadius: BorderRadius.circular(20),
@@ -137,36 +138,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Row(
                 children: [
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: 52,
+                    height: 52,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: SomaColors.primaryContainer.withValues(alpha: 0.2),
-                      border: Border.all(color: SomaColors.primaryContainer),
+                      color: SomaColors.primaryContainer.withValues(alpha: 0.15),
+                      border: Border.all(color: SomaColors.primaryContainer, width: 1.5),
                     ),
-                    child: const Icon(Icons.person, color: SomaColors.primaryContainer, size: 32),
+                    child: const Icon(Icons.person, color: SomaColors.primaryContainer, size: 28),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           provider.userGoals.userName ?? 'SOMA Athlete',
-                          style: const TextStyle(
-                            fontFamily: 'Geist',
-                            fontSize: 20,
+                          style: SomaFonts.display(
+                            fontSize: 18,
                             fontWeight: FontWeight.w800,
                             color: SomaColors.onSurface,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          provider.userGoals.primaryFocus ?? 'Focus: Peak Athletic Performance',
-                          style: const TextStyle(
-                            fontFamily: 'JetBrains Mono',
-                            fontSize: 12,
-                            color: SomaColors.primaryContainer,
+                        const SizedBox(height: 3),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                          decoration: BoxDecoration(
+                            color: SomaColors.surfaceContainerHigh,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            provider.userGoals.primaryFocus ?? 'Peak Athletic Performance',
+                            style: SomaFonts.mono(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: SomaColors.primaryContainer,
+                            ),
                           ),
                         ),
                       ],
@@ -181,19 +188,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'BODY STATS & AUTO-CALORIE BURN (BMR)',
-                  style: TextStyle(
-                    fontFamily: 'JetBrains Mono',
+                Text(
+                  'BODY STATS & LIVE BMR ENGINE',
+                  style: SomaFonts.mono(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: SomaColors.onSecondaryContainer,
                     letterSpacing: 1.0,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.info_outline, color: SomaColors.primaryContainer, size: 20),
-                  onPressed: () => BmrInfoDialog.show(context),
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    BmrInfoDialog.show(context);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    child: const Icon(Icons.info_outline, color: SomaColors.primaryContainer, size: 18),
+                  ),
                 ),
               ],
             ),
@@ -205,7 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               decoration: BoxDecoration(
                 color: SomaColors.cardBackground,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.4)),
+                border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.35)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -213,22 +225,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'AUTO RESTING BURN (BMR)',
-                        style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 10, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer),
+                        style: SomaFonts.mono(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: SomaColors.onSecondaryContainer,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '$calculatedBmr kcal / day',
-                        style: const TextStyle(fontFamily: 'Geist', fontSize: 24, fontWeight: FontWeight.w800, color: SomaColors.primaryContainer),
+                        style: SomaFonts.display(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: SomaColors.primaryContainer,
+                        ),
                       ),
                       Text(
-                        '~${hourlyBmr.toStringAsFixed(1)} kcal/hr burnt simply by existing',
-                        style: const TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, color: SomaColors.onSurface),
+                        '~${hourlyBmr.toStringAsFixed(1)} kcal/hr burned continuously',
+                        style: SomaFonts.mono(
+                          fontSize: 10.5,
+                          color: SomaColors.onSurface,
+                        ),
                       ),
                     ],
                   ),
-                  const Icon(Icons.local_fire_department, color: SomaColors.primaryContainer, size: 36),
+                  const Icon(Icons.local_fire_department_rounded, color: SomaColors.primaryContainer, size: 36),
                 ],
               ),
             ),
@@ -241,7 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(width: 8),
                 Expanded(child: _buildInputField('Height (cm)', _heightController, const TextInputType.numberWithOptions(decimal: true), () => setState(() {}))),
                 const SizedBox(width: 8),
-                Expanded(child: _buildInputField('Age (years)', _ageController, TextInputType.number, () => setState(() {}))),
+                Expanded(child: _buildInputField('Age (yrs)', _ageController, TextInputType.number, () => setState(() {}))),
               ],
             ),
             const SizedBox(height: 12),
@@ -250,7 +273,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Sex / Gender', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
+                Text(
+                  'Sex / Biological Profile',
+                  style: SomaFonts.mono(fontSize: 10.5, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer),
+                ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
@@ -269,16 +295,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('BMR Formula Choice', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
+                Text(
+                  'BMR Formula Model',
+                  style: SomaFonts.mono(fontSize: 10.5, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer),
+                ),
                 const SizedBox(height: 6),
                 DropdownButtonFormField<String>(
                   initialValue: _bmrFormula,
                   dropdownColor: SomaColors.cardBackground,
-                  style: const TextStyle(color: SomaColors.onSurface, fontFamily: 'Geist', fontWeight: FontWeight.bold),
+                  style: SomaFonts.primary(color: SomaColors.onSurface, fontWeight: FontWeight.bold, fontSize: 14),
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: SomaColors.cardBackground,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: SomaColors.cardBorder)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: SomaColors.cardBorder)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: SomaColors.primaryContainer)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   ),
                   items: const [
@@ -306,20 +337,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
 
             const SizedBox(height: 24),
-            const Text(
-              'CUSTOMIZE DAILY TARGETS',
-              style: TextStyle(
-                fontFamily: 'JetBrains Mono',
-                fontSize: 12,
+            Text(
+              'DAILY PERFORMANCE TARGETS',
+              style: SomaFonts.mono(
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: SomaColors.onSecondaryContainer,
-                letterSpacing: 1.2,
+                letterSpacing: 1.0,
               ),
             ),
-            const SizedBox(height: 16),
-
-            _buildInputField('Calories Target (kcal)', _caloriesController, TextInputType.number, () {}),
             const SizedBox(height: 12),
+
+            _buildInputField('Daily Calorie Target (kcal)', _caloriesController, TextInputType.number, () {}),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(child: _buildInputField('Protein (g)', _proteinController, TextInputType.number, () {})),
@@ -329,13 +359,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Expanded(child: _buildInputField('Fats (g)', _fatsController, TextInputType.number, () {})),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             _buildInputField('Daily Steps Target', _stepsController, TextInputType.number, () {}),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             _buildInputField('Daily Water Target (Liters)', _waterController, const TextInputType.numberWithOptions(decimal: true), () {}),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             _buildInputField('Sleep Target (Hours)', _sleepController, const TextInputType.numberWithOptions(decimal: true), () {}),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             _buildInputField('Digital Goal Limit (Hours)', _digitalController, TextInputType.number, () {}),
 
             const SizedBox(height: 24),
@@ -349,6 +379,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 onPressed: () async {
+                  HapticFeedback.mediumImpact();
                   final newGoals = UserGoals(
                     caloriesGoal: int.tryParse(_caloriesController.text) ?? 3200,
                     proteinGoal: int.tryParse(_proteinController.text) ?? 180,
@@ -380,12 +411,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     );
                   }
                 },
-                icon: const Icon(Icons.save),
-                label: const Text(
+                icon: const Icon(Icons.check_circle_rounded, size: 20),
+                label: Text(
                   'SAVE TARGET GOALS & BMR',
-                  style: TextStyle(
-                    fontFamily: 'Geist',
-                    fontSize: 16,
+                  style: SomaFonts.mono(
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -397,20 +427,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               height: 48,
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: SomaColors.primaryContainer,
-                  side: const BorderSide(color: SomaColors.primaryContainer),
+                  foregroundColor: SomaColors.onSurface,
+                  side: const BorderSide(color: SomaColors.cardBorder),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 onPressed: () async {
+                  HapticFeedback.lightImpact();
                   await provider.resetOnboarding();
                 },
-                icon: const Icon(Icons.restart_alt),
-                label: const Text(
+                icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                label: Text(
                   'RE-RUN ONBOARDING FLOW',
-                  style: TextStyle(
-                    fontFamily: 'Geist',
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                  style: SomaFonts.mono(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -421,28 +451,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
               height: 48,
               child: OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.redAccent,
-                  side: const BorderSide(color: Colors.redAccent),
+                  foregroundColor: SomaColors.error,
+                  side: BorderSide(color: SomaColors.error.withValues(alpha: 0.5)),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 onPressed: () async {
+                  HapticFeedback.heavyImpact();
                   await provider.clearAllData();
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('All logged entries cleared!'),
-                        backgroundColor: Colors.redAccent,
+                        backgroundColor: SomaColors.error,
                       ),
                     );
                   }
                 },
-                icon: const Icon(Icons.delete_forever),
-                label: const Text(
+                icon: const Icon(Icons.delete_sweep_rounded, size: 18),
+                label: Text(
                   'CLEAR ALL LOGGED DATA',
-                  style: TextStyle(
-                    fontFamily: 'Geist',
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                  style: SomaFonts.mono(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
@@ -455,27 +485,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     borderRadius: BorderRadius.circular(10),
                     child: Image.asset(
                       'asset/icon_data/playstore.png',
-                      width: 36,
-                      height: 36,
+                      width: 32,
+                      height: 32,
                     ),
                   ),
                   const SizedBox(height: 10),
-                  const Text(
+                  Text(
                     'SOMA PERFORMANCE ECOSYSTEM',
-                    style: TextStyle(
-                      fontFamily: 'JetBrains Mono',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
+                    style: SomaFonts.mono(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
                       color: SomaColors.primaryContainer,
-                      letterSpacing: 1.5,
+                      letterSpacing: 1.2,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Version 0.1.0 • Build 1',
-                    style: TextStyle(
-                      fontFamily: 'JetBrains Mono',
-                      fontSize: 11,
+                    style: SomaFonts.mono(
+                      fontSize: 10,
                       color: SomaColors.onSecondaryContainer,
                     ),
                   ),
@@ -490,18 +518,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildGenderChip(String key, String label) {
     final isSelected = _gender == key;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      selectedColor: SomaColors.primaryContainer,
-      backgroundColor: SomaColors.cardBackground,
-      labelStyle: TextStyle(
-        fontFamily: 'JetBrains Mono',
-        fontSize: 12,
-        fontWeight: FontWeight.bold,
-        color: isSelected ? Colors.black : SomaColors.onSurface,
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _gender = key);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? SomaColors.primaryContainer : SomaColors.cardBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? SomaColors.primaryContainer : SomaColors.cardBorder,
+          ),
+        ),
+        child: Text(
+          label,
+          style: SomaFonts.mono(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: isSelected ? Colors.black : SomaColors.onSurface,
+          ),
+        ),
       ),
-      onSelected: (_) => setState(() => _gender = key),
     );
   }
 
@@ -511,9 +551,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontFamily: 'JetBrains Mono',
-            fontSize: 11,
+          style: SomaFonts.mono(
+            fontSize: 10.5,
             fontWeight: FontWeight.bold,
             color: SomaColors.onSecondaryContainer,
           ),
@@ -523,9 +562,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           controller: controller,
           keyboardType: keyboardType,
           onChanged: (_) => onChanged(),
-          style: const TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 15,
+          style: SomaFonts.primary(
+            fontSize: 14.5,
             fontWeight: FontWeight.bold,
             color: SomaColors.onSurface,
           ),

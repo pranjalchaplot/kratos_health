@@ -1,5 +1,6 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../models/exercise_set.dart';
 import '../providers/soma_provider.dart';
@@ -109,7 +110,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         color: SomaColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(
-          top: BorderSide(color: SomaColors.surfaceContainerHighest, width: 1),
+          top: BorderSide(color: SomaColors.cardBorder, width: 1),
         ),
       ),
       child: Column(
@@ -132,19 +133,24 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'LOG ACTIVITY & VITAL METRICS',
-                  style: TextStyle(
-                    fontFamily: 'Geist',
-                    fontSize: 18,
+                  style: SomaFonts.display(
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.36,
+                    letterSpacing: -0.2,
                     color: SomaColors.onSurface,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.info_outline, color: SomaColors.primaryContainer),
-                  onPressed: () => BmrInfoDialog.show(context),
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    BmrInfoDialog.show(context);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    child: const Icon(Icons.info_outline_rounded, color: SomaColors.primaryContainer, size: 20),
+                  ),
                 ),
               ],
             ),
@@ -157,25 +163,25 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             indicatorColor: SomaColors.primaryContainer,
             labelColor: SomaColors.primaryContainer,
             unselectedLabelColor: SomaColors.onSecondaryContainer,
-            labelStyle: const TextStyle(
-              fontFamily: 'JetBrains Mono',
-              fontSize: 12,
+            labelStyle: SomaFonts.mono(
+              fontSize: 11,
               fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
             ),
             tabs: const [
-              Tab(icon: Icon(Icons.water_drop_outlined, size: 18), text: 'WATER'),
-              Tab(icon: Icon(Icons.restaurant_outlined, size: 18), text: 'MEAL'),
-              Tab(icon: Icon(Icons.local_fire_department, size: 18), text: 'BURN'),
-              Tab(icon: Icon(Icons.fitness_center_outlined, size: 18), text: 'ACTIVITY'),
-              Tab(icon: Icon(Icons.bed_outlined, size: 18), text: 'SLEEP'),
-              Tab(icon: Icon(Icons.phone_iphone_outlined, size: 18), text: 'DIGITAL'),
+              Tab(icon: Icon(Icons.water_drop_rounded, size: 18), text: 'WATER'),
+              Tab(icon: Icon(Icons.restaurant_rounded, size: 18), text: 'MEAL'),
+              Tab(icon: Icon(Icons.local_fire_department_rounded, size: 18), text: 'BURN'),
+              Tab(icon: Icon(Icons.fitness_center_rounded, size: 18), text: 'ACTIVITY'),
+              Tab(icon: Icon(Icons.bedtime_rounded, size: 18), text: 'SLEEP'),
+              Tab(icon: Icon(Icons.phone_iphone_rounded, size: 18), text: 'DIGITAL'),
             ],
           ),
-          const Divider(color: SomaColors.surfaceContainerHighest, height: 1),
+          const Divider(color: SomaColors.cardBorder, height: 1),
           // Tab Views
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               child: SizedBox(
                 height: 480,
                 child: TabBarView(
@@ -217,18 +223,21 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'LIVE REAL-TIME CALORIE BURN',
-              style: TextStyle(
-                fontFamily: 'JetBrains Mono',
-                fontSize: 12,
+              style: SomaFonts.mono(
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: SomaColors.onSecondaryContainer,
+                letterSpacing: 0.8,
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.info_outline, color: SomaColors.primaryContainer, size: 18),
-              onPressed: () => BmrInfoDialog.show(context),
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                BmrInfoDialog.show(context);
+              },
+              child: const Icon(Icons.info_outline_rounded, color: SomaColors.primaryContainer, size: 18),
             ),
           ],
         ),
@@ -238,7 +247,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.orangeAccent.withValues(alpha: 0.1),
+            color: SomaColors.cardBackground,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.orangeAccent.withValues(alpha: 0.4)),
           ),
@@ -248,10 +257,9 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'RESTING BMR BURN (BY EXISTING)',
-                    style: TextStyle(
-                      fontFamily: 'JetBrains Mono',
+                    style: SomaFonts.mono(
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       color: Colors.orangeAccent,
@@ -265,8 +273,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                     ),
                     child: Text(
                       '+${bmrPerSec.toStringAsFixed(4)} kcal/sec',
-                      style: const TextStyle(
-                        fontFamily: 'JetBrains Mono',
+                      style: SomaFonts.mono(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: Colors.black,
@@ -282,21 +289,19 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 children: [
                   Text(
                     preciseBmrSoFar.toStringAsFixed(3),
-                    style: const TextStyle(
-                      fontFamily: 'JetBrains Mono',
-                      fontSize: 32,
+                    style: SomaFonts.mono(
+                      fontSize: 30,
                       fontWeight: FontWeight.w800,
                       color: Colors.orangeAccent,
                     ),
                   ),
                   const SizedBox(width: 6),
-                  const Text(
+                  Text(
                     'kcal',
-                    style: TextStyle(
-                      fontFamily: 'Geist',
-                      fontSize: 16,
+                    style: SomaFonts.mono(
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white70,
+                      color: SomaColors.onSecondaryContainer,
                     ),
                   ),
                 ],
@@ -311,12 +316,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                SomaColors.primaryContainer.withValues(alpha: 0.2),
-                SomaColors.cardBackground,
-              ],
-            ),
+            color: SomaColors.cardBackground,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.5)),
           ),
@@ -328,24 +328,23 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 children: [
                   Text(
                     'Total Burn: ${totalBurnPrecise.toStringAsFixed(1)} kcal',
-                    style: const TextStyle(
-                      fontFamily: 'Geist',
-                      fontSize: 20,
+                    style: SomaFonts.display(
+                      fontSize: 18,
                       fontWeight: FontWeight.w800,
                       color: SomaColors.primaryContainer,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     'Active ($activeBurn kcal) + Resting BMR (${preciseBmrSoFar.toStringAsFixed(1)} kcal)',
-                    style: const TextStyle(
-                      fontFamily: 'Geist',
-                      fontSize: 11,
+                    style: SomaFonts.primary(
+                      fontSize: 11.5,
                       color: SomaColors.onSecondaryContainer,
                     ),
                   ),
                 ],
               ),
-              const Icon(Icons.local_fire_department, color: SomaColors.primaryContainer, size: 28),
+              const Icon(Icons.local_fire_department_rounded, color: SomaColors.primaryContainer, size: 28),
             ],
           ),
         ),
@@ -357,18 +356,16 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           children: [
             Text(
               'TDEE Target ($targetTdee kcal)',
-              style: const TextStyle(
-                fontFamily: 'JetBrains Mono',
-                fontSize: 12,
+              style: SomaFonts.mono(
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: SomaColors.onSecondaryContainer,
               ),
             ),
             Text(
               '${((totalBurnPrecise / targetTdee) * 100).round()}%',
-              style: const TextStyle(
-                fontFamily: 'JetBrains Mono',
-                fontSize: 12,
+              style: SomaFonts.mono(
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
                 color: SomaColors.primaryContainer,
               ),
@@ -439,10 +436,9 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
 
     return Column(
       children: [
-        const Text(
+        Text(
           'RECORD HYDRATION',
-          style: TextStyle(
-            fontFamily: 'JetBrains Mono',
+          style: SomaFonts.mono(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: SomaColors.onSecondaryContainer,
@@ -457,6 +453,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               label: 'Glasses',
               isSelected: _isGlassesMode,
               onTap: () {
+                HapticFeedback.selectionClick();
                 setState(() {
                   _isGlassesMode = true;
                   _glassesCount = (_waterAmount / 0.25).round().clamp(1, 20);
@@ -470,6 +467,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               label: 'Milliliters (ml)',
               isSelected: !_isGlassesMode,
               onTap: () {
+                HapticFeedback.selectionClick();
                 setState(() {
                   _isGlassesMode = false;
                 });
@@ -485,6 +483,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               IconButton.filledTonal(
                 onPressed: _glassesCount > 1
                     ? () {
+                        HapticFeedback.lightImpact();
                         setState(() {
                           _glassesCount--;
                           _waterAmount = _glassesCount * 0.25;
@@ -503,17 +502,15 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 children: [
                   Text(
                     '$_glassesCount ${_glassesCount == 1 ? 'Glass' : 'Glasses'}',
-                    style: const TextStyle(
-                      fontFamily: 'Geist',
-                      fontSize: 36,
+                    style: SomaFonts.display(
+                      fontSize: 34,
                       fontWeight: FontWeight.w800,
                       color: Colors.cyanAccent,
                     ),
                   ),
                   Text(
                     '($mlValue ml)',
-                    style: TextStyle(
-                      fontFamily: 'JetBrains Mono',
+                    style: SomaFonts.mono(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: SomaColors.onSecondaryContainer,
@@ -524,6 +521,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               const SizedBox(width: 20),
               IconButton.filledTonal(
                 onPressed: () {
+                  HapticFeedback.lightImpact();
                   setState(() {
                     _glassesCount++;
                     _waterAmount = _glassesCount * 0.25;
@@ -555,17 +553,15 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         ] else ...[
           Text(
             '$mlValue ml',
-            style: const TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 38,
+            style: SomaFonts.display(
+              fontSize: 36,
               fontWeight: FontWeight.w800,
               color: Colors.cyanAccent,
             ),
           ),
           Text(
             '(~${(_waterAmount / 0.25).toStringAsFixed(1)} ${_waterAmount / 0.25 == 1.0 ? 'glass' : 'glasses'})',
-            style: TextStyle(
-              fontFamily: 'JetBrains Mono',
+            style: SomaFonts.mono(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: SomaColors.onSecondaryContainer,
@@ -609,10 +605,10 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
       children: [
         TextField(
           controller: _mealNameController,
-          style: const TextStyle(color: SomaColors.onSurface),
+          style: SomaFonts.primary(color: SomaColors.onSurface),
           decoration: InputDecoration(
             labelText: 'Meal Name',
-            labelStyle: const TextStyle(color: SomaColors.onSecondaryContainer),
+            labelStyle: SomaFonts.primary(color: SomaColors.onSecondaryContainer),
             filled: true,
             fillColor: SomaColors.cardBackground,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -634,13 +630,15 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                   side: BorderSide(
                     color: isSelected ? SomaColors.primaryContainer : SomaColors.cardBorder,
                   ),
-                  labelStyle: TextStyle(
-                    fontFamily: 'JetBrains Mono',
+                  labelStyle: SomaFonts.mono(
                     fontSize: 12,
                     color: isSelected ? SomaColors.background : SomaColors.onSurface,
                     fontWeight: FontWeight.bold,
                   ),
-                  onSelected: (_) => setState(() => _mealCategory = cat),
+                  onSelected: (_) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _mealCategory = cat);
+                  },
                 ),
               );
             }).toList(),
@@ -713,13 +711,15 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                   side: BorderSide(
                     color: isSelected ? SomaColors.primaryContainer : SomaColors.cardBorder,
                   ),
-                  labelStyle: TextStyle(
-                    fontFamily: 'JetBrains Mono',
+                  labelStyle: SomaFonts.mono(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: isSelected ? Colors.black : SomaColors.onSurface,
                   ),
-                  onSelected: (_) => setState(() => _activitySubMode = mode),
+                  onSelected: (_) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _activitySubMode = mode);
+                  },
                 ),
               ),
             );
@@ -754,17 +754,15 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
       children: [
         Text(
           '${_stepsCount.toInt()} Steps',
-          style: const TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 40,
+          style: SomaFonts.display(
+            fontSize: 38,
             fontWeight: FontWeight.w800,
             color: SomaColors.secondary,
           ),
         ),
         Text(
           'Estimated Active Burn: $calcCalories kcal',
-          style: const TextStyle(
-            fontFamily: 'JetBrains Mono',
+          style: SomaFonts.mono(
             fontSize: 13,
             fontWeight: FontWeight.bold,
             color: SomaColors.primaryContainer,
@@ -820,10 +818,10 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         DropdownButtonFormField<String>(
           initialValue: _cardioType,
           dropdownColor: SomaColors.cardBackground,
-          style: const TextStyle(color: SomaColors.onSurface, fontFamily: 'Geist', fontWeight: FontWeight.bold),
+          style: SomaFonts.primary(color: SomaColors.onSurface, fontWeight: FontWeight.bold),
           decoration: InputDecoration(
             labelText: 'Cardio Type',
-            labelStyle: const TextStyle(color: SomaColors.onSecondaryContainer),
+            labelStyle: SomaFonts.primary(color: SomaColors.onSecondaryContainer),
             filled: true,
             fillColor: SomaColors.cardBackground,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -860,11 +858,15 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                     selected: isSelected,
                     selectedColor: SomaColors.secondary,
                     backgroundColor: SomaColors.cardBackground,
-                    labelStyle: TextStyle(
+                    labelStyle: SomaFonts.mono(
+                      fontSize: 10,
                       color: isSelected ? Colors.black : SomaColors.onSurface,
                       fontWeight: FontWeight.bold,
                     ),
-                    onSelected: (_) => setState(() => _cardioIntensity = intense),
+                    onSelected: (_) {
+                      HapticFeedback.selectionClick();
+                      setState(() => _cardioIntensity = intense);
+                    },
                   ),
                 ),
               );
@@ -898,8 +900,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           ),
           child: Text(
             'Estimated Calorie Burn: $calcCalories kcal',
-            style: const TextStyle(
-              fontFamily: 'JetBrains Mono',
+            style: SomaFonts.mono(
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: SomaColors.primaryContainer,
@@ -1017,11 +1018,11 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
 
         const SizedBox(height: 8),
         // Sets Manager Table Header
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('WORKOUT SETS', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
-            Text('REPS × WEIGHT (KG)', style: TextStyle(fontFamily: 'JetBrains Mono', fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
+            Text('WORKOUT SETS', style: SomaFonts.mono(fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
+            Text('REPS × WEIGHT (KG)', style: SomaFonts.mono(fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
           ],
         ),
         const SizedBox(height: 6),
@@ -1044,8 +1045,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                   children: [
                     Text(
                       'SET ${index + 1}',
-                      style: const TextStyle(
-                        fontFamily: 'JetBrains Mono',
+                      style: SomaFonts.mono(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: SomaColors.primaryContainer,
@@ -1120,12 +1120,11 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 });
               },
               icon: const Icon(Icons.add, size: 16, color: SomaColors.primaryContainer),
-              label: const Text('ADD SET', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.primaryContainer)),
+              label: Text('ADD SET', style: SomaFonts.mono(fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.primaryContainer)),
             ),
             Text(
               'Burn: $calcCalories kcal',
-              style: const TextStyle(
-                fontFamily: 'JetBrains Mono',
+              style: SomaFonts.mono(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: SomaColors.primaryContainer,
@@ -1152,10 +1151,9 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
   Widget _buildSleepTab() {
     return Column(
       children: [
-        const Text(
+        Text(
           'RECORD SLEEP DURATION',
-          style: TextStyle(
-            fontFamily: 'JetBrains Mono',
+          style: SomaFonts.mono(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: SomaColors.onSecondaryContainer,
@@ -1164,9 +1162,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         const SizedBox(height: 24),
         Text(
           '${_sleepHours.toStringAsFixed(1)} hrs',
-          style: const TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 44,
+          style: SomaFonts.display(
+            fontSize: 42,
             fontWeight: FontWeight.w800,
             color: Colors.purpleAccent,
           ),
@@ -1193,10 +1190,9 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
   Widget _buildDigitalTab() {
     return Column(
       children: [
-        const Text(
+        Text(
           'UPDATE DIGITAL SCREEN TIME',
-          style: TextStyle(
-            fontFamily: 'JetBrains Mono',
+          style: SomaFonts.mono(
             fontSize: 12,
             fontWeight: FontWeight.w700,
             color: SomaColors.onSecondaryContainer,
@@ -1205,9 +1201,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         const SizedBox(height: 12),
         Text(
           '${_digitalHours.toInt()}h ${_digitalMinutes.toInt()}m',
-          style: const TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 40,
+          style: SomaFonts.display(
+            fontSize: 38,
             fontWeight: FontWeight.w800,
             color: Colors.amberAccent,
           ),
@@ -1220,6 +1215,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
           onPressed: () async {
+            HapticFeedback.selectionClick();
             final duration = await ScreenTimeService.getTodayTotalScreenTime();
             if (duration > Duration.zero) {
               setState(() {
@@ -1234,7 +1230,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             }
           },
           icon: const Icon(Icons.sync, size: 16),
-          label: const Text('AUTO-FETCH FROM DEVICE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          label: Text('AUTO-FETCH FROM DEVICE', style: SomaFonts.mono(fontSize: 11, fontWeight: FontWeight.bold)),
         ),
         const SizedBox(height: 12),
         _buildValueControl('Screen Hours', '${_digitalHours.toInt()} hrs', _digitalHours, 0, 18, (v) {
@@ -1284,8 +1280,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
             const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(
-                fontFamily: 'JetBrains Mono',
+              style: SomaFonts.mono(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected ? Colors.cyanAccent : SomaColors.onSecondaryContainer,
@@ -1304,8 +1299,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(color: SomaColors.onSecondaryContainer, fontSize: 11, fontWeight: FontWeight.bold)),
-            Text(valueDisplay, style: const TextStyle(color: SomaColors.onSurface, fontSize: 12, fontWeight: FontWeight.bold)),
+            Text(label, style: SomaFonts.mono(color: SomaColors.onSecondaryContainer, fontSize: 11, fontWeight: FontWeight.bold)),
+            Text(valueDisplay, style: SomaFonts.mono(color: SomaColors.onSurface, fontSize: 12, fontWeight: FontWeight.bold)),
           ],
         ),
         Slider(
@@ -1330,12 +1325,14 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           foregroundColor: Colors.black,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
-        onPressed: onPressed,
+        onPressed: () {
+          HapticFeedback.mediumImpact();
+          onPressed();
+        },
         child: Text(
           label,
-          style: const TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 15,
+          style: SomaFonts.mono(
+            fontSize: 14,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.5,
           ),

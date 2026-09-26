@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/soma_provider.dart';
 import '../models/user_goals.dart';
@@ -295,10 +296,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text(
+                      Text(
                         'SOMA',
-                        style: TextStyle(
-                          fontFamily: 'Geist',
+                        style: SomaFonts.display(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 2.0,
@@ -310,12 +310,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                   const Spacer(),
                   Text(
                     'STEP ${_currentStep + 1} OF 4',
-                    style: const TextStyle(
-                      fontFamily: 'JetBrains Mono',
-                      fontSize: 12,
+                    style: SomaFonts.mono(
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: SomaColors.onSecondaryContainer,
-                      letterSpacing: 1.2,
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ],
@@ -328,7 +327,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               child: Row(
                 children: List.generate(4, (index) {
                   return Expanded(
-                    child: Container(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
                       height: 4,
                       margin: EdgeInsets.only(right: index == 3 ? 0 : 8),
                       decoration: BoxDecoration(
@@ -374,8 +374,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                 children: [
                   if (_currentStep > 0)
                     IconButton(
-                      onPressed: _previousPage,
-                      icon: const Icon(Icons.arrow_back_ios_new, color: SomaColors.onSurface),
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        _previousPage();
+                      },
+                      icon: const Icon(Icons.arrow_back_ios_new, color: SomaColors.onSurface, size: 18),
                       style: IconButton.styleFrom(
                         backgroundColor: SomaColors.cardBackground,
                         shape: RoundedRectangleBorder(
@@ -393,12 +396,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                         style: ElevatedButton.styleFrom(
                           backgroundColor: SomaColors.primaryContainer,
                           foregroundColor: Colors.black,
-                          elevation: 4,
+                          elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
                         onPressed: () {
+                          HapticFeedback.mediumImpact();
                           if (_currentStep == 3) {
                             _finishOnboarding();
                           } else {
@@ -412,9 +416,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                           _currentStep == 3
                               ? 'INITIALIZE SOMA ENGINE'
                               : 'CONTINUE TO NEXT STEP',
-                          style: const TextStyle(
-                            fontFamily: 'Geist',
-                            fontSize: 15,
+                          style: SomaFonts.mono(
+                            fontSize: 13,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.5,
                           ),
@@ -438,44 +441,42 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'EXPECTATIONS & FOCUS',
-            style: TextStyle(
-              fontFamily: 'JetBrains Mono',
-              fontSize: 12,
+            style: SomaFonts.mono(
+              fontSize: 11,
               fontWeight: FontWeight.w700,
               color: SomaColors.primaryContainer,
-              letterSpacing: 1.5,
+              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'What is your primary objective?',
-            style: TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 26,
+            style: SomaFonts.display(
+              fontSize: 24,
               fontWeight: FontWeight.w800,
               color: SomaColors.onSurface,
               height: 1.2,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Select the target profile that aligns with your active goals. We will tailor your daily performance metrics accordingly.',
-            style: TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 14,
+            style: SomaFonts.primary(
+              fontSize: 13.5,
               color: SomaColors.secondary,
               height: 1.4,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           ..._focusOptions.map((opt) {
             final isSelected = _selectedFocus == opt['title'];
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               child: InkWell(
                 onTap: () {
+                  HapticFeedback.selectionClick();
                   setState(() {
                     _selectedFocus = opt['title'];
                     _recalculateGoals();
@@ -484,7 +485,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                 borderRadius: BorderRadius.circular(16),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(18),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? SomaColors.primaryContainer.withValues(alpha: 0.1)
@@ -494,13 +495,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       color: isSelected
                           ? SomaColors.primaryContainer
                           : SomaColors.cardBorder,
-                      width: isSelected ? 2 : 1,
+                      width: isSelected ? 1.5 : 1,
                     ),
                   ),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? SomaColors.primaryContainer
@@ -510,30 +511,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                         child: Icon(
                           opt['icon'] as IconData,
                           color: isSelected ? Colors.black : SomaColors.primaryContainer,
-                          size: 24,
+                          size: 22,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               opt['title'],
-                              style: TextStyle(
-                                fontFamily: 'Geist',
-                                fontSize: 16,
+                              style: SomaFonts.primary(
+                                fontSize: 15,
                                 fontWeight: FontWeight.w700,
                                 color: isSelected
                                     ? SomaColors.primaryContainer
                                     : SomaColors.onSurface,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 3),
                             Text(
                               opt['subtitle'],
-                              style: const TextStyle(
-                                fontFamily: 'Geist',
+                              style: SomaFonts.primary(
                                 fontSize: 12,
                                 color: SomaColors.secondary,
                               ),
@@ -543,7 +542,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       ),
                       if (isSelected)
                         const Icon(
-                          Icons.check_circle,
+                          Icons.check_circle_rounded,
                           color: SomaColors.primaryContainer,
                         ),
                     ],
@@ -564,33 +563,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'PHYSICAL BASELINE',
-            style: TextStyle(
-              fontFamily: 'JetBrains Mono',
-              fontSize: 12,
+            style: SomaFonts.mono(
+              fontSize: 11,
               fontWeight: FontWeight.w700,
               color: SomaColors.primaryContainer,
-              letterSpacing: 1.5,
+              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Your Current Stats',
-            style: TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 26,
+            style: SomaFonts.display(
+              fontSize: 24,
               fontWeight: FontWeight.w800,
               color: SomaColors.onSurface,
               height: 1.2,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Enter your current physical stats to compute your baseline energy expenditure and macronutrient requirements.',
-            style: TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 14,
+            style: SomaFonts.primary(
+              fontSize: 13.5,
               color: SomaColors.secondary,
             ),
           ),
@@ -618,10 +614,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           ),
 
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Daily Activity Level',
-            style: TextStyle(
-              fontFamily: 'JetBrains Mono',
+            style: SomaFonts.mono(
               fontSize: 11,
               fontWeight: FontWeight.bold,
               color: SomaColors.onSecondaryContainer,
@@ -640,8 +635,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
               return ChoiceChip(
                 label: Text(
                   level,
-                  style: TextStyle(
-                    fontFamily: 'Geist',
+                  style: SomaFonts.primary(
                     fontSize: 12,
                     fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
                     color: isSel ? Colors.black : SomaColors.onSurface,
@@ -658,6 +652,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                 ),
                 onSelected: (selected) {
                   if (selected) {
+                    HapticFeedback.selectionClick();
                     setState(() {
                       _activityLevel = level;
                       _recalculateGoals();
@@ -680,15 +675,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.auto_awesome, color: SomaColors.primaryContainer, size: 18),
-                    SizedBox(width: 8),
+                    const Icon(Icons.auto_awesome, color: SomaColors.primaryContainer, size: 18),
+                    const SizedBox(width: 8),
                     Text(
                       'RECOMMENDED BASELINE TARGETS',
-                      style: TextStyle(
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: 11,
+                      style: SomaFonts.mono(
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                         color: SomaColors.primaryContainer,
                         letterSpacing: 1.0,
@@ -721,33 +715,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'DEVICE PERMISSIONS & INTEGRATIONS',
-            style: TextStyle(
-              fontFamily: 'JetBrains Mono',
-              fontSize: 12,
+            style: SomaFonts.mono(
+              fontSize: 11,
               fontWeight: FontWeight.w700,
               color: SomaColors.primaryContainer,
-              letterSpacing: 1.5,
+              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Automated Activity & Discipline',
-            style: TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 26,
+            style: SomaFonts.display(
+              fontSize: 24,
               fontWeight: FontWeight.w800,
               color: SomaColors.onSurface,
               height: 1.2,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Grant permissions so SOMA can auto-detect your daily steps and screen time without requiring manual entry.',
-            style: TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 14,
+            style: SomaFonts.primary(
+              fontSize: 13.5,
               color: SomaColors.secondary,
               height: 1.4,
             ),
@@ -792,8 +783,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                             _isPermissionGranted
                                 ? 'Digital Wellbeing Connected'
                                 : 'Usage Stats Permission',
-                            style: const TextStyle(
-                              fontFamily: 'Geist',
+                            style: SomaFonts.primary(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: SomaColors.onSurface,
@@ -804,8 +794,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                             _isPermissionGranted
                                 ? 'App usage syncs automatically into daily dashboard.'
                                 : 'Grant access to track daily screen-on time.',
-                            style: const TextStyle(
-                              fontFamily: 'Geist',
+                            style: SomaFonts.primary(
                               fontSize: 12,
                               color: SomaColors.secondary,
                             ),
@@ -837,9 +826,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                         : Icon(_isPermissionGranted ? Icons.check : Icons.lock_open, size: 18),
                     label: Text(
                       _isPermissionGranted ? 'PERMISSIONS ACTIVE' : 'ALLOW DIGITAL WELLBEING',
-                      style: const TextStyle(
-                        fontFamily: 'Geist',
-                        fontSize: 12,
+                      style: SomaFonts.mono(
+                        fontSize: 11.5,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -875,7 +863,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        _isStepPermissionGranted ? Icons.directions_walk : Icons.directions_walk_outlined,
+                        _isStepPermissionGranted ? Icons.directions_walk_rounded : Icons.directions_walk_outlined,
                         color: _isStepPermissionGranted ? SomaColors.primaryContainer : SomaColors.secondary,
                         size: 24,
                       ),
@@ -889,8 +877,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                             _isStepPermissionGranted
                                 ? 'Auto Step Counter Active'
                                 : 'Physical Activity Permission',
-                            style: const TextStyle(
-                              fontFamily: 'Geist',
+                            style: SomaFonts.primary(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
                               color: SomaColors.onSurface,
@@ -901,8 +888,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                             _isStepPermissionGranted
                                 ? 'Hardware pedometer counting live steps 24/7.'
                                 : 'Allow device pedometer to auto-detect steps.',
-                            style: const TextStyle(
-                              fontFamily: 'Geist',
+                            style: SomaFonts.primary(
                               fontSize: 12,
                               color: SomaColors.secondary,
                             ),
@@ -931,12 +917,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
                           )
-                        : Icon(_isStepPermissionGranted ? Icons.check : Icons.directions_run, size: 18),
+                        : Icon(_isStepPermissionGranted ? Icons.check : Icons.directions_run_rounded, size: 18),
                     label: Text(
                       _isStepPermissionGranted ? 'STEP COUNTER CONNECTED' : 'ENABLE AUTO STEP TRACKER',
-                      style: const TextStyle(
-                        fontFamily: 'Geist',
-                        fontSize: 12,
+                      style: SomaFonts.mono(
+                        fontSize: 11.5,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -947,10 +932,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           ),
 
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Target Daily Screen Limit (Hours)',
-            style: TextStyle(
-              fontFamily: 'JetBrains Mono',
+            style: SomaFonts.mono(
               fontSize: 11,
               fontWeight: FontWeight.bold,
               color: SomaColors.onSecondaryContainer,
@@ -967,7 +951,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
             ),
             child: Row(
               children: [
-                const Icon(Icons.screen_search_desktop, color: SomaColors.primaryContainer),
+                const Icon(Icons.phone_iphone_rounded, color: SomaColors.primaryContainer),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Slider(
@@ -987,9 +971,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                 ),
                 Text(
                   '${_digitalLimitHours}h / day',
-                  style: const TextStyle(
-                    fontFamily: 'JetBrains Mono',
-                    fontSize: 14,
+                  style: SomaFonts.mono(
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: SomaColors.primaryContainer,
                   ),
@@ -999,11 +982,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           ),
 
           const SizedBox(height: 16),
-          const Center(
+          Center(
             child: Text(
               'Note: You can adjust this or update permissions anytime in Profile Settings.',
-              style: TextStyle(
-                fontFamily: 'Geist',
+              style: SomaFonts.primary(
                 fontSize: 12,
                 color: SomaColors.secondary,
               ),
@@ -1026,33 +1008,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'SYSTEM ACTIVATION',
-            style: TextStyle(
-              fontFamily: 'JetBrains Mono',
-              fontSize: 12,
+            style: SomaFonts.mono(
+              fontSize: 11,
               fontWeight: FontWeight.w700,
               color: SomaColors.primaryContainer,
-              letterSpacing: 1.5,
+              letterSpacing: 1.2,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Ready to Dominate',
-            style: TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 26,
+            style: SomaFonts.display(
+              fontSize: 24,
               fontWeight: FontWeight.w800,
               color: SomaColors.onSurface,
               height: 1.2,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Review your performance blueprint below. Everything is configured and ready for execution.',
-            style: TextStyle(
-              fontFamily: 'Geist',
-              fontSize: 14,
+            style: SomaFonts.primary(
+              fontSize: 13.5,
               color: SomaColors.secondary,
             ),
           ),
@@ -1064,39 +1043,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
             decoration: BoxDecoration(
               color: SomaColors.cardBackground,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: SomaColors.primaryContainer),
-              boxShadow: [
-                BoxShadow(
-                  color: SomaColors.primaryContainer.withValues(alpha: 0.08),
-                  blurRadius: 16,
-                  spreadRadius: 2,
-                ),
-              ],
+              border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.5)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.shield, color: SomaColors.primaryContainer, size: 28),
+                    const Icon(Icons.shield_rounded, color: SomaColors.primaryContainer, size: 28),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           name.toUpperCase(),
-                          style: const TextStyle(
-                            fontFamily: 'Geist',
-                            fontSize: 18,
+                          style: SomaFonts.display(
+                            fontSize: 17,
                             fontWeight: FontWeight.w900,
                             color: SomaColors.onSurface,
                           ),
                         ),
                         Text(
                           '$weight kg • $height cm • $_selectedFocus',
-                          style: const TextStyle(
-                            fontFamily: 'JetBrains Mono',
-                            fontSize: 11,
+                          style: SomaFonts.mono(
+                            fontSize: 10.5,
                             color: SomaColors.primaryContainer,
                           ),
                         ),
@@ -1105,24 +1075,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                   ],
                 ),
                 const Divider(color: SomaColors.cardBorder, height: 28),
-                const Text(
+                Text(
                   'DAILY PERFORMANCE TARGETS',
-                  style: TextStyle(
-                    fontFamily: 'JetBrains Mono',
-                    fontSize: 11,
+                  style: SomaFonts.mono(
+                    fontSize: 10.5,
                     fontWeight: FontWeight.bold,
                     color: SomaColors.onSecondaryContainer,
                     letterSpacing: 1.0,
                   ),
                 ),
                 const SizedBox(height: 12),
-                _buildSummaryRow('Energy Target', '$_calcCalories kcal / day', Icons.local_fire_department),
-                _buildSummaryRow('Protein Target', '$_calcProtein g / day', Icons.fitness_center),
-                _buildSummaryRow('Carbs & Fats', '$_calcCarbs g C / $_calcFats g F', Icons.restaurant),
-                _buildSummaryRow('Hydration Target', '$_calcWater Liters / day', Icons.water_drop),
-                _buildSummaryRow('Daily Activity', '$_calcSteps Steps / day', Icons.directions_walk),
-                _buildSummaryRow('Digital Limit', '$_digitalLimitHours Hours Max', Icons.screen_lock_portrait),
-                _buildSummaryRow('Screen Sync', _isPermissionGranted ? 'Active & Permitted' : 'Manual / Pending', Icons.phonelink_setup),
+                _buildSummaryRow('Energy Target', '$_calcCalories kcal / day', Icons.local_fire_department_rounded),
+                _buildSummaryRow('Protein Target', '$_calcProtein g / day', Icons.fitness_center_rounded),
+                _buildSummaryRow('Carbs & Fats', '$_calcCarbs g C / $_calcFats g F', Icons.restaurant_rounded),
+                _buildSummaryRow('Hydration Target', '$_calcWater Liters / day', Icons.water_drop_rounded),
+                _buildSummaryRow('Daily Activity', '$_calcSteps Steps / day', Icons.directions_walk_rounded),
+                _buildSummaryRow('Digital Limit', '$_digitalLimitHours Hours Max', Icons.phone_iphone_rounded),
+                _buildSummaryRow('Screen Sync', _isPermissionGranted ? 'Active & Permitted' : 'Manual / Pending', Icons.phonelink_setup_rounded),
               ],
             ),
           ),
@@ -1140,8 +1109,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           const SizedBox(width: 10),
           Text(
             label,
-            style: const TextStyle(
-              fontFamily: 'Geist',
+            style: SomaFonts.primary(
               fontSize: 13,
               color: SomaColors.secondary,
             ),
@@ -1149,9 +1117,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           const Spacer(),
           Text(
             value,
-            style: const TextStyle(
-              fontFamily: 'JetBrains Mono',
-              fontSize: 13,
+            style: SomaFonts.mono(
+              fontSize: 12.5,
               fontWeight: FontWeight.bold,
               color: SomaColors.onSurface,
             ),
@@ -1166,8 +1133,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontFamily: 'Geist',
+          style: SomaFonts.primary(
             fontSize: 11,
             color: SomaColors.secondary,
           ),
@@ -1175,9 +1141,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
         const SizedBox(height: 2),
         Text(
           val,
-          style: const TextStyle(
-            fontFamily: 'JetBrains Mono',
-            fontSize: 13,
+          style: SomaFonts.mono(
+            fontSize: 12.5,
             fontWeight: FontWeight.bold,
             color: SomaColors.onSurface,
           ),
@@ -1198,9 +1163,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontFamily: 'JetBrains Mono',
-            fontSize: 11,
+          style: SomaFonts.mono(
+            fontSize: 10.5,
             fontWeight: FontWeight.bold,
             color: SomaColors.onSecondaryContainer,
           ),
@@ -1210,9 +1174,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           controller: controller,
           keyboardType: keyboardType,
           onChanged: onChanged,
-          style: const TextStyle(
-            fontFamily: 'Geist',
-            fontSize: 15,
+          style: SomaFonts.primary(
+            fontSize: 14.5,
             fontWeight: FontWeight.bold,
             color: SomaColors.onSurface,
           ),

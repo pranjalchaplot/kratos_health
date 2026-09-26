@@ -235,18 +235,31 @@ class CalorieCalculatorService {
     }
 
     double baseMet = 7.0;
-    if (normKey.contains('run')) baseMet = 8.5;
-    else if (normKey.contains('cycl') || normKey.contains('bike')) baseMet = 7.5;
-    else if (normKey.contains('swim')) baseMet = 8.0;
-    else if (normKey.contains('row')) baseMet = 7.0;
-    else if (normKey.contains('hiit')) baseMet = 9.5;
-    else if (normKey.contains('walk')) baseMet = 3.5;
-    else if (normKey.contains('stair')) baseMet = 8.8;
-    else if (normKey.contains('rope')) baseMet = 11.0;
+    if (normKey.contains('run')) {
+      baseMet = 8.5;
+    } else if (normKey.contains('cycl') || normKey.contains('bike')) {
+      baseMet = 7.5;
+    } else if (normKey.contains('swim')) {
+      baseMet = 8.0;
+    } else if (normKey.contains('row')) {
+      baseMet = 7.0;
+    } else if (normKey.contains('hiit')) {
+      baseMet = 9.5;
+    } else if (normKey.contains('walk')) {
+      baseMet = 3.5;
+    } else if (normKey.contains('stair')) {
+      baseMet = 8.8;
+    } else if (normKey.contains('rope')) {
+      baseMet = 11.0;
+    }
 
-    if (effKey.contains('low') || effKey.contains('light')) baseMet *= 0.8;
-    else if (effKey.contains('high') || effKey.contains('vigorous')) baseMet *= 1.2;
-    else if (effKey.contains('extreme') || effKey.contains('max')) baseMet *= 1.4;
+    if (effKey.contains('low') || effKey.contains('light')) {
+      baseMet *= 0.8;
+    } else if (effKey.contains('high') || effKey.contains('vigorous')) {
+      baseMet *= 1.2;
+    } else if (effKey.contains('extreme') || effKey.contains('max')) {
+      baseMet *= 1.4;
+    }
 
     return baseMet;
   }

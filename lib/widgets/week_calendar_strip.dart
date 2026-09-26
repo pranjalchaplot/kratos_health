@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/soma_theme.dart';
 
 /// Weekly calendar strip showing MON-SUN with active day highlighted & interactive date selection
@@ -18,6 +19,7 @@ class WeekCalendarStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     // Calculate actual dates for current week (Mon-Sun)
     final now = DateTime.now();
+    final currentDayIndex = now.weekday - 1; // 0 = Mon, 6 = Sun
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final dates = List.generate(7, (i) => monday.add(Duration(days: i)).day);
 
@@ -25,39 +27,41 @@ class WeekCalendarStrip extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: SomaColors.surface.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(12),
+        color: SomaColors.cardBackground,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
+          color: SomaColors.cardBorder,
           width: 1,
         ),
       ),
       child: Row(
         children: List.generate(7, (index) {
-          final isActive = index == activeIndex;
+          final isSelected = index == activeIndex;
+          final isToday = index == currentDayIndex;
+
           return Expanded(
             child: GestureDetector(
-              onTap: () => onDaySelected?.call(index),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 2),
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onDaySelected?.call(index);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 2.5),
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: isActive ? SomaColors.primaryContainer : null,
-                  gradient: isActive
-                      ? null
-                      : LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            SomaColors.primaryContainer.withValues(alpha: 0.05),
-                            Colors.transparent,
-                          ],
-                        ),
-                  borderRadius: BorderRadius.circular(8),
+                  color: isSelected
+                      ? SomaColors.primaryContainer
+                      : isToday
+                          ? SomaColors.surfaceContainerHigh
+                          : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isActive
+                    color: isSelected
                         ? SomaColors.primaryContainer
-                        : Colors.white.withValues(alpha: 0.05),
+                        : isToday
+                            ? SomaColors.primaryContainer.withValues(alpha: 0.4)
+                            : Colors.transparent,
                     width: 1,
                   ),
                 ),
@@ -66,27 +70,38 @@ class WeekCalendarStrip extends StatelessWidget {
                   children: [
                     Text(
                       _days[index],
-                      style: TextStyle(
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: 10,
+                      style: SomaFonts.mono(
+                        fontSize: 9.5,
                         fontWeight: FontWeight.w700,
-                        height: 1.0,
-                        letterSpacing: 1.0,
-                        color: isActive
-                            ? SomaColors.background
-                            : SomaColors.onSecondaryContainer.withValues(alpha: 0.5),
+                        letterSpacing: 0.8,
+                        color: isSelected
+                            ? SomaColors.onPrimary
+                            : SomaColors.onSecondaryContainer,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       '${dates[index]}',
-                      style: TextStyle(
-                        fontFamily: 'Geist',
+                      style: SomaFonts.display(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: isActive
-                            ? SomaColors.background
+                        color: isSelected
+                            ? SomaColors.onPrimary
                             : SomaColors.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    // Micro-indicator dot
+                    Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected
+                            ? SomaColors.onPrimary
+                            : isToday
+                                ? SomaColors.primaryContainer
+                                : Colors.transparent,
                       ),
                     ),
                   ],

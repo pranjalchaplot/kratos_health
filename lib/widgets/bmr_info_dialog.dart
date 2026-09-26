@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/soma_provider.dart';
 import '../services/calorie_calculator_service.dart';
@@ -59,15 +59,21 @@ class BmrInfoDialog extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.info_outline, color: SomaColors.primaryContainer, size: 24),
-                      SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: SomaColors.primaryContainer.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.local_fire_department_rounded, color: SomaColors.primaryContainer, size: 20),
+                      ),
+                      const SizedBox(width: 10),
                       Text(
-                        'METRIC INFO & BMR',
-                        style: TextStyle(
-                          fontFamily: 'Geist',
-                          fontSize: 18,
+                        'METABOLIC ENGINE',
+                        style: SomaFonts.display(
+                          fontSize: 16,
                           fontWeight: FontWeight.w800,
                           color: SomaColors.onSurface,
                         ),
@@ -75,7 +81,7 @@ class BmrInfoDialog extends StatelessWidget {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: SomaColors.onSecondaryContainer),
+                    icon: const Icon(Icons.close_rounded, color: SomaColors.onSecondaryContainer),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -86,33 +92,26 @@ class BmrInfoDialog extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      SomaColors.primaryContainer.withValues(alpha: 0.2),
-                      SomaColors.cardBackground,
-                    ],
-                  ),
+                  color: SomaColors.cardBackground,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.5)),
+                  border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.4)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       '$bmr kcal / day',
-                      style: const TextStyle(
-                        fontFamily: 'Geist',
-                        fontSize: 28,
+                      style: SomaFonts.display(
+                        fontSize: 26,
                         fontWeight: FontWeight.w800,
                         color: SomaColors.primaryContainer,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '~${hourlyBmr.toStringAsFixed(1)} kcal/hr burnt simply by existing',
-                      style: const TextStyle(
-                        fontFamily: 'JetBrains Mono',
-                        fontSize: 12,
+                      '~${hourlyBmr.toStringAsFixed(1)} kcal/hr burned continuously at rest',
+                      style: SomaFonts.mono(
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: SomaColors.onSurface,
                       ),
@@ -126,8 +125,7 @@ class BmrInfoDialog extends StatelessWidget {
                       ),
                       child: Text(
                         'Burnt So Far Today: $bmrSoFar kcal',
-                        style: const TextStyle(
-                          fontFamily: 'JetBrains Mono',
+                        style: SomaFonts.mono(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: SomaColors.primaryContainer,
@@ -141,10 +139,9 @@ class BmrInfoDialog extends StatelessWidget {
               const SizedBox(height: 20),
               // Active Formula Card
               Text(
-                'ACTIVE FORMULA',
-                style: TextStyle(
-                  fontFamily: 'JetBrains Mono',
-                  fontSize: 11,
+                'ACTIVE FORMULA MODEL',
+                style: SomaFonts.mono(
+                  fontSize: 10.5,
                   fontWeight: FontWeight.bold,
                   color: SomaColors.onSecondaryContainer,
                   letterSpacing: 1.0,
@@ -153,9 +150,8 @@ class BmrInfoDialog extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 formulaName,
-                style: const TextStyle(
-                  fontFamily: 'Geist',
-                  fontSize: 16,
+                style: SomaFonts.primary(
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: SomaColors.onSurface,
                 ),
@@ -163,9 +159,8 @@ class BmrInfoDialog extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 formulaDesc,
-                style: const TextStyle(
-                  fontFamily: 'Geist',
-                  fontSize: 13,
+                style: SomaFonts.primary(
+                  fontSize: 12.5,
                   color: SomaColors.onSecondaryContainer,
                   height: 1.3,
                 ),
@@ -174,10 +169,9 @@ class BmrInfoDialog extends StatelessWidget {
               const SizedBox(height: 20),
               // User Metrics List
               Text(
-                'USER METRICS USED',
-                style: TextStyle(
-                  fontFamily: 'JetBrains Mono',
-                  fontSize: 11,
+                'ATHLETE BIOMETRICS USED',
+                style: SomaFonts.mono(
+                  fontSize: 10.5,
                   fontWeight: FontWeight.bold,
                   color: SomaColors.onSecondaryContainer,
                   letterSpacing: 1.0,
@@ -206,25 +200,23 @@ class BmrInfoDialog extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: SomaColors.cardBorder),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       '🔥 Active Burn vs Resting BMR',
-                      style: TextStyle(
-                        fontFamily: 'Geist',
+                      style: SomaFonts.primary(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: SomaColors.onSurface,
                       ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
-                      '• Active Burn: Extra calories burned from steps, cardio, and weightlifting workouts.\n'
-                      '• Resting BMR: Background calories your body burns for vital organ function 24/7.\n'
-                      '• Total Daily Energy Expenditure (TDEE) = Active Burn + BMR.',
-                      style: TextStyle(
-                        fontFamily: 'Geist',
+                      '• Active Burn: Extra calories burned from steps, cardio, and workouts.\n'
+                      '• Resting BMR: Background calories vital organs burn 24/7.\n'
+                      '• Total Expenditure (TDEE) = Active Burn + BMR.',
+                      style: SomaFonts.primary(
                         fontSize: 12,
                         color: SomaColors.onSecondaryContainer,
                         height: 1.4,
@@ -242,17 +234,16 @@ class BmrInfoDialog extends StatelessWidget {
 
   Widget _buildMetricBadge(String label, String value) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: SomaColors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: SomaColors.cardBorder),
       ),
       child: Text(
         '$label: $value',
-        style: const TextStyle(
-          fontFamily: 'JetBrains Mono',
-          fontSize: 12,
+        style: SomaFonts.mono(
+          fontSize: 11,
           fontWeight: FontWeight.w700,
           color: SomaColors.onSurface,
         ),
