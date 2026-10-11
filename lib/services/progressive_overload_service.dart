@@ -43,10 +43,10 @@ class ProgressiveOverloadService {
     final standardWeightIncrement = isCompound ? 2.5 : 1.25;
 
     final normVelocity = velocity.toLowerCase();
-    final isExplosive = normVelocity.contains('explosive');
-    final isGrind = normVelocity.contains('grind');
+    final isExplosive = normVelocity.contains('explosive') || normVelocity.contains('fast') || normVelocity.contains('power');
+    final isGrind = normVelocity.contains('grind') || normVelocity.contains('slow') || normVelocity.contains('struggl');
 
-    // Case 1: High speed & low-to-moderate RPE (<= 7.5) -> Load jump
+    // Case 1: High speed & low-to-moderate exertion (<= 7.5 or <= 8.0 with fast reps) -> Load jump
     if (rpe <= 7.5 || (rpe <= 8.0 && isExplosive)) {
       final newSets = previousSets.map((s) {
         return ExerciseSet(
@@ -64,13 +64,13 @@ class ProgressiveOverloadService {
         type: OverloadType.weightIncrease,
         deltaWeightKg: standardWeightIncrement,
         deltaReps: 0,
-        title: '+$incStr kg Overload Advised',
-        explanation: 'High lifting velocity & RPE ${rpe.toStringAsFixed(1)} indicate significant neuro-muscular reserve.',
+        title: 'Ready for +$incStr kg weight increase',
+        explanation: 'Your reps were fast and you had plenty left in the tank. You can safely increase weight next time!',
         suggestedSets: newSets,
       );
     }
 
-    // Case 2: Solid working set (RPE 8.0 - 8.5) and Controlled tempo -> Add volume (reps)
+    // Case 2: Solid working set (RPE 8.0 - 8.5) and steady tempo -> Add 1 more rep
     if (rpe <= 8.5 && !isGrind) {
       final newSets = previousSets.map((s) {
         return ExerciseSet(
@@ -84,20 +84,20 @@ class ProgressiveOverloadService {
         type: OverloadType.repIncrease,
         deltaWeightKg: 0.0,
         deltaReps: 1,
-        title: '+1 Rep Volume Progression',
-        explanation: 'Steady cadence at RPE ${rpe.toStringAsFixed(1)}. Progress reps before loading additional mass.',
+        title: 'Aim for +1 extra rep next time',
+        explanation: 'Great steady effort! Try hitting 1 more rep per set before moving up in weight.',
         suggestedSets: newSets,
       );
     }
 
-    // Case 3: Near Failure or Grind (RPE 9.0 - 9.5) -> Maintain load & solidify form
+    // Case 3: Near limit or heavy struggle (RPE 9.0 - 9.5) -> Hold current weight
     if (rpe <= 9.5) {
       return OverloadRecommendation(
         type: OverloadType.maintain,
         deltaWeightKg: 0.0,
         deltaReps: 0,
-        title: 'Consolidate Current Load',
-        explanation: 'Effort peaked near technical threshold. Repeat current load until velocity improves.',
+        title: 'Hold this weight & master form',
+        explanation: 'That was heavy and close to your limit. Stick with this weight until your reps feel smoother.',
         suggestedSets: previousSets.map((s) => ExerciseSet(
           setNumber: s.setNumber,
           reps: s.reps,
@@ -121,8 +121,8 @@ class ProgressiveOverloadService {
       type: OverloadType.deload,
       deltaWeightKg: -deloadIncrement,
       deltaReps: 0,
-      title: 'Active Recovery / Deload Suggested',
-      explanation: 'Session approached true mechanical failure (RPE 10). Deload by $deloadIncrement kg to prevent CNS fatigue.',
+      title: 'Lighten load slightly next session',
+      explanation: 'You pushed to absolute limit last time. Drop by $deloadIncrement kg next session to recover and protect your joints.',
       suggestedSets: newSets,
     );
   }

@@ -292,7 +292,15 @@ class _WorkoutTabState extends State<_WorkoutTab> {
   int _durationMins = 45;
   final bool _includeRest = true;
   double _rpe = 8.0;
-  String _velocity = 'Controlled';
+  String _velocity = 'Steady Pace';
+
+  String _getIntensityLabel(double rpe) {
+    if (rpe <= 6.0) return 'Warm-up / Easy (4+ reps left in tank)';
+    if (rpe <= 7.0) return 'Moderate (3 reps left in tank)';
+    if (rpe <= 8.0) return 'Hard / Solid Set (2 reps left in tank)';
+    if (rpe <= 9.0) return 'Very Hard (Only 1 rep left in tank!)';
+    return 'Max Effort / Limit (Couldn\'t do another rep)';
+  }
 
   final List<ExerciseSet> _sets = [
     ExerciseSet(setNumber: 1, reps: 10, weightKg: 60.0),
@@ -516,9 +524,113 @@ class _WorkoutTabState extends State<_WorkoutTab> {
             ),
           ),
 
+          // Last Session Benchmark Card
+          if (lastRecord != null && lastRecord.sets.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: SomaColors.surfaceContainerHigh.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: SomaColors.cardBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.history_rounded, size: 16, color: SomaColors.primaryContainer),
+                          const SizedBox(width: 6),
+                          Text(
+                            'LAST SESSION STATS',
+                            style: SomaFonts.mono(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.6,
+                              color: SomaColors.primaryContainer,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        DateFormat('MMM d, yyyy').format(lastRecord.date),
+                        style: SomaFonts.mono(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: SomaColors.onSecondaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: lastRecord.sets.map((s) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: SomaColors.cardBackground,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: SomaColors.cardBorder),
+                        ),
+                        child: Text(
+                          'Set ${s.setNumber}: ${s.weightKg % 1 == 0 ? s.weightKg.toInt() : s.weightKg}kg × ${s.reps}',
+                          style: SomaFonts.mono(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: SomaColors.onSurface,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  if (lastRecord.rpe != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Felt like: ${_getIntensityLabel(lastRecord.rpe!)}${lastRecord.velocity != null ? " • ${lastRecord.velocity}" : ""}',
+                      style: SomaFonts.primary(
+                        fontSize: 11,
+                        color: SomaColors.onSecondaryContainer,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: SomaColors.cardBackground.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: SomaColors.cardBorder),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded, size: 16, color: SomaColors.secondary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'First time logging ${_exerciseNameController.text.trim()}! Today\'s sets will be saved as your benchmark for future workouts.',
+                      style: SomaFonts.primary(
+                        fontSize: 11.5,
+                        color: SomaColors.onSecondaryContainer,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           // Progressive Overload Advisory Banner (if previous history found)
           if (overloadRec != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -661,8 +773,11 @@ class _WorkoutTabState extends State<_WorkoutTab> {
                   separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final set = _sets[index];
+                    final prevSet = (lastRecord != null && index < lastRecord.sets.length)
+                        ? lastRecord.sets[index]
+                        : null;
                     return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       decoration: BoxDecoration(
                         color: SomaColors.surfaceContainerHigh.withValues(alpha: 0.35),
                         borderRadius: BorderRadius.circular(12),
@@ -671,103 +786,151 @@ class _WorkoutTabState extends State<_WorkoutTab> {
                       child: Row(
                         children: [
                           // Set number pill
-                          Container(
-                            width: 32,
-                            height: 32,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: SomaColors.primaryContainer.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '${index + 1}',
-                              style: SomaFonts.mono(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: SomaColors.primaryContainer,
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: SomaColors.primaryContainer.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${index + 1}',
+                                  style: SomaFonts.mono(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: SomaColors.primaryContainer,
+                                  ),
+                                ),
                               ),
-                            ),
+                              if (prevSet != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  'PREV',
+                                  style: SomaFonts.mono(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w700,
+                                    color: SomaColors.onSecondaryContainer.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                           const SizedBox(width: 12),
 
                           // Weight control
                           Expanded(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                _buildMiniCounterButton(
-                                  icon: Icons.remove,
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    setState(() {
-                                      if (set.weightKg >= 2.5) {
-                                        set.weightKg = (set.weightKg - 2.5).clamp(0.0, 500.0);
-                                      }
-                                    });
-                                  },
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _buildMiniCounterButton(
+                                      icon: Icons.remove,
+                                      onTap: () {
+                                        HapticFeedback.lightImpact();
+                                        setState(() {
+                                          if (set.weightKg >= 2.5) {
+                                            set.weightKg = (set.weightKg - 2.5).clamp(0.0, 500.0);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                    Container(
+                                      width: 54,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        set.weightKg % 1 == 0
+                                            ? '${set.weightKg.toInt()}'
+                                            : set.weightKg.toStringAsFixed(1),
+                                        style: SomaFonts.mono(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w800,
+                                          color: SomaColors.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                    _buildMiniCounterButton(
+                                      icon: Icons.add,
+                                      onTap: () {
+                                        HapticFeedback.lightImpact();
+                                        setState(() {
+                                          set.weightKg = (set.weightKg + 2.5).clamp(0.0, 500.0);
+                                        });
+                                      },
+                                    ),
+                                  ],
                                 ),
-                                Container(
-                                  width: 54,
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    set.weightKg % 1 == 0
-                                        ? '${set.weightKg.toInt()}'
-                                        : set.weightKg.toStringAsFixed(1),
+                                if (prevSet != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Last: ${prevSet.weightKg % 1 == 0 ? prevSet.weightKg.toInt() : prevSet.weightKg} kg',
                                     style: SomaFonts.mono(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                      color: SomaColors.onSurface,
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: SomaColors.primaryContainer.withValues(alpha: 0.85),
                                     ),
                                   ),
-                                ),
-                                _buildMiniCounterButton(
-                                  icon: Icons.add,
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    setState(() {
-                                      set.weightKg = (set.weightKg + 2.5).clamp(0.0, 500.0);
-                                    });
-                                  },
-                                ),
+                                ],
                               ],
                             ),
                           ),
 
                           // Reps control
                           Expanded(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                _buildMiniCounterButton(
-                                  icon: Icons.remove,
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    setState(() {
-                                      if (set.reps > 1) set.reps--;
-                                    });
-                                  },
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _buildMiniCounterButton(
+                                      icon: Icons.remove,
+                                      onTap: () {
+                                        HapticFeedback.lightImpact();
+                                        setState(() {
+                                          if (set.reps > 1) set.reps--;
+                                        });
+                                      },
+                                    ),
+                                    Container(
+                                      width: 44,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        '${set.reps}',
+                                        style: SomaFonts.mono(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w800,
+                                          color: SomaColors.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                    _buildMiniCounterButton(
+                                      icon: Icons.add,
+                                      onTap: () {
+                                        HapticFeedback.lightImpact();
+                                        setState(() {
+                                          set.reps++;
+                                        });
+                                      },
+                                    ),
+                                  ],
                                 ),
-                                Container(
-                                  width: 44,
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    '${set.reps}',
+                                if (prevSet != null) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Last: ${prevSet.reps} reps',
                                     style: SomaFonts.mono(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                      color: SomaColors.onSurface,
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: SomaColors.primaryContainer.withValues(alpha: 0.85),
                                     ),
                                   ),
-                                ),
-                                _buildMiniCounterButton(
-                                  icon: Icons.add,
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    setState(() {
-                                      set.reps++;
-                                    });
-                                  },
-                                ),
+                                ],
                               ],
                             ),
                           ),
@@ -797,7 +960,7 @@ class _WorkoutTabState extends State<_WorkoutTab> {
             ),
           ),
 
-          // Intensity, RPE & Exertion Card
+          // Effort & Lifting Speed Card
           const SizedBox(height: 14),
           Container(
             padding: const EdgeInsets.all(16),
@@ -809,24 +972,51 @@ class _WorkoutTabState extends State<_WorkoutTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Effort / Difficulty Title
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'EXERTION (RPE)',
-                      style: SomaFonts.mono(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.6,
-                        color: SomaColors.onSecondaryContainer,
-                      ),
+                    Row(
+                      children: [
+                        const Icon(Icons.speed_rounded, size: 16, color: SomaColors.primaryContainer),
+                        const SizedBox(width: 6),
+                        Text(
+                          'HOW HARD DID IT FEEL?',
+                          style: SomaFonts.mono(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
+                            color: SomaColors.onSecondaryContainer,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        InkWell(
+                          onTap: () => _showEffortAndSpeedInfoModal(context),
+                          borderRadius: BorderRadius.circular(12),
+                          child: const Padding(
+                            padding: EdgeInsets.all(4),
+                            child: Icon(
+                              Icons.info_outline_rounded,
+                              size: 15,
+                              color: SomaColors.primaryContainer,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      'RPE ${_rpe.toStringAsFixed(1)} / 10',
-                      style: SomaFonts.mono(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: SomaColors.primaryContainer,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: SomaColors.primaryContainer.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'Effort ${_rpe.toStringAsFixed(1)} / 10',
+                        style: SomaFonts.mono(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: SomaColors.primaryContainer,
+                        ),
                       ),
                     ),
                   ],
@@ -842,14 +1032,48 @@ class _WorkoutTabState extends State<_WorkoutTab> {
                     setState(() => _rpe = val);
                   },
                 ),
-                const SizedBox(height: 10),
 
-                // Rep Velocity selection
+                // Friendly Meaning Explainer Pill
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: SomaColors.surfaceContainerHigh.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: SomaColors.cardBorder.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _rpe >= 9.5
+                            ? Icons.local_fire_department_rounded
+                            : (_rpe >= 8.0 ? Icons.fitness_center_rounded : Icons.check_circle_outline_rounded),
+                        size: 15,
+                        color: _rpe >= 9.5 ? Colors.orangeAccent : SomaColors.primaryContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _getIntensityLabel(_rpe),
+                          style: SomaFonts.primary(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: SomaColors.onSurface,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Lifting Speed & Feel Selection
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    const Icon(Icons.bolt_rounded, size: 16, color: SomaColors.primaryContainer),
+                    const SizedBox(width: 6),
                     Text(
-                      'VELOCITY PROFILE',
+                      'LIFTING SPEED & FEEL',
                       style: SomaFonts.mono(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -857,39 +1081,68 @@ class _WorkoutTabState extends State<_WorkoutTab> {
                         color: SomaColors.onSecondaryContainer,
                       ),
                     ),
-                    Row(
-                      children: ['Explosive', 'Controlled', 'Grind'].map((vel) {
-                        final isSel = _velocity == vel;
-                        return Padding(
-                          padding: const EdgeInsets.only(left: 6),
-                          child: InkWell(
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              setState(() => _velocity = vel);
-                            },
-                            borderRadius: BorderRadius.circular(8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: isSel ? SomaColors.primaryContainer : SomaColors.cardBorder,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                vel,
-                                style: SomaFonts.mono(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: isSel ? Colors.black : SomaColors.onSurface,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                    const SizedBox(width: 4),
+                    InkWell(
+                      onTap: () => _showEffortAndSpeedInfoModal(context),
+                      borderRadius: BorderRadius.circular(12),
+                      child: const Padding(
+                        padding: EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.info_outline_rounded,
+                          size: 15,
+                          color: SomaColors.primaryContainer,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
+
+                Row(
+                  children: [
+                    {'label': 'Fast & Smooth ⚡', 'value': 'Fast & Smooth'},
+                    {'label': 'Steady Pace ⏱️', 'value': 'Steady Pace'},
+                    {'label': 'Struggling 🏋️', 'value': 'Struggling'},
+                  ].map((opt) {
+                    final isSel = _velocity == opt['value'];
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: InkWell(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() => _velocity = opt['value']!);
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isSel
+                                  ? SomaColors.primaryContainer
+                                  : SomaColors.surfaceContainerHigh.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isSel ? SomaColors.primaryContainer : SomaColors.cardBorder,
+                              ),
+                            ),
+                            child: Text(
+                              opt['label']!,
+                              textAlign: TextAlign.center,
+                              style: SomaFonts.mono(
+                                fontSize: 9.5,
+                                fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                                color: isSel ? Colors.black : SomaColors.onSurface,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 14),
 
                 // Workout Duration Slider
                 Row(
@@ -1066,8 +1319,14 @@ class _WorkoutTabState extends State<_WorkoutTab> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '$setsStr • $maxWeightStr • ${entry.calories} kcal',
-                  style: SomaFonts.mono(fontSize: 11, color: SomaColors.onSecondaryContainer),
+                  [
+                    if (setsStr.isNotEmpty) setsStr,
+                    if (maxWeightStr.isNotEmpty) maxWeightStr,
+                    '${entry.calories} kcal',
+                    if (entry.rpe != null) 'Effort: ${entry.rpe!.toStringAsFixed(1)}',
+                    if (entry.velocity != null && entry.velocity!.isNotEmpty) entry.velocity!,
+                  ].join(' • '),
+                  style: SomaFonts.mono(fontSize: 10.5, color: SomaColors.onSecondaryContainer),
                 ),
               ],
             ),
@@ -1078,6 +1337,286 @@ class _WorkoutTabState extends State<_WorkoutTab> {
               HapticFeedback.lightImpact();
               provider.deleteLogEntry(entry.id);
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEffortAndSpeedInfoModal(BuildContext context) {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+          ),
+          decoration: const BoxDecoration(
+            color: Color(0xFF16181C),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag Handle
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+
+              // Content
+              Flexible(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: SomaColors.primaryContainer.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.help_outline_rounded,
+                              color: SomaColors.primaryContainer,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'EFFORT & SPEED GUIDE',
+                                  style: SomaFonts.mono(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5,
+                                    color: SomaColors.onSurface,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'How KRATOS calculates your next progression',
+                                  style: SomaFonts.primary(
+                                    fontSize: 12,
+                                    color: SomaColors.onSecondaryContainer,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 20),
+                            onPressed: () => Navigator.of(ctx).pop(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Section 1: Effort Scale
+                      Text(
+                        '1. HOW HARD DID IT FEEL? (EFFORT / RPE)',
+                        style: SomaFonts.mono(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                          color: SomaColors.primaryContainer,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'This rating indicates how close to failure you were. Instead of training to absolute exhaustion every set, tracking effort ensures consistent muscle growth without burnout or injury.',
+                        style: SomaFonts.primary(
+                          fontSize: 12.5,
+                          height: 1.4,
+                          color: SomaColors.onSurface.withValues(alpha: 0.85),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildInfoRow(
+                        badge: '5 – 6',
+                        badgeColor: Colors.tealAccent,
+                        title: 'Warm-up / Easy',
+                        description: 'You had 4+ reps left in reserve. Minimal fatigue.',
+                      ),
+                      _buildInfoRow(
+                        badge: '7.0',
+                        badgeColor: Colors.greenAccent,
+                        title: 'Moderate',
+                        description: 'About 3 reps left. Solid working load, crisp movement.',
+                      ),
+                      _buildInfoRow(
+                        badge: '8.0',
+                        badgeColor: SomaColors.primaryContainer,
+                        title: 'Hard / Solid Set (Sweet Spot)',
+                        description: 'Exactly 2 reps left in the tank. The ideal range for building strength and muscle safely.',
+                      ),
+                      _buildInfoRow(
+                        badge: '9.0',
+                        badgeColor: Colors.orangeAccent,
+                        title: 'Very Hard',
+                        description: 'Only 1 rep left before failure. Very taxing.',
+                      ),
+                      _buildInfoRow(
+                        badge: '10.0',
+                        badgeColor: Colors.redAccent,
+                        title: 'Max Effort / Limit',
+                        description: 'Could not complete another rep. True muscular failure.',
+                      ),
+
+                      const SizedBox(height: 20),
+                      const Divider(color: SomaColors.cardBorder, height: 1),
+                      const SizedBox(height: 20),
+
+                      // Section 2: Lifting Speed & Feel
+                      Text(
+                        '2. LIFTING SPEED & FEEL',
+                        style: SomaFonts.mono(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                          color: SomaColors.primaryContainer,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Rep tempo reflects nervous system fatigue. A weight that feels heavy but moves fast shows high strength readiness.',
+                        style: SomaFonts.primary(
+                          fontSize: 12.5,
+                          height: 1.4,
+                          color: SomaColors.onSurface.withValues(alpha: 0.85),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildInfoRow(
+                        badge: '⚡',
+                        badgeColor: Colors.amberAccent,
+                        title: 'Fast & Smooth',
+                        description: 'Weights moved fast with no slowdown. Clear signal you are ready to increase weight (+1.25kg to +2.5kg)!',
+                      ),
+                      _buildInfoRow(
+                        badge: '⏱️',
+                        badgeColor: SomaColors.primaryContainer,
+                        title: 'Steady Pace',
+                        description: 'Controlled cadence with steady control. Signal to hit +1 extra rep next session before increasing weight.',
+                      ),
+                      _buildInfoRow(
+                        badge: '🏋️',
+                        badgeColor: Colors.purpleAccent,
+                        title: 'Struggling',
+                        description: 'Final reps slowed significantly to a hard grind. Maintain current weight until form and speed feel comfortable.',
+                      ),
+
+                      const SizedBox(height: 24),
+                      // Got It Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: SomaColors.primaryContainer,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: Text(
+                            'GOT IT, LET\'S TRAIN',
+                            style: SomaFonts.mono(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow({
+    required String badge,
+    required Color badgeColor,
+    required String title,
+    required String description,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: SomaColors.cardBackground,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: SomaColors.cardBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: badgeColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
+            ),
+            child: Text(
+              badge,
+              style: SomaFonts.mono(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: badgeColor,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: SomaFonts.primary(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: SomaColors.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: SomaFonts.primary(
+                    fontSize: 11.5,
+                    color: SomaColors.onSecondaryContainer,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
