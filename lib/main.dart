@@ -43,8 +43,33 @@ class SomaApp extends StatelessWidget {
 // Backwards compatibility alias
 typedef KratosApp = SomaApp;
 
-class MainShell extends StatelessWidget {
+class MainShell extends StatefulWidget {
   const MainShell({super.key});
+
+  @override
+  State<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // User returned to SOMA: acknowledge unattended alerts and resume engine
+      context.read<SomaProvider>().acknowledgeAllReminders();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

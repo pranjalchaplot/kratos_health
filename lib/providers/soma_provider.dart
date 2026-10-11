@@ -5,14 +5,19 @@ import '../models/daily_log.dart';
 import '../models/log_entry.dart';
 import '../models/user_goals.dart';
 import '../models/exercise_set.dart';
+import '../models/reminder_settings.dart';
 import '../services/screen_time_service.dart';
 import '../services/step_tracker_service.dart';
 import '../services/sleep_tracker_service.dart';
+import '../services/notification_service.dart';
+import '../services/sedentary_tracker_service.dart';
+import '../services/reminder_scheduler_service.dart';
 
 class SomaProvider extends ChangeNotifier {
   DateTime _selectedDate = DateTime.now();
   int _currentTabIndex = 0;
   UserGoals _userGoals = UserGoals();
+  ReminderSettings _reminderSettings = ReminderSettings();
   final Map<String, DailyLog> _logsMap = {};
   bool _isLoading = true;
   bool _isOnboardingCompleted = false;
@@ -23,6 +28,7 @@ class SomaProvider extends ChangeNotifier {
   DateTime get selectedDate => _selectedDate;
   int get currentTabIndex => _currentTabIndex;
   UserGoals get userGoals => _userGoals;
+  ReminderSettings get reminderSettings => _reminderSettings;
   bool get isLoading => _isLoading;
   bool get isOnboardingCompleted => _isOnboardingCompleted;
   bool get isStepPermissionGranted => _isStepPermissionGranted;
@@ -111,6 +117,16 @@ class SomaProvider extends ChangeNotifier {
         await saveToPrefs();
       }
 
+      // Load Reminder Settings
+      final reminderStr = prefs.getString('soma_reminder_settings');
+      if (reminderStr != null) {
+        _reminderSettings = ReminderSettings.decode(reminderStr);
+      }
+
+      // Initialize Notification Engine & Reminders Scheduler
+      await NotificationService().init(onAction: _handleNotificationAction);
+      _initReminderServices();
+
       // Sync & start step tracker listening if permission already granted
       await syncStepTrackingFromDevice();
 
@@ -129,6 +145,7 @@ class SomaProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('soma_onboarding_completed', _isOnboardingCompleted);
       await prefs.setString('soma_user_goals', _userGoals.encode());
+      await prefs.setString('soma_reminder_settings', _reminderSettings.encode());
 
       final Map<String, dynamic> logsExport = {};
       _logsMap.forEach((key, log) {
@@ -220,6 +237,9 @@ class SomaProvider extends ChangeNotifier {
       amount: amountLiters,
     );
     currentLog.entries.insert(0, entry);
+    // Notify hydration scheduler that water was logged and clear pending reminder
+    ReminderSchedulerService().notifyWaterLogged();
+    _reminderSettings.acknowledgeCategory('hydration');
     notifyListeners();
     await saveToPrefs();
   }
@@ -509,6 +529,98 @@ class SomaProvider extends ChangeNotifier {
     currentLog.applyGoals(newGoals);
     notifyListeners();
     await saveToPrefs();
+  }
+
+  // --- Notification & Reminders Engine Integration ---
+
+  void _initReminderServices() {
+    SedentaryTrackerService().startMonitoring(
+      settings: _reminderSettings,
+      onAlertSent: (category) {
+        _reminderSettings.recordSent(category);
+        saveToPrefs();
+        notifyListeners();
+      },
+      onMovementAcknowledged: (category) {
+        _reminderSettings.acknowledgeCategory(category);
+        saveToPrefs();
+        notifyListeners();
+      },
+    );
+
+    ReminderSchedulerService().start(
+      settings: _reminderSettings,
+      getCurrentLog: () => currentLog,
+      getUserGoals: () => _userGoals,
+      getCurrentStreak: () => streak,
+      onAlertSent: (category) {
+        _reminderSettings.recordSent(category);
+        saveToPrefs();
+        notifyListeners();
+      },
+    );
+  }
+
+  void _handleNotificationAction(String actionId, String? payload) {
+    if (actionId == NotificationService.actionAdd250ml) {
+      logWater(0.250, title: 'Quick Water', customSubtitle: '250 ml via notification');
+    } else if (actionId == NotificationService.actionAdd500ml) {
+      logWater(0.500, title: 'Quick Water', customSubtitle: '500 ml via notification');
+    }
+    acknowledgeAllReminders();
+  }
+
+  Future<void> updateReminderSettings(ReminderSettings newSettings) async {
+    _reminderSettings = newSettings;
+    SedentaryTrackerService().updateSettings(newSettings);
+    ReminderSchedulerService().updateSettings(newSettings);
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  Future<void> acknowledgeAllReminders() async {
+    _reminderSettings.acknowledgeAll();
+    SedentaryTrackerService().resetInactivityTimer();
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  Future<void> testNotification(String reminderType) async {
+    switch (reminderType) {
+      case 'sedentary':
+        await NotificationService().showSedentaryAlert(inactiveMinutes: 60);
+        break;
+      case 'hydration':
+        await NotificationService().showHydrationReminder(
+          currentLiters: currentLog.water,
+          goalLiters: _userGoals.waterGoal,
+        );
+        break;
+      case 'continuous_screen':
+        await NotificationService().showContinuousScreenAlert(sessionMinutes: 45);
+        break;
+      case 'digital_budget':
+        await NotificationService().showDigitalBudgetAlert(
+          currentHours: currentLog.digitalHours,
+          budgetHours: _userGoals.digitalGoalHours,
+        );
+        break;
+      case 'meal':
+        await NotificationService().showMealLoggingNudge(mealName: 'Lunch');
+        break;
+      case 'bedtime':
+        await NotificationService().showBedtimeAlert(targetTime: '23:00');
+        break;
+      case 'streak':
+        await NotificationService().showStreakSaverAlert(currentStreak: streak);
+        break;
+      case 'steps':
+        await NotificationService().showStepProgressAlert(
+          currentSteps: currentLog.steps,
+          goalSteps: _userGoals.stepsGoal,
+        );
+        break;
+    }
   }
 }
 

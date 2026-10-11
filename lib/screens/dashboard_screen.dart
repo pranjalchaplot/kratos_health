@@ -12,6 +12,7 @@ import '../widgets/macro_progress_bar.dart';
 import '../widgets/metric_card.dart';
 import '../widgets/quick_log_modal.dart';
 import '../widgets/bmr_info_dialog.dart';
+import '../widgets/notification_settings_sheet.dart';
 
 /// Main Dashboard Screen - SOMA Performance & Fitness Ecosystem
 class DashboardScreen extends StatefulWidget {
@@ -258,6 +259,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         color: SomaColors.primaryContainer,
                         size: 20,
                       ),
+              ),
+              const SizedBox(width: 2),
+              // Reminders & Alerts Bell Action Button
+              IconButton(
+                tooltip: 'Reminders & Alerts',
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  NotificationSettingsSheet.show(context);
+                },
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Icon(
+                      Icons.notifications_outlined,
+                      color: provider.reminderSettings.isCircuitBreakerActive
+                          ? SomaColors.accentAmber
+                          : SomaColors.onSurface,
+                      size: 21,
+                    ),
+                    if (provider.reminderSettings.isCircuitBreakerActive)
+                      Positioned(
+                        top: -1,
+                        right: -1,
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: SomaColors.accentAmber,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      )
+                    else if (provider.reminderSettings.sedentaryEnabled ||
+                        provider.reminderSettings.hydrationEnabled)
+                      Positioned(
+                        top: -1,
+                        right: -1,
+                        child: Container(
+                          width: 6,
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: SomaColors.primaryContainer,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
               const SizedBox(width: 4),
               // Streak Flame Pill
