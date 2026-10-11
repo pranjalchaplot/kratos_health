@@ -6,6 +6,9 @@ import '../models/user_goals.dart';
 import '../theme/soma_theme.dart';
 import '../services/step_tracker_service.dart';
 import '../services/android_sleep_service.dart';
+import '../services/notification_service.dart';
+import '../services/screen_time_service.dart';
+
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -28,13 +31,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
   final TextEditingController _ageController = TextEditingController(text: '24');
   String _activityLevel = 'Moderate (3-4 workouts/wk)';
 
-  // Step 3: Permissions (Digital Wellbeing, Step Tracker & Sleep Sensing)
+  // Step 3: Permissions (Digital Wellbeing, Steps, Sleep & Notifications)
   bool _isPermissionRequesting = false;
   bool _isPermissionGranted = false;
   bool _isStepPermissionRequesting = false;
   bool _isStepPermissionGranted = false;
   bool _isSleepPermissionRequesting = false;
   bool _isSleepPermissionGranted = false;
+  bool _isNotificationPermissionRequesting = false;
+  bool _isNotificationPermissionGranted = false;
   bool _isTestingSensors = false;
   int _digitalLimitHours = 6;
 
@@ -83,52 +88,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _recalculateGoals();
+    _checkPassivePermissions();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _currentStep == 2) {
-      if (_isPermissionRequesting) {
-        _verifyDigitalWellbeingOnResume();
-      } else {
-        _checkPassivePermissions();
-      }
+      _checkPassivePermissions();
     }
   }
 
-  /// Passive check that never prompts or triggers Android Settings intents
+  /// Passive check that queries system state without prompting or opening settings
   Future<void> _checkPassivePermissions() async {
     try {
+      final wellbeingGranted = await ScreenTimeService.isPermissionGranted();
       final stepGranted = await StepTrackerService.isPermissionGranted();
       final sleepGranted = await AndroidSleepService.isPermissionGranted();
+      final notifGranted = await NotificationService().isPermissionGranted();
       if (!mounted) return;
       final provider = context.read<SomaProvider>();
+
+      if (wellbeingGranted && !_isPermissionGranted) {
+        provider.syncScreenTimeFromDevice();
+      }
+
       setState(() {
+        _isPermissionGranted = wellbeingGranted;
         _isStepPermissionGranted = stepGranted;
         _isSleepPermissionGranted = sleepGranted || provider.isSleepTrackingActive;
+        _isNotificationPermissionGranted = notifGranted;
+        _isPermissionRequesting = false;
+        _isStepPermissionRequesting = false;
+        _isSleepPermissionRequesting = false;
+        _isNotificationPermissionRequesting = false;
       });
     } catch (_) {}
-  }
-
-  /// Verify digital wellbeing only when user explicitly tapped the permission button
-  Future<void> _verifyDigitalWellbeingOnResume() async {
-    try {
-      if (!mounted) return;
-      final provider = context.read<SomaProvider>();
-      final screenTimeSuccess = await provider.syncScreenTimeFromDevice();
-      if (mounted) {
-        setState(() {
-          _isPermissionGranted = screenTimeSuccess;
-          _isPermissionRequesting = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _isPermissionRequesting = false;
-        });
-      }
-    }
   }
 
   @override
@@ -207,31 +201,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
     });
 
     try {
-      final success = await context.read<SomaProvider>().syncScreenTimeFromDevice();
-      setState(() {
-        _isPermissionGranted = success;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              success
-                  ? 'Digital Wellbeing Permission Granted & Usage Synced!'
-                  : 'Usage stats queried. Ensure permission is enabled in Android Settings.',
-            ),
-            backgroundColor: success ? SomaColors.primaryContainer : SomaColors.surfaceContainerHigh,
-          ),
-        );
+      final isAlreadyGranted = await ScreenTimeService.isPermissionGranted();
+      if (!mounted) return;
+      if (isAlreadyGranted) {
+        await context.read<SomaProvider>().syncScreenTimeFromDevice();
+        if (mounted) {
+          setState(() {
+            _isPermissionGranted = true;
+          });
+          HapticFeedback.mediumImpact();
+        }
+        return;
       }
+
+      // If not granted yet, launch Android Usage Access Settings
+      await ScreenTimeService.openUsageSettings();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not sync usage stats: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+      debugPrint('Could not request digital wellbeing permission: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -248,30 +234,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
 
     try {
       final success = await context.read<SomaProvider>().requestStepPermission();
-      setState(() {
-        _isStepPermissionGranted = success;
-      });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              success
-                  ? 'Physical Activity Permission Granted! Auto step counting active.'
-                  : 'Step permission not granted. You can still log steps manually or enable it later.',
-            ),
-            backgroundColor: success ? SomaColors.primaryContainer : SomaColors.surfaceContainerHigh,
-          ),
-        );
+        setState(() {
+          _isStepPermissionGranted = success;
+        });
+        if (success) {
+          HapticFeedback.mediumImpact();
+        }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not request step permission: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+      debugPrint('Could not request step permission: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -288,35 +260,47 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
 
     try {
       final success = await context.read<SomaProvider>().requestSleepPermission();
-      setState(() {
-        _isSleepPermissionGranted = success;
-        if (success) _isStepPermissionGranted = true;
-      });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              success
-                  ? 'Sleep Sensing Armed! Phone will passively detect sleep overnight.'
-                  : 'Sleep permission not granted. You can still log sleep manually.',
-            ),
-            backgroundColor: success ? SomaColors.primaryContainer : SomaColors.surfaceContainerHigh,
-          ),
-        );
+        setState(() {
+          _isSleepPermissionGranted = success;
+          if (success) _isStepPermissionGranted = true;
+        });
+        if (success) {
+          HapticFeedback.mediumImpact();
+        }
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not request sleep permission: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+      debugPrint('Could not request sleep permission: $e');
     } finally {
       if (mounted) {
         setState(() {
           _isSleepPermissionRequesting = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    setState(() {
+      _isNotificationPermissionRequesting = true;
+    });
+
+    try {
+      final success = await NotificationService().requestPermissions();
+      if (mounted) {
+        setState(() {
+          _isNotificationPermissionGranted = success;
+        });
+        if (success) {
+          HapticFeedback.mediumImpact();
+        }
+      }
+    } catch (e) {
+      debugPrint('Could not request notification permission: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isNotificationPermissionRequesting = false;
         });
       }
     }
@@ -327,24 +311,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
       _isTestingSensors = true;
     });
     HapticFeedback.mediumImpact();
-    final results = await context.read<SomaProvider>().syncAllFromPhone();
+    final provider = context.read<SomaProvider>();
+    final notifGranted = await NotificationService().isPermissionGranted();
+    if (!mounted) return;
+    final results = await provider.syncAllFromPhone();
     if (mounted) {
-      final provider = context.read<SomaProvider>();
       setState(() {
         _isPermissionGranted = results['screenTime'] ?? false;
         _isStepPermissionGranted = results['steps'] ?? false;
         _isSleepPermissionGranted = (results['sleep'] ?? false) || provider.isSleepTrackingActive;
+        _isNotificationPermissionGranted = notifGranted;
         _isTestingSensors = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Telemetry Synced: Screen Time (${results['screenTime'] == true ? 'Active' : 'Pending'}), Steps (${results['steps'] == true ? 'Active' : 'Pending'}), Sleep (${provider.isSleepTrackingActive ? 'Armed' : 'Pending'})',
-          ),
-          backgroundColor: SomaColors.primaryContainer,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      HapticFeedback.mediumImpact();
     }
   }
 
@@ -833,7 +812,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           ),
           const SizedBox(height: 8),
           Text(
-            'Grant permissions so SOMA can auto-detect your daily steps and screen time without requiring manual entry.',
+            'Grant permissions so SOMA can auto-detect your daily steps, screen time, sleep, and deliver timely reminders.',
             style: SomaFonts.primary(
               fontSize: 13.5,
               color: SomaColors.secondary,
@@ -846,10 +825,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: SomaColors.cardBackground,
+              color: _isPermissionGranted
+                  ? SomaColors.primaryContainer.withValues(alpha: 0.08)
+                  : SomaColors.cardBackground,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _isPermissionGranted ? SomaColors.primaryContainer : SomaColors.cardBorder,
+                width: _isPermissionGranted ? 1.5 : 1.0,
               ),
             ),
             child: Column(
@@ -866,7 +848,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        _isPermissionGranted ? Icons.verified_user : Icons.phonelink_setup,
+                        _isPermissionGranted ? Icons.check_circle_rounded : Icons.phonelink_setup,
                         color: _isPermissionGranted ? SomaColors.primaryContainer : SomaColors.secondary,
                         size: 24,
                       ),
@@ -876,15 +858,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _isPermissionGranted
-                                ? 'Digital Wellbeing Connected'
-                                : 'Usage Stats Permission',
-                            style: SomaFonts.primary(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: SomaColors.onSurface,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                _isPermissionGranted
+                                    ? 'Digital Wellbeing Connected'
+                                    : 'Usage Stats Permission',
+                                style: SomaFonts.primary(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: SomaColors.onSurface,
+                                ),
+                              ),
+                              if (_isPermissionGranted) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: SomaColors.primaryContainer.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: SomaColors.primaryContainer.withValues(alpha: 0.4),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'ACTIVE',
+                                    style: SomaFonts.mono(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: SomaColors.primaryContainer,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -908,9 +916,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _isPermissionGranted
-                          ? SomaColors.surfaceContainerHigh
+                          ? SomaColors.primaryContainer.withValues(alpha: 0.15)
                           : SomaColors.primaryContainer,
-                      foregroundColor: _isPermissionGranted ? SomaColors.onSurface : Colors.black,
+                      foregroundColor: _isPermissionGranted ? SomaColors.primaryContainer : Colors.black,
+                      side: _isPermissionGranted ? const BorderSide(color: SomaColors.primaryContainer, width: 1) : null,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _isPermissionRequesting ? null : _requestDigitalWellbeingPermission,
@@ -920,7 +929,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
                           )
-                        : Icon(_isPermissionGranted ? Icons.check : Icons.lock_open, size: 18),
+                        : Icon(_isPermissionGranted ? Icons.check_circle_rounded : Icons.lock_open, size: 18),
                     label: Text(
                       _isPermissionGranted ? 'PERMISSIONS ACTIVE' : 'ALLOW DIGITAL WELLBEING',
                       style: SomaFonts.mono(
@@ -940,10 +949,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: SomaColors.cardBackground,
+              color: _isStepPermissionGranted
+                  ? SomaColors.primaryContainer.withValues(alpha: 0.08)
+                  : SomaColors.cardBackground,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _isStepPermissionGranted ? SomaColors.primaryContainer : SomaColors.cardBorder,
+                width: _isStepPermissionGranted ? 1.5 : 1.0,
               ),
             ),
             child: Column(
@@ -960,7 +972,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        _isStepPermissionGranted ? Icons.directions_walk_rounded : Icons.directions_walk_outlined,
+                        _isStepPermissionGranted ? Icons.check_circle_rounded : Icons.directions_walk_outlined,
                         color: _isStepPermissionGranted ? SomaColors.primaryContainer : SomaColors.secondary,
                         size: 24,
                       ),
@@ -970,15 +982,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _isStepPermissionGranted
-                                ? 'Auto Step Counter Active'
-                                : 'Physical Activity Permission',
-                            style: SomaFonts.primary(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: SomaColors.onSurface,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                _isStepPermissionGranted
+                                    ? 'Auto Step Counter Active'
+                                    : 'Physical Activity Permission',
+                                style: SomaFonts.primary(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: SomaColors.onSurface,
+                                ),
+                              ),
+                              if (_isStepPermissionGranted) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: SomaColors.primaryContainer.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: SomaColors.primaryContainer.withValues(alpha: 0.4),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'ACTIVE',
+                                    style: SomaFonts.mono(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: SomaColors.primaryContainer,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -1002,9 +1040,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _isStepPermissionGranted
-                          ? SomaColors.surfaceContainerHigh
+                          ? SomaColors.primaryContainer.withValues(alpha: 0.15)
                           : SomaColors.primaryContainer,
-                      foregroundColor: _isStepPermissionGranted ? SomaColors.onSurface : Colors.black,
+                      foregroundColor: _isStepPermissionGranted ? SomaColors.primaryContainer : Colors.black,
+                      side: _isStepPermissionGranted ? const BorderSide(color: SomaColors.primaryContainer, width: 1) : null,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _isStepPermissionRequesting ? null : _requestStepPermission,
@@ -1014,7 +1053,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
                           )
-                        : Icon(_isStepPermissionGranted ? Icons.check : Icons.directions_run_rounded, size: 18),
+                        : Icon(_isStepPermissionGranted ? Icons.check_circle_rounded : Icons.directions_run_rounded, size: 18),
                     label: Text(
                       _isStepPermissionGranted ? 'STEP COUNTER CONNECTED' : 'ENABLE AUTO STEP TRACKER',
                       style: SomaFonts.mono(
@@ -1034,10 +1073,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: SomaColors.cardBackground,
+              color: _isSleepPermissionGranted
+                  ? SomaColors.primaryContainer.withValues(alpha: 0.08)
+                  : SomaColors.cardBackground,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _isSleepPermissionGranted ? SomaColors.primaryContainer : SomaColors.cardBorder,
+                width: _isSleepPermissionGranted ? 1.5 : 1.0,
               ),
             ),
             child: Column(
@@ -1054,7 +1096,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        _isSleepPermissionGranted ? Icons.nightlight_round : Icons.bedtime_outlined,
+                        _isSleepPermissionGranted ? Icons.check_circle_rounded : Icons.bedtime_outlined,
                         color: _isSleepPermissionGranted ? SomaColors.primaryContainer : SomaColors.secondary,
                         size: 24,
                       ),
@@ -1064,15 +1106,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _isSleepPermissionGranted
-                                ? 'Sleep Sensing Active'
-                                : 'Nightly Sleep Sensing',
-                            style: SomaFonts.primary(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: SomaColors.onSurface,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                _isSleepPermissionGranted
+                                    ? 'Sleep Sensing Active'
+                                    : 'Nightly Sleep Sensing',
+                                style: SomaFonts.primary(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: SomaColors.onSurface,
+                                ),
+                              ),
+                              if (_isSleepPermissionGranted) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: SomaColors.primaryContainer.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: SomaColors.primaryContainer.withValues(alpha: 0.4),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'ACTIVE',
+                                    style: SomaFonts.mono(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: SomaColors.primaryContainer,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                           const SizedBox(height: 2),
                           Text(
@@ -1098,7 +1166,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                       backgroundColor: _isSleepPermissionGranted
                           ? SomaColors.surfaceContainerHigh
                           : SomaColors.primaryContainer,
-                      foregroundColor: _isSleepPermissionGranted ? SomaColors.onSurface : Colors.black,
+                      foregroundColor: _isSleepPermissionGranted ? SomaColors.primaryContainer : Colors.black,
+                      side: _isSleepPermissionGranted ? const BorderSide(color: SomaColors.primaryContainer, width: 1) : null,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _isSleepPermissionRequesting ? null : _requestSleepPermission,
@@ -1108,9 +1177,133 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                             height: 16,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
                           )
-                        : Icon(_isSleepPermissionGranted ? Icons.check : Icons.nightlight_round, size: 18),
+                        : Icon(_isSleepPermissionGranted ? Icons.check_circle_rounded : Icons.nightlight_round, size: 18),
                     label: Text(
                       _isSleepPermissionGranted ? 'SLEEP SENSING ARMED' : 'ENABLE AUTO SLEEP TRACKER',
+                      style: SomaFonts.mono(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // 4. Smart Nudges & Notifications Permission Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: _isNotificationPermissionGranted
+                  ? SomaColors.primaryContainer.withValues(alpha: 0.08)
+                  : SomaColors.cardBackground,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: _isNotificationPermissionGranted ? SomaColors.primaryContainer : SomaColors.cardBorder,
+                width: _isNotificationPermissionGranted ? 1.5 : 1.0,
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: _isNotificationPermissionGranted
+                            ? SomaColors.primaryContainer.withValues(alpha: 0.2)
+                            : SomaColors.surfaceContainerHigh,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _isNotificationPermissionGranted ? Icons.check_circle_rounded : Icons.notifications_none_rounded,
+                        color: _isNotificationPermissionGranted ? SomaColors.primaryContainer : SomaColors.secondary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                _isNotificationPermissionGranted
+                                    ? 'Smart Nudges Armed'
+                                    : 'Notification Permissions',
+                                style: SomaFonts.primary(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: SomaColors.onSurface,
+                                ),
+                              ),
+                              if (_isNotificationPermissionGranted) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: SomaColors.primaryContainer.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: SomaColors.primaryContainer.withValues(alpha: 0.4),
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'ACTIVE',
+                                    style: SomaFonts.mono(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: SomaColors.primaryContainer,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _isNotificationPermissionGranted
+                                ? 'Posture, hydration, and goal reminders scheduled.'
+                                : 'Receive proactive nudges for posture, hydration, & bedtime.',
+                            style: SomaFonts.primary(
+                              fontSize: 12,
+                              color: SomaColors.secondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 42,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _isNotificationPermissionGranted
+                          ? SomaColors.surfaceContainerHigh
+                          : SomaColors.primaryContainer,
+                      foregroundColor: _isNotificationPermissionGranted ? SomaColors.primaryContainer : Colors.black,
+                      side: _isNotificationPermissionGranted ? const BorderSide(color: SomaColors.primaryContainer, width: 1) : null,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: _isNotificationPermissionRequesting ? null : _requestNotificationPermission,
+                    icon: _isNotificationPermissionRequesting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                          )
+                        : Icon(_isNotificationPermissionGranted ? Icons.check_circle_rounded : Icons.notifications_active_rounded, size: 18),
+                    label: Text(
+                      _isNotificationPermissionGranted ? 'NOTIFICATIONS ACTIVE' : 'ALLOW NOTIFICATIONS',
                       style: SomaFonts.mono(
                         fontSize: 11.5,
                         fontWeight: FontWeight.bold,
@@ -1311,6 +1504,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with WidgetsBinding
                 _buildSummaryRow('Daily Activity', '$_calcSteps Steps / day', Icons.directions_walk_rounded),
                 _buildSummaryRow('Digital Limit', '$_digitalLimitHours Hours Max', Icons.phone_iphone_rounded),
                 _buildSummaryRow('Screen Sync', _isPermissionGranted ? 'Active & Permitted' : 'Manual / Pending', Icons.phonelink_setup_rounded),
+                _buildSummaryRow('Smart Nudges', _isNotificationPermissionGranted ? 'Active & Scheduled' : 'Disabled / Pending', Icons.notifications_active_rounded),
               ],
             ),
           ),

@@ -1,7 +1,31 @@
 import 'package:app_usage/app_usage.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 class ScreenTimeService {
+  static const MethodChannel _channel = MethodChannel('com.soma/sleep');
+
+  /// Check if Usage Stats / Digital Wellbeing permission is granted by user.
+  /// This check is passive, instant, and never prompts or redirects.
+  static Future<bool> isPermissionGranted() async {
+    try {
+      final bool? granted = await _channel.invokeMethod<bool>('checkUsageStatsPermission');
+      return granted ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Explicitly open Android Usage Access Settings screen.
+  static Future<bool> openUsageSettings() async {
+    try {
+      final bool? success = await _channel.invokeMethod<bool>('openUsageAccessSettings');
+      return success ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Known Android system, launcher, keyboard, and background services
   /// that Digital Wellbeing filters out of user screen time.
   static const Set<String> _systemExclusionPackages = {

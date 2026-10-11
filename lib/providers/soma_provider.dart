@@ -383,13 +383,15 @@ class SomaProvider extends ChangeNotifier {
 
   Future<bool> syncScreenTimeFromDevice() async {
     try {
-      final total = await ScreenTimeService.getTodayTotalScreenTime();
-      if (total > Duration.zero) {
-        final hours = total.inHours;
-        final minutes = total.inMinutes.remainder(60);
-        await logDigital(hours, minutes);
-        return true;
+      final isGranted = await ScreenTimeService.isPermissionGranted();
+      if (!isGranted) {
+        return false;
       }
+      final total = await ScreenTimeService.getTodayTotalScreenTime();
+      final hours = total.inHours;
+      final minutes = total.inMinutes.remainder(60);
+      await logDigital(hours, minutes);
+      return true;
     } catch (e) {
       debugPrint('Screen time sync failed: $e');
     }
