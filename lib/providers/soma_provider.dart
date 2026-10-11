@@ -42,6 +42,19 @@ class SomaProvider extends ChangeNotifier {
     return _logsMap[key]!;
   }
 
+  // Get yesterday log relative to the currently selected date
+  DailyLog? get yesterdayLog {
+    final yesterdayDate = _selectedDate.subtract(const Duration(days: 1));
+    final key = _formatKey(yesterdayDate);
+    return _logsMap[key];
+  }
+
+  // Get log for any specific date
+  DailyLog? getLogForDate(DateTime date) {
+    final key = _formatKey(date);
+    return _logsMap[key];
+  }
+
   // Active day index in week (0 for Mon, 6 for Sun)
   int get activeDayIndex => (_selectedDate.weekday - 1) % 7;
 

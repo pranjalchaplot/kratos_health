@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/dashboard_data.dart';
 import '../theme/soma_theme.dart';
 
 /// Metric card used in the 2x2 telemetry grid (Steps, Water, Sleep, Digital)
@@ -12,6 +13,8 @@ class MetricCard extends StatelessWidget {
   final double progress; // 0.0 to 1.0+
   final IconData icon;
   final Color? accentColor;
+  final MetricTrend? trend;
+  final String? trendDeltaText;
 
   const MetricCard({
     super.key,
@@ -24,6 +27,8 @@ class MetricCard extends StatelessWidget {
     required this.progress,
     required this.icon,
     this.accentColor,
+    this.trend,
+    this.trendDeltaText,
   });
 
   @override
@@ -72,20 +77,57 @@ class MetricCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    percentage,
-                    style: SomaFonts.mono(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                      color: color,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (trend != null && trend != MetricTrend.neutral) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        margin: const EdgeInsets.only(right: 6),
+                        decoration: BoxDecoration(
+                          color: (trend == MetricTrend.up ? SomaColors.primaryContainer : SomaColors.accentCoral)
+                              .withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              trend == MetricTrend.up ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                              size: 11,
+                              color: trend == MetricTrend.up ? SomaColors.primaryContainer : SomaColors.accentCoral,
+                            ),
+                            if (trendDeltaText != null && trendDeltaText!.isNotEmpty) ...[
+                              const SizedBox(width: 2),
+                              Text(
+                                trendDeltaText!,
+                                style: SomaFonts.mono(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: trend == MetricTrend.up ? SomaColors.primaryContainer : SomaColors.accentCoral,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        percentage,
+                        style: SomaFonts.mono(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: color,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),

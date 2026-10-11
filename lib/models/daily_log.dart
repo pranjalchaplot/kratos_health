@@ -61,6 +61,16 @@ class DailyLog {
 
   int get caloriesBurned => activeCaloriesBurned;
 
+  int get caloriesConsumed {
+    int total = 0;
+    for (var entry in entries) {
+      if (entry.type == LogType.meal) {
+        total += entry.calories;
+      }
+    }
+    return total;
+  }
+
   int get protein {
     int total = 0;
     for (var entry in entries) {

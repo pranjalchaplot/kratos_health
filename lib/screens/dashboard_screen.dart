@@ -50,6 +50,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       provider.userGoals,
       provider.streak,
       provider.activeDayIndex,
+      yesterdayLog: provider.yesterdayLog,
     );
 
     return Scaffold(
@@ -381,6 +382,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildDailySummaryCard(BuildContext context, DashboardData data) {
     final formatCurrency = NumberFormat("#,##0", "en_US");
+    final deficit = data.calorieDeficit;
+    final isDeficit = deficit >= 0;
+    final deficitPrefix = isDeficit ? '+' : '';
+    final centerVal = '$deficitPrefix${formatCurrency.format(deficit)}';
+    final centerLbl = isDeficit ? 'NET DEFICIT' : 'NET SURPLUS';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -407,8 +413,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ProgressRings(
                           calorieProgress: data.caloriesProgress,
                           activityProgress: data.caloriesProgress,
-                          centerValue: formatCurrency.format(data.totalCaloriesBurned),
-                          centerLabel: 'KCAL BURNED',
+                          centerValue: centerVal,
+                          centerLabel: centerLbl,
                         ),
                         const SizedBox(width: 24),
                         Expanded(child: _buildMacrosSection(context, data)),
@@ -420,8 +426,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ProgressRings(
                         calorieProgress: data.caloriesProgress,
                         activityProgress: data.caloriesProgress,
-                        centerValue: formatCurrency.format(data.totalCaloriesBurned),
-                        centerLabel: 'KCAL BURNED',
+                        centerValue: centerVal,
+                        centerLabel: centerLbl,
                       ),
                       const SizedBox(height: 20),
                       _buildMacrosSection(context, data),
@@ -437,6 +443,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildMacrosSection(BuildContext context, DashboardData data) {
+    final formatCurrency = NumberFormat("#,##0", "en_US");
     final goalPercent = (data.caloriesProgress * 100).round();
 
     return Column(
@@ -451,7 +458,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: [
                   Flexible(
                     child: Text(
-                      'DAILY METABOLIC BURN',
+                      'METABOLIC BALANCE',
                       style: SomaFonts.display(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -491,9 +498,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                '$goalPercent% OF GOAL',
+                '$goalPercent% BURN GOAL',
                 style: SomaFonts.mono(
-                  fontSize: 11,
+                  fontSize: 10.5,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.8,
                   color: SomaColors.primaryContainer,
@@ -502,30 +509,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        // Sub-metrics: Burn vs Intake breakdown pills
+        Row(
+          children: [
+            _buildDeficitSubPill(
+              '🔥 BURN',
+              '${formatCurrency.format(data.totalCaloriesBurned)} kcal',
+              SomaColors.accentCoral,
+            ),
+            const SizedBox(width: 8),
+            _buildDeficitSubPill(
+              '🍽️ INTAKE',
+              '${formatCurrency.format(data.caloriesConsumed)} kcal',
+              SomaColors.accentCyan,
+            ),
+          ],
+        ),
         const SizedBox(height: 6),
         Text(
           'Active: ${data.caloriesBurned} kcal • Resting BMR: ${data.bmrBurntSoFar} kcal',
           style: SomaFonts.mono(
-            fontSize: 10.5,
+            fontSize: 10,
             color: SomaColors.onSecondaryContainer,
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         MacroProgressBar(
           label: 'PROTEIN',
           value: '${data.protein}g / ${data.proteinGoal}g',
           progress: data.proteinProgress,
           barColor: SomaColors.primaryContainer,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         MacroProgressBar(
           label: 'CARBS',
           value: '${data.carbs}g / ${data.carbsGoal}g',
           progress: data.carbsProgress,
           barColor: SomaColors.onSurface,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         MacroProgressBar(
           label: 'FATS',
           value: '${data.fats}g / ${data.fatsGoal}g',
@@ -533,6 +557,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
           barColor: SomaColors.secondary,
         ),
       ],
+    );
+  }
+
+  Widget _buildDeficitSubPill(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$label ',
+            style: SomaFonts.mono(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+          Text(
+            value,
+            style: SomaFonts.mono(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w800,
+              color: SomaColors.onSurface,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -561,6 +617,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               progress: data.stepsProgress,
               icon: Icons.directions_walk_rounded,
               accentColor: SomaColors.primaryContainer,
+              trend: data.hasYesterdayData ? data.stepsTrend : null,
+              trendDeltaText: data.hasYesterdayData
+                  ? (data.stepsDelta >= 0 ? '+${formatCurrency.format(data.stepsDelta)}' : formatCurrency.format(data.stepsDelta))
+                  : null,
             ),
           ),
           // Water Card
@@ -577,6 +637,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               progress: data.waterProgress,
               icon: Icons.water_drop_rounded,
               accentColor: SomaColors.accentCyan,
+              trend: data.hasYesterdayData ? data.waterTrend : null,
+              trendDeltaText: data.hasYesterdayData
+                  ? (data.waterDelta >= 0 ? '+${data.waterDelta.toStringAsFixed(1)}L' : '${data.waterDelta.toStringAsFixed(1)}L')
+                  : null,
             ),
           ),
           // Sleep Card
@@ -593,6 +657,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               progress: data.sleepProgress,
               icon: Icons.bedtime_rounded,
               accentColor: SomaColors.accentPurple,
+              trend: data.hasYesterdayData ? data.sleepTrend : null,
+              trendDeltaText: data.hasYesterdayData
+                  ? (data.sleepDelta >= 0 ? '+${data.sleepDelta.toStringAsFixed(1)}h' : '${data.sleepDelta.toStringAsFixed(1)}h')
+                  : null,
             ),
           ),
           // Digital Wellbeing Card
@@ -611,6 +679,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               progress: data.digitalProgress,
               icon: Icons.phone_iphone_rounded,
               accentColor: SomaColors.accentAmber,
+              trend: data.hasYesterdayData ? data.screenTrend : null,
+              trendDeltaText: data.hasYesterdayData
+                  ? (data.screenMinutesDelta >= 0 ? '+${data.screenMinutesDelta}m' : '${data.screenMinutesDelta}m')
+                  : null,
             ),
           ),
         ],
