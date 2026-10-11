@@ -1,6 +1,15 @@
-import 'package:app_usage/app_usage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+
+class AppScreenUsage {
+  final String packageName;
+  final Duration usage;
+
+  const AppScreenUsage({
+    required this.packageName,
+    required this.usage,
+  });
+}
 
 class ScreenTimeService {
   static const MethodChannel _channel = MethodChannel('com.soma/sleep');
@@ -26,70 +35,48 @@ class ScreenTimeService {
     }
   }
 
-  /// Known Android system, launcher, keyboard, and background services
-  /// that Digital Wellbeing filters out of user screen time.
-  static const Set<String> _systemExclusionPackages = {
-    'com.android.systemui',
-    'com.google.android.apps.nexuslauncher',
-    'com.google.android.launcher',
-    'com.sec.android.app.launcher',
-    'com.miui.home',
-    'com.oppo.launcher',
-    'com.huawei.android.launcher',
-    'com.oneplus.launcher',
-    'com.teslacoilsw.launcher',
-    'ch.deletescape.lawnchair',
-    'com.google.android.inputmethod.latin',
-    'com.samsung.android.honeyboard',
-    'com.touchtype.swiftkey',
-    'com.google.android.gms',
-    'com.google.android.googlequicksearchbox',
-    'com.android.settings',
-    'android',
-  };
-
-  /// Fetches app usage stats for today (strictly from local midnight 00:00:00 to now),
-  /// filtering out background system services and launchers.
-  static Future<List<AppUsageInfo>> getTodayAppUsage() async {
+  /// Calculates total Screen-On Time (in Duration) for today across tracked user apps.
+  /// Queries raw Android UsageEvents (MOVE_TO_FOREGROUND and MOVE_TO_BACKGROUND transitions)
+  /// starting explicitly from local midnight (00:00:00) to now, perfectly filtering out
+  /// system UI, keyboards, launchers, and background services to align with Digital Wellbeing.
+  static Future<Duration> getTodayTotalScreenTime() async {
     try {
-      final now = DateTime.now();
-      // Ensure strict local midnight bounds
-      final startDate = DateTime(now.year, now.month, now.day, 0, 0, 0, 0);
-      final endDate = now;
-      
-      final rawList = await AppUsage().getAppUsage(startDate, endDate);
-      
-      // Filter out system launchers, keyboards, wallpaper engines, and 0-duration entries
-      final filteredList = rawList.where((info) {
-        if (info.usage <= Duration.zero) return false;
-        final pkg = info.packageName.toLowerCase();
-        if (_systemExclusionPackages.contains(pkg)) return false;
-        if (pkg.startsWith('com.android.wallpaper') || pkg.startsWith('com.google.android.apps.wallpaper')) {
-          return false;
-        }
-        return true;
-      }).toList();
-
-      return filteredList;
+      final result = await _channel.invokeMethod<Map<dynamic, dynamic>>('getTodayScreenTime');
+      if (result != null && result.containsKey('totalTimeMillis')) {
+        final totalMillis = (result['totalTimeMillis'] as num).toInt();
+        return Duration(milliseconds: totalMillis);
+      }
     } catch (exception) {
       if (kDebugMode) {
-        print('ScreenTimeService error: $exception');
+        print('ScreenTimeService getTodayTotalScreenTime error: $exception');
       }
-      return [];
     }
+    return Duration.zero;
   }
 
-  /// Calculates total Screen-On Time (in Duration) for today across tracked user apps.
-  static Future<Duration> getTodayTotalScreenTime() async {
-    final usages = await getTodayAppUsage();
-    Duration total = Duration.zero;
-    for (final info in usages) {
-      total += info.usage;
+  /// Fetches per-app usage breakdown for today from raw UsageEvents.
+  static Future<List<AppScreenUsage>> getTodayAppUsage() async {
+    try {
+      final result = await _channel.invokeMethod<Map<dynamic, dynamic>>('getTodayScreenTime');
+      if (result != null && result['apps'] is List) {
+        final list = result['apps'] as List;
+        return list.map((item) {
+          final map = Map<String, dynamic>.from(item as Map);
+          return AppScreenUsage(
+            packageName: map['packageName'] as String? ?? '',
+            usage: Duration(milliseconds: (map['usageMillis'] as num? ?? 0).toInt()),
+          );
+        }).toList();
+      }
+    } catch (exception) {
+      if (kDebugMode) {
+        print('ScreenTimeService getTodayAppUsage error: $exception');
+      }
     }
-    return total;
+    return [];
   }
 
-  /// Formats duration into readable format e.g. "4h 25m"
+  /// Formats duration into readable format e.g. "1h 4m"
   static String formatDuration(Duration duration) {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);

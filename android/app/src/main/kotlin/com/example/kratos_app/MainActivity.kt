@@ -3,10 +3,13 @@ package com.example.kratos_app
 import android.Manifest
 import android.app.AppOpsManager
 import android.app.PendingIntent
+import android.app.usage.UsageEvents
+import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.PowerManager
 import android.os.Process
 import android.provider.Settings
 import android.util.Log
@@ -17,11 +20,35 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.util.Calendar
+import java.util.Date
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.soma/sleep"
     private val TAG = "SomaMainActivity"
     private val SLEEP_REQUEST_CODE = 4210
+
+    companion object {
+        private val SYSTEM_EXCLUDED_PACKAGES = hashSetOf(
+            "com.android.systemui",
+            "android",
+            "com.google.android.apps.nexuslauncher",
+            "com.google.android.launcher",
+            "com.sec.android.app.launcher",
+            "com.miui.home",
+            "com.oppo.launcher",
+            "com.huawei.android.launcher",
+            "com.oneplus.launcher",
+            "com.teslacoilsw.launcher",
+            "ch.deletescape.lawnchair",
+            "com.google.android.inputmethod.latin",
+            "com.samsung.android.honeyboard",
+            "com.touchtype.swiftkey",
+            "com.google.android.gms",
+            "com.google.android.googlequicksearchbox",
+            "com.google.android.permissioncontroller",
+            "com.android.settings"
+        )
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -33,6 +60,9 @@ class MainActivity : FlutterActivity() {
                 }
                 "openUsageAccessSettings" -> {
                     openUsageAccessSettings(result)
+                }
+                "getTodayScreenTime" -> {
+                    getTodayScreenTime(result)
                 }
                 "startSleepTracking" -> {
                     startSleepTracking(result)
@@ -92,6 +122,231 @@ class MainActivity : FlutterActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Error opening usage access settings: ${e.message}", e)
             result.success(false)
+        }
+    }
+
+    private fun getLauncherPackages(): Set<String> {
+        val launcherPackages = mutableSetOf<String>()
+        try {
+            val intent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_HOME)
+            }
+            val resolveInfos = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.queryIntentActivities(
+                    intent,
+                    PackageManager.ResolveInfoFlags.of(0L)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.queryIntentActivities(intent, 0)
+            }
+            for (info in resolveInfos) {
+                info.activityInfo?.packageName?.let { launcherPackages.add(it) }
+            }
+            val defaultResolve = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+            defaultResolve?.activityInfo?.packageName?.let { launcherPackages.add(it) }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error resolving launcher packages: ${e.message}")
+        }
+        return launcherPackages
+    }
+
+    private fun getLaunchablePackages(): Set<String> {
+        val launchable = mutableSetOf<String>()
+        try {
+            val intent = Intent(Intent.ACTION_MAIN).apply {
+                addCategory(Intent.CATEGORY_LAUNCHER)
+            }
+            val resolveInfos = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                packageManager.queryIntentActivities(
+                    intent,
+                    PackageManager.ResolveInfoFlags.of(0L)
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.queryIntentActivities(intent, 0)
+            }
+            for (info in resolveInfos) {
+                info.activityInfo?.packageName?.let { launchable.add(it) }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error resolving launchable packages: ${e.message}")
+        }
+        return launchable
+    }
+
+    private fun isExcludedPackage(
+        pkg: String?,
+        launcherPackages: Set<String>,
+        launchablePackages: Set<String>
+    ): Boolean {
+        if (pkg.isNullOrBlank()) return true
+        val lower = pkg.lowercase()
+        if (launcherPackages.contains(pkg) || launcherPackages.contains(lower)) return true
+        if (SYSTEM_EXCLUDED_PACKAGES.contains(lower)) return true
+        if (lower.startsWith("com.android.wallpaper") || lower.startsWith("com.google.android.apps.wallpaper")) return true
+        if (lower == "android" || lower == "com.android.systemui") return true
+        // Exclude internal OS packages, background providers, and transparent activities that lack a launchable intent
+        if (launchablePackages.isNotEmpty() && !launchablePackages.contains(pkg) && pkg != packageName) {
+            return true
+        }
+        return false
+    }
+
+    private fun getTodayScreenTime(result: MethodChannel.Result) {
+        try {
+            val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+            val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                appOps.unsafeCheckOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    Process.myUid(),
+                    packageName
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                appOps.checkOpNoThrow(
+                    AppOpsManager.OPSTR_GET_USAGE_STATS,
+                    Process.myUid(),
+                    packageName
+                )
+            }
+            if (mode != AppOpsManager.MODE_ALLOWED) {
+                Log.w(TAG, "ScreenTime: Usage stats permission not allowed")
+                result.success(hashMapOf(
+                    "totalTimeMillis" to 0L,
+                    "eventCount" to 0,
+                    "apps" to emptyList<Map<String, Any>>()
+                ))
+                return
+            }
+
+            // 1. Boundary Alignment: Local Midnight explicitly at 00:00:00.000
+            val calendar = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val startTime = calendar.timeInMillis
+            val endTime = System.currentTimeMillis()
+            Log.i(TAG, "ScreenTime: Window start = ${Date(startTime)} ($startTime), end = ${Date(endTime)} ($endTime)")
+
+            // 2. Filter Launchers and Non-Launchable System Packages
+            val launcherPackages = getLauncherPackages()
+            val launchablePackages = getLaunchablePackages()
+            Log.i(TAG, "ScreenTime: Excluded launcher packages: $launcherPackages")
+            Log.i(TAG, "ScreenTime: Total launchable packages registered: ${launchablePackages.size}")
+
+            // 3. Raw UsageEvents Transition Tracking (MOVE_TO_FOREGROUND & MOVE_TO_BACKGROUND)
+            val usageStatsManager = getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+            val usageEvents = usageStatsManager.queryEvents(startTime, endTime)
+
+            var currentForegroundPackage: String? = null
+            var currentForegroundStartTime: Long = 0L
+            val perAppUsageMap = mutableMapOf<String, Long>()
+            var totalScreenTimeMs = 0L
+            var eventCount = 0
+
+            val event = UsageEvents.Event()
+            while (usageEvents.hasNextEvent()) {
+                usageEvents.getNextEvent(event)
+                eventCount++
+                val eventType = event.eventType
+                val pkg = event.packageName ?: ""
+                val time = event.timeStamp
+                val clampedTime = time.coerceIn(startTime, endTime)
+
+                when (eventType) {
+                    1 -> { // UsageEvents.Event.ACTIVITY_RESUMED / MOVE_TO_FOREGROUND
+                        if (currentForegroundPackage != null) {
+                            if (clampedTime > currentForegroundStartTime && !isExcludedPackage(currentForegroundPackage, launcherPackages, launchablePackages)) {
+                                val sessionDuration = clampedTime - currentForegroundStartTime
+                                perAppUsageMap[currentForegroundPackage!!] = (perAppUsageMap[currentForegroundPackage!!] ?: 0L) + sessionDuration
+                                totalScreenTimeMs += sessionDuration
+                            }
+                        }
+                        currentForegroundPackage = pkg
+                        currentForegroundStartTime = clampedTime
+                    }
+                    2 -> { // UsageEvents.Event.ACTIVITY_PAUSED / MOVE_TO_BACKGROUND
+                        if (currentForegroundPackage == pkg) {
+                            if (clampedTime > currentForegroundStartTime && !isExcludedPackage(pkg, launcherPackages, launchablePackages)) {
+                                val sessionDuration = clampedTime - currentForegroundStartTime
+                                perAppUsageMap[pkg] = (perAppUsageMap[pkg] ?: 0L) + sessionDuration
+                                totalScreenTimeMs += sessionDuration
+                            }
+                            currentForegroundPackage = null
+                            currentForegroundStartTime = 0L
+                        } else if (currentForegroundPackage == null) {
+                            // If this was the first event of today, app was active across midnight
+                            if (clampedTime > startTime && !isExcludedPackage(pkg, launcherPackages, launchablePackages)) {
+                                val sessionDuration = clampedTime - startTime
+                                if (sessionDuration in 1..(4 * 3600 * 1000)) {
+                                    perAppUsageMap[pkg] = (perAppUsageMap[pkg] ?: 0L) + sessionDuration
+                                    totalScreenTimeMs += sessionDuration
+                                }
+                            }
+                        }
+                    }
+                    16, 18 -> { // SCREEN_NON_INTERACTIVE or KEYGUARD_SHOWN (Screen locked / turned off)
+                        if (currentForegroundPackage != null) {
+                            if (clampedTime > currentForegroundStartTime && !isExcludedPackage(currentForegroundPackage, launcherPackages, launchablePackages)) {
+                                val sessionDuration = clampedTime - currentForegroundStartTime
+                                perAppUsageMap[currentForegroundPackage!!] = (perAppUsageMap[currentForegroundPackage!!] ?: 0L) + sessionDuration
+                                totalScreenTimeMs += sessionDuration
+                            }
+                            currentForegroundPackage = null
+                            currentForegroundStartTime = 0L
+                        }
+                    }
+                }
+            }
+
+            // Close trailing active session if user is currently using the device right now
+            if (currentForegroundPackage != null && !isExcludedPackage(currentForegroundPackage, launcherPackages, launchablePackages)) {
+                val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+                val isInteractive = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+                    powerManager?.isInteractive ?: true
+                } else {
+                    @Suppress("DEPRECATION")
+                    powerManager?.isScreenOn ?: true
+                }
+                if (isInteractive && endTime > currentForegroundStartTime) {
+                    val sessionDuration = endTime - currentForegroundStartTime
+                    if (sessionDuration in 1..(2 * 3600 * 1000)) {
+                        perAppUsageMap[currentForegroundPackage!!] = (perAppUsageMap[currentForegroundPackage!!] ?: 0L) + sessionDuration
+                        totalScreenTimeMs += sessionDuration
+                    }
+                }
+            }
+
+            val hours = totalScreenTimeMs / (1000 * 3600)
+            val minutes = (totalScreenTimeMs % (1000 * 3600)) / (1000 * 60)
+            Log.i(TAG, "ScreenTime: Processed $eventCount events. Total screen time: ${hours}h ${minutes}m (${totalScreenTimeMs}ms)")
+            Log.i(TAG, "ScreenTime: Tracked active apps breakdown (${perAppUsageMap.size} packages):")
+            for ((appPkg, usageMs) in perAppUsageMap) {
+                val appMins = usageMs / (1000 * 60)
+                Log.d(TAG, "   -> $appPkg: ${appMins}m (${usageMs}ms)")
+            }
+
+            val appList = perAppUsageMap.map { (pkg, usageMs) ->
+                hashMapOf(
+                    "packageName" to pkg,
+                    "usageMillis" to usageMs
+                )
+            }
+
+            val resultMap = hashMapOf(
+                "totalTimeMillis" to totalScreenTimeMs,
+                "startTimeMillis" to startTime,
+                "endTimeMillis" to endTime,
+                "eventCount" to eventCount,
+                "apps" to appList
+            )
+            result.success(resultMap)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error calculating screen time: ${e.message}", e)
+            result.error("ERROR", e.message, null)
         }
     }
 
