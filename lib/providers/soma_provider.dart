@@ -6,12 +6,32 @@ import '../models/log_entry.dart';
 import '../models/user_goals.dart';
 import '../models/exercise_set.dart';
 import '../models/reminder_settings.dart';
+import '../models/weight_entry.dart';
+import '../models/workout_routine.dart';
+import '../services/activity_detection_service.dart';
+import '../services/calorie_calculator_service.dart';
 import '../services/screen_time_service.dart';
 import '../services/step_tracker_service.dart';
 import '../services/sleep_tracker_service.dart';
 import '../services/notification_service.dart';
 import '../services/sedentary_tracker_service.dart';
 import '../services/reminder_scheduler_service.dart';
+
+class LastExerciseRecord {
+  final String exerciseName;
+  final List<ExerciseSet> sets;
+  final double? rpe;
+  final String? velocity;
+  final DateTime date;
+
+  LastExerciseRecord({
+    required this.exerciseName,
+    required this.sets,
+    this.rpe,
+    this.velocity,
+    required this.date,
+  });
+}
 
 class SomaProvider extends ChangeNotifier {
   DateTime _selectedDate = DateTime.now();
@@ -25,6 +45,13 @@ class SomaProvider extends ChangeNotifier {
   bool _isSleepTrackingActive = false;
   bool _isSyncingFromPhone = false;
 
+  // Weight Tracking State
+  final List<WeightEntry> _weightHistory = [];
+
+  // Routines & Splits State
+  List<WorkoutRoutine> _routines = WorkoutRoutine.builtInPresets;
+  String _activeRoutineId = 'preset_push_split';
+
   DateTime get selectedDate => _selectedDate;
   int get currentTabIndex => _currentTabIndex;
   UserGoals get userGoals => _userGoals;
@@ -34,6 +61,25 @@ class SomaProvider extends ChangeNotifier {
   bool get isStepPermissionGranted => _isStepPermissionGranted;
   bool get isSleepTrackingActive => _isSleepTrackingActive;
   bool get isSyncingFromPhone => _isSyncingFromPhone;
+
+  List<WeightEntry> get weightHistory => List.unmodifiable(_weightHistory);
+  double get latestWeightKg {
+    if (_weightHistory.isNotEmpty) {
+      return _weightHistory.last.weightKg;
+    }
+    return _userGoals.weightKg ?? 75.0;
+  }
+  double get startingWeightKg => _weightHistory.isNotEmpty ? _weightHistory.first.weightKg : latestWeightKg;
+  double get weightDeltaSinceStart => latestWeightKg - startingWeightKg;
+
+  List<WorkoutRoutine> get routines => List.unmodifiable(_routines);
+  String get activeRoutineId => _activeRoutineId;
+  WorkoutRoutine get activeRoutine {
+    return _routines.firstWhere(
+      (r) => r.id == _activeRoutineId,
+      orElse: () => _routines.isNotEmpty ? _routines.first : WorkoutRoutine.builtInPresets.first,
+    );
+  }
 
   String _formatKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -123,6 +169,35 @@ class SomaProvider extends ChangeNotifier {
         _reminderSettings = ReminderSettings.decode(reminderStr);
       }
 
+      // Load Weight History
+      final weightJsonStr = prefs.getString('soma_weight_history');
+      if (weightJsonStr != null) {
+        final List<dynamic> decoded = jsonDecode(weightJsonStr);
+        _weightHistory.clear();
+        for (final item in decoded) {
+          _weightHistory.add(WeightEntry.fromJson(Map<String, dynamic>.from(item)));
+        }
+      }
+      if (_weightHistory.isEmpty) {
+        final initialW = _userGoals.weightKg ?? 75.0;
+        _weightHistory.add(WeightEntry(
+          id: 'initial_weight_baseline',
+          timestamp: DateTime.now().subtract(const Duration(days: 7)),
+          weightKg: initialW,
+          notes: 'Baseline weight',
+        ));
+      }
+
+      // Load Routines
+      final routinesJsonStr = prefs.getString('soma_routines');
+      if (routinesJsonStr != null) {
+        final List<dynamic> decoded = jsonDecode(routinesJsonStr);
+        _routines = decoded.map((e) => WorkoutRoutine.fromJson(Map<String, dynamic>.from(e))).toList();
+      } else {
+        _routines = List.from(WorkoutRoutine.builtInPresets);
+      }
+      _activeRoutineId = prefs.getString('soma_active_routine_id') ?? 'preset_push_split';
+
       // Initialize Notification Engine & Reminders Scheduler
       await NotificationService().init(onAction: _handleNotificationAction);
       _initReminderServices();
@@ -152,6 +227,15 @@ class SomaProvider extends ChangeNotifier {
         logsExport[key] = log.toJson();
       });
       await prefs.setString('soma_daily_logs', jsonEncode(logsExport));
+
+      // Save Weight History
+      final weightExport = _weightHistory.map((e) => e.toJson()).toList();
+      await prefs.setString('soma_weight_history', jsonEncode(weightExport));
+
+      // Save Routines
+      final routinesExport = _routines.map((e) => e.toJson()).toList();
+      await prefs.setString('soma_routines', jsonEncode(routinesExport));
+      await prefs.setString('soma_active_routine_id', _activeRoutineId);
     } catch (e) {
       debugPrint('Error saving data: $e');
     }
@@ -338,22 +422,147 @@ class SomaProvider extends ChangeNotifier {
     required List<ExerciseSet> sets,
     required int durationMinutes,
     required int calories,
+    double? rpe,
+    String? velocity,
   }) async {
     final totalReps = sets.fold(0, (sum, s) => sum + s.reps);
     final maxWeight = sets.fold(0.0, (max, s) => s.weightKg > max ? s.weightKg : max);
     final maxWeightStr = maxWeight % 1 == 0 ? maxWeight.toInt().toString() : maxWeight.toStringAsFixed(1);
     
+    final rpeText = rpe != null ? ' • RPE ${rpe.toStringAsFixed(1)}' : '';
+    final velText = velocity != null && velocity.isNotEmpty ? ' ($velocity)' : '';
+
     final entry = LogEntry(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       timestamp: DateTime.now(),
       type: LogType.activity,
       title: exerciseName,
-      subtitle: '${sets.length} sets • $totalReps total reps (Max: ${maxWeightStr}kg)',
+      subtitle: '${sets.length} sets • $totalReps total reps (Max: ${maxWeightStr}kg)$rpeText$velText',
       calories: calories,
       activityCategory: 'exercise',
       exerciseName: exerciseName,
       sets: sets,
       durationMinutes: durationMinutes,
+      rpe: rpe,
+      velocity: velocity,
+    );
+    currentLog.entries.insert(0, entry);
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  // --- Weight Tracking Engine ---
+
+  Future<void> logWeight(double weightKg, {String? notes, DateTime? timestamp}) async {
+    final entry = WeightEntry(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      timestamp: timestamp ?? DateTime.now(),
+      weightKg: weightKg,
+      notes: notes,
+    );
+    _weightHistory.add(entry);
+    _weightHistory.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+    // Automatically synchronize user goals and recalibrate BMR
+    _userGoals.weightKg = weightKg;
+    final updatedBmr = CalorieCalculatorService.calculateBmr(_userGoals);
+    currentLog.caloriesGoal = updatedBmr;
+
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  Future<void> deleteWeightEntry(String id) async {
+    _weightHistory.removeWhere((e) => e.id == id);
+    if (_weightHistory.isNotEmpty) {
+      _userGoals.weightKg = _weightHistory.last.weightKg;
+      final updatedBmr = CalorieCalculatorService.calculateBmr(_userGoals);
+      currentLog.caloriesGoal = updatedBmr;
+    }
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  // --- Routines & Splits Management ---
+
+  Future<void> setActiveRoutine(String routineId) async {
+    _activeRoutineId = routineId;
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  Future<void> addCustomRoutine(WorkoutRoutine routine) async {
+    _routines.add(routine);
+    _activeRoutineId = routine.id;
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  Future<void> deleteRoutine(String routineId) async {
+    _routines.removeWhere((r) => r.id == routineId);
+    if (_activeRoutineId == routineId) {
+      _activeRoutineId = _routines.isNotEmpty ? _routines.first.id : 'preset_push_split';
+    }
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  // --- Historical Query for Prefill & Progressive Overload Engine ---
+
+  LastExerciseRecord? getLastExerciseLog(String exerciseName) {
+    final queryName = exerciseName.trim().toLowerCase();
+    if (queryName.isEmpty) return null;
+
+    final sortedDates = _logsMap.keys.toList()
+      ..sort((a, b) => b.compareTo(a)); // Newest first
+
+    for (final dateKey in sortedDates) {
+      final log = _logsMap[dateKey];
+      if (log == null) continue;
+
+      for (final entry in log.entries) {
+        if (entry.type == LogType.activity &&
+            entry.sets != null &&
+            entry.sets!.isNotEmpty) {
+          final entryExName = (entry.exerciseName ?? entry.title).trim().toLowerCase();
+          if (entryExName == queryName) {
+            return LastExerciseRecord(
+              exerciseName: entry.exerciseName ?? entry.title,
+              sets: entry.sets!.map((s) => ExerciseSet(
+                setNumber: s.setNumber,
+                reps: s.reps,
+                weightKg: s.weightKg,
+              )).toList(),
+              rpe: entry.rpe,
+              velocity: entry.velocity,
+              date: entry.timestamp,
+            );
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  // --- Live Activity Session Logging ---
+
+  Future<void> logLiveActivitySession(LiveActivityState session) async {
+    final durationMins = (session.elapsedSeconds / 60).round().clamp(1, 999);
+    final title = '${session.typeName} Session';
+    final subtitle = '${durationMins}m • ${session.sessionSteps} steps • ${session.currentCadenceSpm} SPM';
+
+    final entry = LogEntry(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      timestamp: DateTime.now(),
+      type: LogType.activity,
+      title: title,
+      subtitle: subtitle,
+      calories: session.caloriesBurned,
+      count: session.sessionSteps,
+      activityCategory: session.activityType == DetectedActivityType.running ? 'cardio' : 'exercise',
+      cardioType: session.typeName,
+      durationMinutes: durationMins,
+      distanceKm: session.distanceKm,
     );
     currentLog.entries.insert(0, entry);
     notifyListeners();

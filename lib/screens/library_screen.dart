@@ -5,6 +5,8 @@ import '../providers/soma_provider.dart';
 import '../services/calorie_calculator_service.dart';
 import '../theme/soma_theme.dart';
 import '../widgets/bmr_info_dialog.dart';
+import '../widgets/weight_chart_widget.dart';
+import '../widgets/log_weight_modal.dart';
 
 class LibraryScreen extends StatelessWidget {
   const LibraryScreen({super.key});
@@ -23,6 +25,10 @@ class LibraryScreen extends StatelessWidget {
     final complianceSleep = log.sleepProgress.clamp(0.0, 1.0);
     final complianceSteps = log.stepsProgress.clamp(0.0, 1.0);
     final overallScore = (((complianceCal + complianceWater + complianceSleep + complianceSteps) / 4) * 100).round();
+
+    final delta = provider.weightDeltaSinceStart;
+    final deltaPrefix = delta > 0 ? '+' : '';
+    final deltaColor = delta <= 0 ? SomaColors.primaryContainer : Colors.orangeAccent;
 
     return Scaffold(
       backgroundColor: SomaColors.background,
@@ -111,6 +117,124 @@ class LibraryScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Weight Tracking Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'BODY MASS & WEIGHT PROGRESSION',
+                  style: SomaFonts.mono(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: SomaColors.onSecondaryContainer,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    LogWeightModal.show(context);
+                  },
+                  child: Row(
+                    children: [
+                      const Icon(Icons.add_circle_outline, size: 14, color: SomaColors.primaryContainer),
+                      const SizedBox(width: 4),
+                      Text(
+                        'LOG WEIGHT',
+                        style: SomaFonts.mono(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: SomaColors.primaryContainer,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // Weight Tracking Master Card
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: SomaColors.cardBackground,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: SomaColors.cardBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'CURRENT MASS',
+                            style: SomaFonts.mono(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: SomaColors.onSecondaryContainer,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${provider.latestWeightKg.toStringAsFixed(1)} kg',
+                            style: SomaFonts.display(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              color: SomaColors.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: SomaColors.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: deltaColor.withValues(alpha: 0.3)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'NET CHANGE',
+                              style: SomaFonts.mono(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: SomaColors.onSecondaryContainer,
+                              ),
+                            ),
+                            Text(
+                              '$deltaPrefix${delta.toStringAsFixed(1)} kg',
+                              style: SomaFonts.mono(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: deltaColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Embedded Custom Canvas Chart
+                  WeightChartWidget(
+                    entries: provider.weightHistory,
+                    targetWeightKg: goals.weightKg,
                   ),
                 ],
               ),

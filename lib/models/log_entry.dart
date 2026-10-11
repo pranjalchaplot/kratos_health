@@ -23,6 +23,8 @@ class LogEntry {
   final String? intensity;
   final int? durationMinutes;
   final double? distanceKm;
+  final double? rpe;
+  final String? velocity;
 
   LogEntry({
     required this.id,
@@ -43,6 +45,8 @@ class LogEntry {
     this.intensity,
     this.durationMinutes,
     this.distanceKm,
+    this.rpe,
+    this.velocity,
   });
 
   Map<String, dynamic> toJson() {
@@ -65,6 +69,8 @@ class LogEntry {
       'intensity': intensity,
       'durationMinutes': durationMinutes,
       'distanceKm': distanceKm,
+      'rpe': rpe,
+      'velocity': velocity,
     };
   }
 
@@ -95,6 +101,8 @@ class LogEntry {
       intensity: json['intensity'] as String?,
       durationMinutes: (json['durationMinutes'] as num?)?.toInt(),
       distanceKm: (json['distanceKm'] as num?)?.toDouble(),
+      rpe: (json['rpe'] as num?)?.toDouble(),
+      velocity: json['velocity'] as String?,
     );
   }
 }

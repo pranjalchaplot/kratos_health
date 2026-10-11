@@ -2,9 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import '../models/exercise_set.dart';
 import '../providers/soma_provider.dart';
 import '../services/calorie_calculator_service.dart';
+import '../services/progressive_overload_service.dart';
 import '../services/screen_time_service.dart';
 import '../theme/soma_theme.dart';
 import 'bmr_info_dialog.dart';
@@ -20,15 +22,27 @@ class QuickLogTab {
 
 class QuickLogModal extends StatefulWidget {
   final int initialTabIndex;
+  final String? initialExerciseName;
 
-  const QuickLogModal({super.key, this.initialTabIndex = QuickLogTab.water});
+  const QuickLogModal({
+    super.key,
+    this.initialTabIndex = QuickLogTab.water,
+    this.initialExerciseName,
+  });
 
-  static void show(BuildContext context, {int initialTabIndex = QuickLogTab.water}) {
+  static void show(
+    BuildContext context, {
+    int initialTabIndex = QuickLogTab.water,
+    String? initialExerciseName,
+  }) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => QuickLogModal(initialTabIndex: initialTabIndex),
+      builder: (context) => QuickLogModal(
+        initialTabIndex: initialTabIndex,
+        initialExerciseName: initialExerciseName,
+      ),
     );
   }
 
@@ -78,6 +92,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
   final _exerciseNameController = TextEditingController(text: 'Bench Press');
   final double _exerciseDurationMins = 45;
   bool _includeStrengthRest = true;
+  double _rpe = 8.0;
+  String _velocity = 'Controlled';
   final List<ExerciseSet> _exerciseSets = [
     ExerciseSet(setNumber: 1, reps: 10, weightKg: 60.0),
     ExerciseSet(setNumber: 2, reps: 10, weightKg: 60.0),
@@ -87,6 +103,11 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
+    if (widget.initialExerciseName != null && widget.initialExerciseName!.isNotEmpty) {
+      _exerciseNameController.text = widget.initialExerciseName!;
+      _activitySubMode = 'EXERCISE';
+    }
+
     _tabController = TabController(
       length: 6,
       vsync: this,
@@ -106,10 +127,37 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
     });
   }
 
+  void _checkAndPrefillExercise(String name) {
+    if (!mounted) return;
+    final provider = context.read<SomaProvider>();
+    final lastRecord = provider.getLastExerciseLog(name);
+    if (lastRecord != null && lastRecord.sets.isNotEmpty) {
+      setState(() {
+        _exerciseSets.clear();
+        for (final s in lastRecord.sets) {
+          _exerciseSets.add(ExerciseSet(
+            setNumber: s.setNumber,
+            reps: s.reps,
+            weightKg: s.weightKg,
+          ));
+        }
+        if (lastRecord.rpe != null) {
+          _rpe = lastRecord.rpe!;
+        }
+        if (lastRecord.velocity != null) {
+          _velocity = lastRecord.velocity!;
+        }
+      });
+    }
+  }
+
   Future<void> _syncInitialMetricsFromDevice() async {
     if (!mounted) return;
     final provider = context.read<SomaProvider>();
     final log = provider.currentLog;
+
+    // Prefill exercise if previous session exists
+    _checkAndPrefillExercise(_exerciseNameController.text);
 
     // 1. Populate initial values from today's active log
     setState(() {
@@ -976,7 +1024,8 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
 
   // --- Exercise Strength Sub-Mode (Workout Sets Manager) ---
   Widget _buildExerciseSubMode() {
-    final goals = context.read<SomaProvider>().userGoals;
+    final provider = context.watch<SomaProvider>();
+    final goals = provider.userGoals;
     final userWeight = goals.weightKg ?? 75.0;
     final userBmr = CalorieCalculatorService.calculateBmr(goals).toDouble();
 
@@ -988,6 +1037,14 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
       weightKg: userWeight,
       userBmr: userBmr,
       includeRest: _includeStrengthRest,
+    );
+
+    final lastRecord = provider.getLastExerciseLog(exerciseName);
+    final overload = ProgressiveOverloadService.computeOverload(
+      exerciseName: exerciseName,
+      previousSets: _exerciseSets,
+      rpe: _rpe,
+      velocity: _velocity,
     );
 
     final presetLifts = [
@@ -1023,7 +1080,9 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
-                onChanged: (_) => setState(() {}),
+                onChanged: (val) {
+                  _checkAndPrefillExercise(val);
+                },
               ),
             ),
             const SizedBox(width: 8),
@@ -1046,20 +1105,20 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
           scrollDirection: Axis.horizontal,
           child: Row(
             children: presetLifts.map((name) {
+              final isSelected = _exerciseNameController.text.toLowerCase() == name.toLowerCase();
               return Padding(
                 padding: const EdgeInsets.only(right: 6),
                 child: ChoiceChip(
                   label: Text(name, style: const TextStyle(fontSize: 10)),
-                  selected: _exerciseNameController.text == name,
+                  selected: isSelected,
                   selectedColor: SomaColors.primaryContainer,
                   backgroundColor: SomaColors.cardBackground,
                   labelStyle: TextStyle(
-                    color: _exerciseNameController.text == name ? Colors.black : SomaColors.onSurface,
+                    color: isSelected ? Colors.black : SomaColors.onSurface,
                   ),
                   onSelected: (_) {
-                    setState(() {
-                      _exerciseNameController.text = name;
-                    });
+                    _exerciseNameController.text = name;
+                    _checkAndPrefillExercise(name);
                   },
                 ),
               );
@@ -1068,15 +1127,184 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
         ),
 
         const SizedBox(height: 8),
+
+        // Automated Progressive Overload Engine Banner
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: SomaColors.cardBackground,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.35)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Text('⚡', style: TextStyle(fontSize: 13)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'OVERLOAD ENGINE',
+                        style: SomaFonts.mono(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: SomaColors.primaryContainer,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (overload.deltaWeightKg != 0 || overload.deltaReps != 0)
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        setState(() {
+                          _exerciseSets.clear();
+                          _exerciseSets.addAll(overload.suggestedSets);
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: SomaColors.primaryContainer,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'APPLY OVERLOAD',
+                          style: SomaFonts.mono(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                overload.title,
+                style: SomaFonts.primary(fontSize: 12, fontWeight: FontWeight.bold, color: SomaColors.onSurface),
+              ),
+              Text(
+                overload.explanation,
+                style: SomaFonts.primary(fontSize: 10.5, color: SomaColors.onSecondaryContainer),
+              ),
+              if (lastRecord != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Previous: ${lastRecord.sets.length} sets • ${lastRecord.sets.first.reps}r @ ${lastRecord.sets.first.weightKg}kg (${DateFormat('MMM d').format(lastRecord.date)})',
+                  style: SomaFonts.mono(fontSize: 9.5, color: SomaColors.accentCyan),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Self-Reported Exertion (RPE) & Lifting Velocity Selectors
+        Row(
+          children: [
+            // RPE Pills
+            Expanded(
+              flex: 5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('EFFORT (RPE)', style: SomaFonts.mono(fontSize: 9, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
+                  const SizedBox(height: 4),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [6.0, 7.0, 8.0, 8.5, 9.0, 10.0].map((rpeVal) {
+                        final isSel = _rpe == rpeVal;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: GestureDetector(
+                            onTap: () => setState(() => _rpe = rpeVal),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isSel ? SomaColors.primaryContainer : SomaColors.surfaceContainerHigh,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                rpeVal == 10.0 ? '10 (Max)' : '$rpeVal',
+                                style: SomaFonts.mono(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSel ? Colors.black : SomaColors.onSecondaryContainer,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Velocity Pills
+            Expanded(
+              flex: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('BAR VELOCITY', style: SomaFonts.mono(fontSize: 9, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
+                  const SizedBox(height: 4),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: ['Explosive', 'Controlled', 'Grind'].map((vel) {
+                        final isSel = _velocity == vel;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: GestureDetector(
+                            onTap: () => setState(() => _velocity = vel),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isSel ? SomaColors.primaryContainer : SomaColors.surfaceContainerHigh,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                vel,
+                                style: SomaFonts.mono(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSel ? Colors.black : SomaColors.onSecondaryContainer,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 8),
+
         // Sets Manager Table Header
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('WORKOUT SETS', style: SomaFonts.mono(fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
-            Text('REPS × WEIGHT (KG)', style: SomaFonts.mono(fontSize: 11, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
+            Text('WORKOUT SETS', style: SomaFonts.mono(fontSize: 10.5, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
+            Text('REPS × WEIGHT (KG)', style: SomaFonts.mono(fontSize: 10.5, fontWeight: FontWeight.bold, color: SomaColors.onSecondaryContainer)),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
 
         // Dynamic Sets List
         Expanded(
@@ -1086,68 +1314,67 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               final setItem = _exerciseSets[index];
               return Container(
                 margin: const EdgeInsets.only(bottom: 6),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
                   color: SomaColors.cardBackground,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: SomaColors.cardBorder),
                 ),
                 child: Row(
                   children: [
-                    Text(
-                      'SET ${index + 1}',
-                      style: SomaFonts.mono(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: SomaColors.primaryContainer,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: SomaColors.primaryContainer.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'SET ${index + 1}',
+                        style: SomaFonts.mono(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: SomaColors.primaryContainer,
+                        ),
                       ),
                     ),
                     const Spacer(),
 
                     // Reps Stepper
-                    Text('${setItem.reps} r', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, size: 18, color: SomaColors.onSecondaryContainer),
-                      onPressed: setItem.reps > 1
-                          ? () {
-                              setState(() => setItem.reps--);
-                            }
+                    _buildCompactStepper(
+                      valueText: '${setItem.reps} r',
+                      onMinus: setItem.reps > 1
+                          ? () => setState(() => setItem.reps--)
                           : null,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline, size: 18, color: SomaColors.primaryContainer),
-                      onPressed: () {
-                        setState(() => setItem.reps++);
-                      },
+                      onPlus: () => setState(() => setItem.reps++),
                     ),
 
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
+
                     // Weight Stepper
-                    Text('${setItem.weightKg.toInt()} kg', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                    IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, size: 18, color: SomaColors.onSecondaryContainer),
-                      onPressed: setItem.weightKg >= 2.5
-                          ? () {
-                              setState(() => setItem.weightKg -= 2.5);
-                            }
+                    _buildCompactStepper(
+                      valueText: '${setItem.weightKg.toStringAsFixed(1)} kg',
+                      onMinus: setItem.weightKg >= 1.25
+                          ? () => setState(() => setItem.weightKg -= 1.25)
                           : null,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline, size: 18, color: SomaColors.primaryContainer),
-                      onPressed: () {
-                        setState(() => setItem.weightKg += 2.5);
-                      },
+                      onPlus: () => setState(() => setItem.weightKg += 1.25),
                     ),
 
-                    if (_exerciseSets.length > 1)
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
-                        onPressed: () {
+                    if (_exerciseSets.length > 1) ...[
+                      const SizedBox(width: 4),
+                      InkWell(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
                           setState(() {
                             _exerciseSets.removeAt(index);
                           });
                         },
+                        borderRadius: BorderRadius.circular(6),
+                        child: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: Icon(Icons.close, size: 14, color: Colors.redAccent),
+                        ),
                       ),
+                    ],
                   ],
                 ),
               );
@@ -1191,10 +1418,65 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 sets: _exerciseSets,
                 durationMinutes: _exerciseDurationMins.toInt(),
                 calories: calcCalories,
+                rpe: _rpe,
+                velocity: _velocity,
               );
           if (mounted) Navigator.pop(context);
         }),
       ],
+    );
+  }
+
+  Widget _buildCompactStepper({
+    required String valueText,
+    required VoidCallback? onMinus,
+    required VoidCallback onPlus,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+      decoration: BoxDecoration(
+        color: SomaColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: SomaColors.cardBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          InkWell(
+            onTap: onMinus,
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: Icon(
+                Icons.remove,
+                size: 13,
+                color: onMinus != null
+                    ? SomaColors.onSurface
+                    : SomaColors.onSecondaryContainer.withValues(alpha: 0.3),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              valueText,
+              style: SomaFonts.mono(
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
+                color: SomaColors.onSurface,
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: onPlus,
+            borderRadius: BorderRadius.circular(4),
+            child: const Padding(
+              padding: EdgeInsets.all(2.0),
+              child: Icon(Icons.add, size: 13, color: SomaColors.primaryContainer),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

@@ -356,6 +356,34 @@ class NotificationService {
     );
   }
 
+  /// Show standard notification (for focus sessions, eye stretch, custom alerts)
+  Future<void> showNotification({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    const androidDetails = AndroidNotificationDetails(
+      channelWellbeingId,
+      'Performance & Wellbeing',
+      channelDescription: 'SOMA Focus & Protocol Notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      category: AndroidNotificationCategory.reminder,
+      playSound: true,
+      sound: _somaSound,
+    );
+
+    await _plugin.show(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: const NotificationDetails(android: androidDetails),
+      payload: payload,
+    );
+  }
+
   /// Cancel specific notification
   Future<void> cancel(int id) async {
     await _plugin.cancel(id: id);

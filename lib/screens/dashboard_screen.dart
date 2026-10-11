@@ -13,6 +13,10 @@ import '../widgets/metric_card.dart';
 import '../widgets/quick_log_modal.dart';
 import '../widgets/bmr_info_dialog.dart';
 import '../widgets/notification_settings_sheet.dart';
+import '../widgets/daily_routine_card.dart';
+import '../widgets/live_activity_hud_sheet.dart';
+import '../widgets/work_mode_hud_sheet.dart';
+import '../services/work_mode_service.dart';
 
 /// Main Dashboard Screen - SOMA Performance & Fitness Ecosystem
 class DashboardScreen extends StatefulWidget {
@@ -88,6 +92,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 // Quick Action Shortcuts Bar
                 _buildQuickActionsRow(context),
+
+                const SizedBox(height: 16),
+
+                // Today's Routine Protocol Card
+                const DailyRoutineCard(),
 
                 const SizedBox(height: 16),
 
@@ -358,6 +367,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         physics: const BouncingScrollPhysics(),
         child: Row(
           children: [
+            // Work Mode Pill (Stream-powered)
+            _buildWorkModePill(context),
+            const SizedBox(width: 8),
+
+            // Live Activity Client Chip
+            _buildActionChip(
+              icon: Icons.sensors_rounded,
+              label: 'LIVE ACTIVITY',
+              color: SomaColors.secondary,
+              onTap: () => LiveActivityHudSheet.show(context),
+            ),
+            const SizedBox(width: 8),
+
             _buildActionChip(
               icon: Icons.restaurant_rounded,
               label: '+ MEAL',
@@ -388,6 +410,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildWorkModePill(BuildContext context) {
+    return StreamBuilder<WorkModeState>(
+      stream: WorkModeService().stateStream,
+      initialData: WorkModeService().currentState,
+      builder: (context, snapshot) {
+        final state = snapshot.data ?? WorkModeService().currentState;
+        final isActive = state.isActive;
+
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.mediumImpact();
+            WorkModeHudSheet.show(context);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: isActive
+                  ? SomaColors.accentCyan.withValues(alpha: 0.18)
+                  : SomaColors.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isActive ? SomaColors.accentCyan : SomaColors.cardBorder,
+                width: isActive ? 1.5 : 1.0,
+              ),
+              boxShadow: isActive
+                  ? [
+                      BoxShadow(
+                        color: SomaColors.accentCyan.withValues(alpha: 0.25),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isActive ? Icons.hourglass_top_rounded : Icons.psychology_rounded,
+                  color: isActive ? SomaColors.accentCyan : SomaColors.onSecondaryContainer,
+                  size: 14,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  isActive ? 'WORK MODE • ${state.formattedTime}' : 'WORK MODE',
+                  style: SomaFonts.mono(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                    color: isActive ? SomaColors.accentCyan : SomaColors.onSecondaryContainer,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
