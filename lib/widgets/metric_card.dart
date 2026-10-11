@@ -42,100 +42,92 @@ class MetricCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Top row: Icon badge, Label, and Percentage
+            // Top row: Icon badge, Label (ellipsized), and Percentage badge
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        icon,
-                        color: color,
-                        size: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      label,
-                      style: SomaFonts.mono(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                        color: SomaColors.onSecondaryContainer,
-                      ),
-                    ),
-                  ],
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: 16,
+                  ),
                 ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (trend != null && trend != MetricTrend.neutral) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                        margin: const EdgeInsets.only(right: 6),
-                        decoration: BoxDecoration(
-                          color: (trend == MetricTrend.up ? SomaColors.primaryContainer : SomaColors.accentCoral)
-                              .withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              trend == MetricTrend.up ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                              size: 11,
-                              color: trend == MetricTrend.up ? SomaColors.primaryContainer : SomaColors.accentCoral,
-                            ),
-                            if (trendDeltaText != null && trendDeltaText!.isNotEmpty) ...[
-                              const SizedBox(width: 2),
-                              Text(
-                                trendDeltaText!,
-                                style: SomaFonts.mono(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: trend == MetricTrend.up ? SomaColors.primaryContainer : SomaColors.accentCoral,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        percentage,
-                        style: SomaFonts.mono(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: color,
-                        ),
-                      ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: SomaFonts.mono(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                      color: SomaColors.onSecondaryContainer,
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+                  ),
+                  child: Text(
+                    percentage,
+                    style: SomaFonts.mono(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
                 ),
               ],
             ),
 
             const Spacer(),
 
-            // Center: Value display with Tabular numerals
-            _buildValueText(),
+            // Center: Value display with Tabular numerals + trend delta
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildValueText(),
+                if (trend != null && trend != MetricTrend.neutral && trendDeltaText != null && trendDeltaText!.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        trend == MetricTrend.up ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                        size: 11,
+                        color: trend == MetricTrend.up ? SomaColors.primaryContainer : SomaColors.accentCoral,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        trendDeltaText!,
+                        style: SomaFonts.mono(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: trend == MetricTrend.up ? SomaColors.primaryContainer : SomaColors.accentCoral,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
 
             const Spacer(),
 

@@ -257,41 +257,36 @@ class _LogsScreenState extends State<LogsScreen> {
   }
 
   Widget _buildLogItem(BuildContext context, SomaProvider provider, LogEntry entry) {
-    IconData icon;
-    Color iconColor;
-
-    switch (entry.type) {
-      case LogType.water:
-        icon = Icons.water_drop_rounded;
-        iconColor = SomaColors.accentCyan;
-        break;
-      case LogType.meal:
-        icon = Icons.restaurant_rounded;
-        iconColor = SomaColors.primaryContainer;
-        break;
-      case LogType.activity:
-        icon = Icons.fitness_center_rounded;
-        iconColor = SomaColors.accentCoral;
-        break;
-      case LogType.sleep:
-        icon = Icons.bedtime_rounded;
-        iconColor = SomaColors.accentPurple;
-        break;
-      case LogType.digital:
-        icon = Icons.phone_iphone_rounded;
-        iconColor = SomaColors.accentAmber;
-        break;
-    }
-
+    final themeColor = _getItemThemeColor(entry);
+    final icon = _getItemIcon(entry);
     final timeStr = DateFormat('h:mm a').format(entry.timestamp);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: SomaColors.cardBackground,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            themeColor.withValues(alpha: 0.16),
+            themeColor.withValues(alpha: 0.05),
+            SomaColors.cardBackground,
+          ],
+          stops: const [0.0, 0.45, 1.0],
+        ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: SomaColors.cardBorder),
+        border: Border.all(
+          color: themeColor.withValues(alpha: 0.38),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: themeColor.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -299,10 +294,14 @@ class _LogsScreenState extends State<LogsScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
+              color: themeColor.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: themeColor.withValues(alpha: 0.45),
+                width: 1.2,
+              ),
             ),
-            child: Icon(icon, color: iconColor, size: 20),
+            child: Icon(icon, color: themeColor, size: 20),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -334,7 +333,7 @@ class _LogsScreenState extends State<LogsScreen> {
                     ),
                   ],
                 ),
-                if (entry.subtitle != null) ...[
+                if (entry.subtitle != null && entry.subtitle!.isNotEmpty) ...[
                   const SizedBox(height: 3),
                   Text(
                     entry.subtitle!,
@@ -344,31 +343,8 @@ class _LogsScreenState extends State<LogsScreen> {
                     ),
                   ),
                 ],
-                if (entry.type == LogType.meal) ...[
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      _buildMealHealthBadge(entry.calories, entry.protein),
-                      _buildMacroBadge('CAL', '${entry.calories} kcal', SomaColors.primaryContainer),
-                      _buildMacroBadge('PRO', '${entry.protein}g', SomaColors.onSurface),
-                      _buildMacroBadge('CARB', '${entry.carbs}g', SomaColors.secondary),
-                      _buildMacroBadge('FAT', '${entry.fats}g', SomaColors.secondary),
-                    ],
-                  ),
-                ] else if (entry.type == LogType.activity) ...[
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      _buildMacroBadge('BURN', '${entry.calories} kcal', SomaColors.accentCoral),
-                      if (entry.activityCategory != null)
-                        _buildMacroBadge('TYPE', entry.activityCategory!.toUpperCase(), SomaColors.primaryContainer),
-                    ],
-                  ),
-                ],
+                const SizedBox(height: 8),
+                _buildEntryBadges(entry, themeColor),
               ],
             ),
           ),
@@ -541,25 +517,25 @@ class _LogsScreenState extends State<LogsScreen> {
     final IconData badgeIcon;
 
     if (isSuperClean) {
-      badgeColor = const Color(0xFFFFD700); // Radiant Gold
+      badgeColor = const Color(0xFFFFC700); // Luminous Amber Gold
       badgeLabel = 'SUPER CLEAN';
       badgeIcon = Icons.keyboard_double_arrow_up_rounded; // ⇈
     } else if (isHealthy) {
-      badgeColor = SomaColors.primaryContainer;
+      badgeColor = const Color(0xFFD4F84D); // Electric Lime
       badgeLabel = 'HEALTHY';
       badgeIcon = Icons.arrow_upward_rounded; // ↑
     } else {
-      badgeColor = SomaColors.accentCoral;
+      badgeColor = const Color(0xFFFF4848); // Vivid Punchy Crimson
       badgeLabel = 'HIGH CAL';
       badgeIcon = Icons.arrow_downward_rounded; // ↓
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: badgeColor.withValues(alpha: 0.12),
+        color: badgeColor.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: badgeColor.withValues(alpha: 0.35), width: 1),
+        border: Border.all(color: badgeColor.withValues(alpha: 0.55), width: 1.2),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -580,12 +556,192 @@ class _LogsScreenState extends State<LogsScreen> {
     );
   }
 
-  Widget _buildMacroBadge(String label, String val, Color color) {
+  Color _getItemThemeColor(LogEntry entry) {
+    switch (entry.type) {
+      case LogType.meal:
+        final double ratio = entry.protein > 0 ? entry.calories / entry.protein : (entry.calories > 0 ? double.infinity : 0.0);
+        if (entry.protein > 0 && ratio < 10.0) {
+          return const Color(0xFFFFC700); // Luminous Gold - Super Clean
+        } else if (entry.protein > 0 && ratio <= 20.0) {
+          return const Color(0xFFD4F84D); // Electric Lime - Healthy
+        } else {
+          return const Color(0xFFFF4848); // Vivid Crimson - High Cal
+        }
+      case LogType.activity:
+        final cat = entry.activityCategory?.toLowerCase() ?? '';
+        final title = entry.title.toLowerCase();
+        if (cat == 'exercise' || title.contains('strength') || title.contains('gym') || title.contains('lift') || entry.sets != null) {
+          return const Color(0xFF00E676); // Neon Emerald - Strength / Workout
+        } else if (cat == 'steps' || title.contains('steps') || title.contains('walk')) {
+          return const Color(0xFF00E5FF); // Electric Cyan - Steps
+        } else {
+          return const Color(0xFFFF5E36); // Electric Coral-Orange - Running / Cardio
+        }
+      case LogType.water:
+        return const Color(0xFF00E5FF); // Hyper-vibrant Cyan
+      case LogType.sleep:
+        return const Color(0xFFC084FC); // Vivid Electric Purple
+      case LogType.digital:
+        return const Color(0xFFFFB020); // Vivid Amber
+    }
+  }
+
+  IconData _getItemIcon(LogEntry entry) {
+    switch (entry.type) {
+      case LogType.water:
+        return Icons.water_drop_rounded;
+      case LogType.meal:
+        return Icons.restaurant_rounded;
+      case LogType.activity:
+        final cat = entry.activityCategory?.toLowerCase() ?? '';
+        final title = entry.title.toLowerCase();
+        if (cat == 'exercise' || title.contains('strength') || title.contains('gym') || title.contains('lift') || entry.sets != null) {
+          return Icons.fitness_center_rounded;
+        } else if (cat == 'steps' || title.contains('steps') || title.contains('walk')) {
+          return Icons.directions_walk_rounded;
+        } else {
+          return Icons.directions_run_rounded;
+        }
+      case LogType.sleep:
+        return Icons.bedtime_rounded;
+      case LogType.digital:
+        return Icons.phone_iphone_rounded;
+    }
+  }
+
+  Widget _buildCategoryBadge({
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: SomaColors.surfaceContainerHigh,
+        color: color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.55), width: 1.2),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: SomaFonts.mono(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w800,
+              color: color,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEntryBadges(LogEntry entry, Color themeColor) {
+    switch (entry.type) {
+      case LogType.meal:
+        return Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _buildMealHealthBadge(entry.calories, entry.protein),
+            _buildMacroBadge('CAL', '${entry.calories} kcal', themeColor),
+            _buildMacroBadge('PRO', '${entry.protein}g', SomaColors.onSurface),
+            _buildMacroBadge('CARB', '${entry.carbs}g', SomaColors.secondary),
+            _buildMacroBadge('FAT', '${entry.fats}g', SomaColors.secondary),
+          ],
+        );
+
+      case LogType.activity:
+        final cat = entry.activityCategory?.toLowerCase() ?? '';
+        final title = entry.title.toLowerCase();
+        final String actLabel;
+        final IconData actIcon;
+
+        if (cat == 'exercise' || title.contains('strength') || title.contains('gym') || title.contains('lift') || entry.sets != null) {
+          actLabel = 'STRENGTH';
+          actIcon = Icons.fitness_center_rounded;
+        } else if (cat == 'steps' || title.contains('steps') || title.contains('walk')) {
+          actLabel = 'STEPS';
+          actIcon = Icons.directions_walk_rounded;
+        } else {
+          actLabel = entry.cardioType?.toUpperCase() ?? (entry.activityCategory?.toUpperCase() ?? 'CARDIO');
+          actIcon = Icons.directions_run_rounded;
+        }
+
+        return Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _buildCategoryBadge(label: actLabel, icon: actIcon, color: themeColor),
+            if (entry.calories > 0)
+              _buildMacroBadge('BURN', '${entry.calories} kcal', themeColor),
+            if (entry.durationMinutes != null && entry.durationMinutes! > 0)
+              _buildMacroBadge('TIME', '${entry.durationMinutes}m', SomaColors.onSurface),
+            if (entry.distanceKm != null && entry.distanceKm! > 0)
+              _buildMacroBadge('DIST', '${entry.distanceKm!.toStringAsFixed(1)}km', SomaColors.secondary),
+            if (entry.sets != null && entry.sets!.isNotEmpty)
+              _buildMacroBadge('SETS', '${entry.sets!.length}', SomaColors.secondary),
+            if (entry.count > 0)
+              _buildMacroBadge('STEPS', '${entry.count}', SomaColors.onSurface),
+          ],
+        );
+
+      case LogType.water:
+        final amountStr = entry.amount > 0
+            ? (entry.amount < 1.0 ? '${(entry.amount * 1000).toInt()} ml' : '${entry.amount.toStringAsFixed(1)} L')
+            : (entry.count > 0 ? '${entry.count} ml' : 'HYDRATED');
+
+        return Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _buildCategoryBadge(label: 'HYDRATION', icon: Icons.water_drop_rounded, color: themeColor),
+            _buildMacroBadge('VOLUME', amountStr, themeColor),
+          ],
+        );
+
+      case LogType.sleep:
+        return Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _buildCategoryBadge(label: 'RECOVERY', icon: Icons.bedtime_rounded, color: themeColor),
+            _buildMacroBadge('DURATION', '${entry.amount.toStringAsFixed(1)} hrs', themeColor),
+          ],
+        );
+
+      case LogType.digital:
+        final durationMin = entry.durationMinutes ?? entry.count;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _buildCategoryBadge(label: 'SCREEN TIME', icon: Icons.phone_iphone_rounded, color: themeColor),
+            _buildMacroBadge('USAGE', '$durationMin min', themeColor),
+          ],
+        );
+    }
+  }
+
+  Widget _buildMacroBadge(String label, String val, Color color) {
+    final bool isHighlighted = color != SomaColors.secondary && color != SomaColors.onSurface;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: isHighlighted ? color.withValues(alpha: 0.15) : SomaColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(6),
+        border: isHighlighted
+            ? Border.all(color: color.withValues(alpha: 0.40), width: 1.0)
+            : Border.all(color: SomaColors.cardBorder, width: 0.8),
       ),
       child: Text(
         '$label: $val',

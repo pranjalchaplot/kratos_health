@@ -514,15 +514,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Row(
           children: [
             _buildDeficitSubPill(
-              '🔥 BURN',
-              '${formatCurrency.format(data.totalCaloriesBurned)} kcal',
-              SomaColors.accentCoral,
+              label: '🔥 BURN',
+              value: '${formatCurrency.format(data.totalCaloriesBurned)} kcal',
+              color: SomaColors.accentCoral,
+              suffixIcon: Icons.north_east_rounded,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                QuickLogModal.show(context, initialTabIndex: QuickLogTab.burn);
+              },
             ),
             const SizedBox(width: 8),
             _buildDeficitSubPill(
-              '🍽️ INTAKE',
-              '${formatCurrency.format(data.caloriesConsumed)} kcal',
-              SomaColors.accentCyan,
+              label: '🍽️ INTAKE',
+              value: '${formatCurrency.format(data.caloriesConsumed)} kcal',
+              color: SomaColors.accentCyan,
+              suffixIcon: Icons.south_east_rounded,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                QuickLogModal.show(context, initialTabIndex: QuickLogTab.meal);
+              },
             ),
           ],
         ),
@@ -560,34 +570,52 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildDeficitSubPill(String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '$label ',
-            style: SomaFonts.mono(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w700,
-              color: color,
+  Widget _buildDeficitSubPill({
+    required String label,
+    required String value,
+    required Color color,
+    IconData? suffixIcon,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.25), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$label ',
+              style: SomaFonts.mono(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
             ),
-          ),
-          Text(
-            value,
-            style: SomaFonts.mono(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w800,
-              color: SomaColors.onSurface,
+            Text(
+              value,
+              style: SomaFonts.mono(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w800,
+                color: SomaColors.onSurface,
+              ),
             ),
-          ),
-        ],
+            if (suffixIcon != null) ...[
+              const SizedBox(width: 4),
+              Icon(
+                suffixIcon,
+                size: 11,
+                color: color,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -601,6 +629,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         crossAxisCount: 2,
         mainAxisSpacing: 14,
         crossAxisSpacing: 14,
+        childAspectRatio: 1.05,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         children: [
