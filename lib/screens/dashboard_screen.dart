@@ -17,6 +17,7 @@ import '../widgets/daily_routine_card.dart';
 import '../widgets/live_activity_hud_sheet.dart';
 import '../widgets/work_mode_hud_sheet.dart';
 import '../services/work_mode_service.dart';
+import '../services/activity_transition_service.dart';
 
 /// Main Dashboard Screen - SOMA Performance & Fitness Ecosystem
 class DashboardScreen extends StatefulWidget {
@@ -26,22 +27,41 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingObserver {
   Timer? _tickerTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // 1-second real-time ticker timer for live Dashboard BMR updates
     _tickerTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {});
       }
     });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkPendingActivity();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkPendingActivity();
+    }
+  }
+
+  void _checkPendingActivity() {
+    if (mounted) {
+      ActivityTransitionService.checkAndShowPrompt(context);
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _tickerTimer?.cancel();
     super.dispose();
   }

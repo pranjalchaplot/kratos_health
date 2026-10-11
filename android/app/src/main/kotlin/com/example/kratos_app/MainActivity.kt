@@ -15,6 +15,9 @@ import android.provider.Settings
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.ActivityRecognition
+import com.google.android.gms.location.ActivityTransition
+import com.google.android.gms.location.ActivityTransitionRequest
+import com.google.android.gms.location.DetectedActivity
 import com.google.android.gms.location.SleepSegmentRequest
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -24,8 +27,10 @@ import java.util.Date
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.soma/sleep"
+    private val ACTIVITY_CHANNEL = "com.soma/activity_transition"
     private val TAG = "SomaMainActivity"
     private val SLEEP_REQUEST_CODE = 4210
+    private val ACTIVITY_REQUEST_CODE = 4220
 
     companion object {
         private val SYSTEM_EXCLUDED_PACKAGES = hashSetOf(
@@ -80,6 +85,36 @@ class MainActivity : FlutterActivity() {
                 "simulateSleepData" -> {
                     val hours = (call.argument<Double>("hours") ?: 7.5)
                     simulateSleepSegment(hours, result)
+                }
+                else -> {
+                    result.notImplemented()
+                }
+            }
+        }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, ACTIVITY_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "startTracking" -> {
+                    startActivityTransitionTracking(result)
+                }
+                "stopTracking" -> {
+                    stopActivityTransitionTracking(result)
+                }
+                "isTrackingActive" -> {
+                    val prefs = ActivityTransitionReceiver.getPrefs(this)
+                    result.success(prefs.getBoolean(ActivityTransitionReceiver.KEY_TRACKING_ENABLED, false))
+                }
+                "getPendingDetectedActivity" -> {
+                    getPendingDetectedActivity(result)
+                }
+                "clearPendingDetectedActivity" -> {
+                    clearPendingDetectedActivity(result)
+                }
+                "simulateDetectedActivity" -> {
+                    val type = call.argument<String>("type") ?: "running"
+                    val durationMins = call.argument<Int>("durationMinutes") ?: 25
+                    val distanceKm = call.argument<Double>("distanceKm")
+                    simulateDetectedActivity(type, durationMins, distanceKm, result)
                 }
                 else -> {
                     result.notImplemented()
@@ -463,6 +498,185 @@ class MainActivity : FlutterActivity() {
             "durationHours" to hours,
             "status" to 0,
             "updatedAt" to now
+        )
+        result.success(map)
+    }
+
+    private fun getActivityPendingIntent(): PendingIntent {
+        val intent = Intent(this, ActivityTransitionReceiver::class.java)
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+        return PendingIntent.getBroadcast(this, ACTIVITY_REQUEST_CODE, intent, flags)
+    }
+
+    private fun startActivityTransitionTracking(result: MethodChannel.Result) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val permissionCheck = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACTIVITY_RECOGNITION
+            )
+            if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                result.error("PERMISSION_DENIED", "ACTIVITY_RECOGNITION permission is required", null)
+                return
+            }
+        }
+
+        try {
+            val transitions = ArrayList<ActivityTransition>()
+
+            // 1. RUNNING
+            transitions.add(
+                ActivityTransition.Builder()
+                    .setActivityType(DetectedActivity.RUNNING)
+                    .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                    .build()
+            )
+            transitions.add(
+                ActivityTransition.Builder()
+                    .setActivityType(DetectedActivity.RUNNING)
+                    .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                    .build()
+            )
+
+            // 2. WALKING
+            transitions.add(
+                ActivityTransition.Builder()
+                    .setActivityType(DetectedActivity.WALKING)
+                    .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                    .build()
+            )
+            transitions.add(
+                ActivityTransition.Builder()
+                    .setActivityType(DetectedActivity.WALKING)
+                    .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                    .build()
+            )
+
+            // 3. ON_BICYCLE
+            transitions.add(
+                ActivityTransition.Builder()
+                    .setActivityType(DetectedActivity.ON_BICYCLE)
+                    .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_ENTER)
+                    .build()
+            )
+            transitions.add(
+                ActivityTransition.Builder()
+                    .setActivityType(DetectedActivity.ON_BICYCLE)
+                    .setActivityTransition(ActivityTransition.ACTIVITY_TRANSITION_EXIT)
+                    .build()
+            )
+
+            val request = ActivityTransitionRequest(transitions)
+            val pendingIntent = getActivityPendingIntent()
+
+            ActivityRecognition.getClient(this)
+                .requestActivityTransitionUpdates(request, pendingIntent)
+                .addOnSuccessListener {
+                    Log.i(TAG, "Successfully subscribed to Activity Transition updates")
+                    ActivityTransitionReceiver.getPrefs(this).edit()
+                        .putBoolean(ActivityTransitionReceiver.KEY_TRACKING_ENABLED, true)
+                        .apply()
+                    result.success(true)
+                }
+                .addOnFailureListener { error ->
+                    Log.e(TAG, "Failed to subscribe to Activity Transition updates: ${error.message}", error)
+                    result.error("SUBSCRIPTION_FAILED", error.message, null)
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception starting activity transition updates: ${e.message}", e)
+            result.error("EXCEPTION", e.message, null)
+        }
+    }
+
+    private fun stopActivityTransitionTracking(result: MethodChannel.Result) {
+        try {
+            val pendingIntent = getActivityPendingIntent()
+            ActivityRecognition.getClient(this)
+                .removeActivityTransitionUpdates(pendingIntent)
+                .addOnSuccessListener {
+                    Log.i(TAG, "Successfully removed Activity Transition updates")
+                    ActivityTransitionReceiver.getPrefs(this).edit()
+                        .putBoolean(ActivityTransitionReceiver.KEY_TRACKING_ENABLED, false)
+                        .apply()
+                    result.success(true)
+                }
+                .addOnFailureListener { error ->
+                    Log.e(TAG, "Failed to remove Activity Transition updates: ${error.message}", error)
+                    result.error("REMOVE_FAILED", error.message, null)
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception stopping activity transition updates: ${e.message}", e)
+            result.error("EXCEPTION", e.message, null)
+        }
+    }
+
+    private fun getPendingDetectedActivity(result: MethodChannel.Result) {
+        val pending = ActivityTransitionReceiver.getPendingActivity(this)
+        result.success(pending)
+    }
+
+    private fun clearPendingDetectedActivity(result: MethodChannel.Result) {
+        ActivityTransitionReceiver.clearPendingActivity(this)
+        result.success(true)
+    }
+
+    private fun simulateDetectedActivity(
+        type: String,
+        durationMins: Int,
+        distanceKm: Double?,
+        result: MethodChannel.Result
+    ) {
+        val now = System.currentTimeMillis()
+        val durationSeconds = durationMins * 60
+        val startTime = now - (durationSeconds * 1000L)
+        val endTime = now
+
+        val hours = durationMins / 60.0
+        val dist = distanceKm ?: when (type.lowercase()) {
+            "running" -> hours * 8.5
+            "walking" -> hours * 4.8
+            "cycling" -> hours * 18.0
+            else -> hours * 5.5
+        }
+
+        val calories = when (type.lowercase()) {
+            "running" -> (9.8 * 75.0 * hours).toInt()
+            "walking" -> (3.8 * 75.0 * hours).toInt()
+            "cycling" -> (7.5 * 75.0 * hours).toInt()
+            else -> (6.0 * 75.0 * hours).toInt()
+        }
+
+        val steps = when (type.lowercase()) {
+            "running" -> durationMins * 155
+            "walking" -> durationMins * 110
+            "cycling" -> 0
+            else -> durationMins * 125
+        }
+
+        ActivityTransitionReceiver.saveDetectedActivity(
+            context = this,
+            type = type,
+            startTimeMillis = startTime,
+            endTimeMillis = endTime,
+            durationSeconds = durationSeconds,
+            distanceKm = dist,
+            calories = calories,
+            steps = steps
+        )
+
+        val map = hashMapOf(
+            "type" to type,
+            "startTimeMillis" to startTime,
+            "endTimeMillis" to endTime,
+            "durationMinutes" to durationMins,
+            "durationSeconds" to durationSeconds,
+            "distanceKm" to dist,
+            "calories" to calories,
+            "steps" to steps,
+            "isLogged" to false
         )
         result.success(map)
     }

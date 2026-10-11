@@ -43,6 +43,11 @@
             android:name=".SleepReceiver"
             android:exported="false">
         </receiver>
+        <!-- Receiver for Android Activity Recognition Transitions (running, walking, cycling) -->
+        <receiver
+            android:name=".ActivityTransitionReceiver"
+            android:exported="false">
+        </receiver>
         <!-- flutter_local_notifications receivers -->
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">

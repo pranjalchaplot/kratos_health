@@ -16,6 +16,8 @@ import '../services/sleep_tracker_service.dart';
 import '../services/notification_service.dart';
 import '../services/sedentary_tracker_service.dart';
 import '../services/reminder_scheduler_service.dart';
+import '../models/detected_activity_record.dart';
+import '../services/activity_transition_service.dart';
 
 class LastExerciseRecord {
   final String exerciseName;
@@ -207,6 +209,9 @@ class SomaProvider extends ChangeNotifier {
 
       // Sync & start sleep tracking from primary Android Sleep API
       await syncSleepTrackingFromDevice();
+
+      // Sync & start background Activity Transition tracking
+      await syncActivityTransitionTrackingFromDevice();
     } catch (e) {
       debugPrint('Error loading saved data: $e');
     } finally {
@@ -252,6 +257,7 @@ class SomaProvider extends ChangeNotifier {
     await syncScreenTimeFromDevice();
     await syncStepTrackingFromDevice();
     await syncSleepTrackingFromDevice();
+    await syncActivityTransitionTrackingFromDevice();
   }
 
   Future<void> resetOnboarding() async {
@@ -567,6 +573,42 @@ class SomaProvider extends ChangeNotifier {
     currentLog.entries.insert(0, entry);
     notifyListeners();
     await saveToPrefs();
+  }
+
+  Future<void> logDetectedActivity(DetectedActivityRecord record) async {
+    final title = '${record.displayName} Session';
+    final distFormatted = record.distanceKm.toStringAsFixed(2);
+    final subtitle = '${record.durationMinutes}m • ~$distFormatted km • ~${record.calories} kcal';
+
+    final entry = LogEntry(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      timestamp: record.startTime,
+      type: LogType.activity,
+      title: title,
+      subtitle: subtitle,
+      calories: record.calories,
+      count: record.steps,
+      activityCategory: record.type.toLowerCase() == 'running' ? 'cardio' : 'exercise',
+      cardioType: record.displayName,
+      durationMinutes: record.durationMinutes,
+      distanceKm: record.distanceKm,
+    );
+    currentLog.entries.insert(0, entry);
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  Future<bool> syncActivityTransitionTrackingFromDevice() async {
+    try {
+      final granted = await ActivityTransitionService.isPermissionGranted();
+      if (granted) {
+        final started = await ActivityTransitionService.startTracking();
+        return started;
+      }
+    } catch (e) {
+      debugPrint('Activity transition tracking sync failed: $e');
+    }
+    return false;
   }
 
   Future<void> logSleep(double hours) async {

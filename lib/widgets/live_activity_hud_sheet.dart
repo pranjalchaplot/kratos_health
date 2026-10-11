@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/soma_provider.dart';
 import '../services/activity_detection_service.dart';
+import '../services/activity_transition_service.dart';
 import '../theme/soma_theme.dart';
 
 class LiveActivityHudSheet extends StatefulWidget {
@@ -293,6 +294,72 @@ class _LiveActivityHudSheetState extends State<LiveActivityHudSheet> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Background Auto-Detection Indicator & Simulation Trigger
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: SomaColors.cardBackground,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: SomaColors.cardBorderSubtle),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.shield_outlined, size: 16, color: SomaColors.primaryContainer),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'BACKGROUND SENSOR CLIENT ACTIVE',
+                                style: SomaFonts.mono(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: SomaColors.primaryContainer,
+                                ),
+                              ),
+                              Text(
+                                'Detects running, walks & cycling without app open',
+                                style: SomaFonts.primary(
+                                  fontSize: 11,
+                                  color: SomaColors.onSecondaryContainer,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            HapticFeedback.mediumImpact();
+                            Navigator.pop(context);
+                            await ActivityTransitionService.simulateDetectedActivity(
+                              type: 'running',
+                              durationMinutes: 24,
+                              distanceKm: 3.12,
+                            );
+                            if (context.mounted) {
+                              ActivityTransitionService.checkAndShowPrompt(context);
+                            }
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'TEST PROMPT',
+                            style: SomaFonts.mono(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w900,
+                              color: SomaColors.primaryContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
