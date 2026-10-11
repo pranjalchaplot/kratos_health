@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/soma_provider.dart';
 import '../theme/soma_theme.dart';
-import 'quick_log_modal.dart';
 
 /// Elite Bottom Navigation Bar for SOMA with obsidian glass styling and micro-haptics
 class SomaBottomNav extends StatelessWidget {
@@ -36,7 +35,7 @@ class SomaBottomNav extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Dashboard Tab
+                // Dashboard Tab (0)
                 _NavItem(
                   icon: Icons.grid_view_rounded,
                   label: 'DASHBOARD',
@@ -46,19 +45,27 @@ class SomaBottomNav extends StatelessWidget {
                     provider.setTab(0);
                   },
                 ),
-                // Logs Tab
+                // Activities Tab (1)
                 _NavItem(
-                  icon: Icons.receipt_long_rounded,
-                  label: 'LOGS',
+                  icon: Icons.fitness_center_rounded,
+                  label: 'ACTIVITIES',
                   isActive: currentIndex == 1,
                   onTap: () {
                     HapticFeedback.selectionClick();
                     provider.setTab(1);
                   },
                 ),
-                // Center Quick Log Floating Action Button
-                _buildFAB(context),
-                // Analytics Tab
+                // Logs Tab (2)
+                _NavItem(
+                  icon: Icons.receipt_long_rounded,
+                  label: 'LOGS',
+                  isActive: currentIndex == 2,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    provider.setTab(2);
+                  },
+                ),
+                // Analytics Tab (3)
                 _NavItem(
                   icon: Icons.query_stats_rounded,
                   label: 'ANALYTICS',
@@ -68,7 +75,7 @@ class SomaBottomNav extends StatelessWidget {
                     provider.setTab(3);
                   },
                 ),
-                // Profile Tab
+                // Profile Tab (4)
                 _NavItem(
                   icon: Icons.account_circle_outlined,
                   label: 'PROFILE',
@@ -81,40 +88,6 @@ class SomaBottomNav extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFAB(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        QuickLogModal.show(context);
-      },
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: SomaColors.primaryContainer,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: SomaColors.background,
-            width: 2.5,
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: SomaColors.primaryGlow,
-              blurRadius: 18,
-              spreadRadius: 2,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons.add,
-          color: SomaColors.onPrimary,
-          size: 26,
         ),
       ),
     );

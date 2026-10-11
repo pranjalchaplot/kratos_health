@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/soma_provider.dart';
 import '../theme/soma_theme.dart';
-import 'quick_log_modal.dart';
 import 'routine_selection_sheet.dart';
 
 class DailyRoutineCard extends StatelessWidget {
@@ -145,11 +144,7 @@ class DailyRoutineCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                     onTap: () {
                       HapticFeedback.selectionClick();
-                      QuickLogModal.show(
-                        context,
-                        initialTabIndex: QuickLogTab.activity,
-                        initialExerciseName: ex.name,
-                      );
+                      context.read<SomaProvider>().setTab(1);
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),

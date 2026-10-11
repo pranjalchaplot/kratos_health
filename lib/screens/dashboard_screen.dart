@@ -418,7 +418,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
               icon: Icons.fitness_center_rounded,
               label: '+ WORKOUT',
               color: SomaColors.accentCoral,
-              onTap: () => QuickLogModal.show(context, initialTabIndex: QuickLogTab.activity),
+              onTap: () => context.read<SomaProvider>().setTab(1),
             ),
             const SizedBox(width: 8),
             _buildActionChip(
@@ -872,7 +872,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
 
   void _handleStepsTap(BuildContext context, DashboardData data, SomaProvider provider) {
     if (provider.isStepPermissionGranted) {
-      QuickLogModal.show(context, initialTabIndex: QuickLogTab.activity);
+      provider.setTab(1);
     } else {
       _showStepPermissionDialog(context, provider);
     }
@@ -985,7 +985,7 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
                   ),
                   onPressed: () {
                     Navigator.pop(ctx);
-                    QuickLogModal.show(context, initialTabIndex: QuickLogTab.activity);
+                    provider.setTab(1);
                   },
                   child: Text(
                     'LOG STEPS MANUALLY INSTEAD',

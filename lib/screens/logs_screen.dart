@@ -211,7 +211,7 @@ class _LogsScreenState extends State<LogsScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Tap the button below or the + icon in the navbar to log your meals, hydration, workouts, or sleep.',
+                            'Tap the + QUICK LOG button below to log your hydration, meals, vitals, or sleep.',
                             style: SomaFonts.primary(
                               fontSize: 13,
                               color: SomaColors.onSecondaryContainer,
@@ -252,6 +252,29 @@ class _LogsScreenState extends State<LogsScreen> {
                   ),
           ),
         ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 64),
+        child: FloatingActionButton.extended(
+          backgroundColor: SomaColors.primaryContainer,
+          foregroundColor: Colors.black,
+          elevation: 6,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          icon: const Icon(Icons.add_rounded, size: 20, color: Colors.black),
+          label: Text(
+            'QUICK LOG',
+            style: SomaFonts.mono(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+              color: Colors.black,
+            ),
+          ),
+          onPressed: () {
+            HapticFeedback.mediumImpact();
+            QuickLogModal.show(context);
+          },
+        ),
       ),
     );
   }

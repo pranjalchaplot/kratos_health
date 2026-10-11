@@ -5,6 +5,7 @@ import 'theme/soma_theme.dart';
 import 'providers/soma_provider.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/activities_screen.dart';
 import 'screens/logs_screen.dart';
 import 'screens/library_screen.dart';
 import 'screens/profile_screen.dart';
@@ -115,6 +116,9 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         bodyWidget = const DashboardScreen();
         break;
       case 1:
+        bodyWidget = const ActivitiesScreen();
+        break;
+      case 2:
         bodyWidget = const LogsScreen();
         break;
       case 3:
