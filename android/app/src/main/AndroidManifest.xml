@@ -12,6 +12,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH"/>
     <!-- Health Connect Permission (Prepared for wearable integration) -->
     <uses-permission android:name="android.permission.health.READ_SLEEP"/>
+    <!-- Voice & Speech Recognition Permission -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="Soma"
         android:name="${applicationName}"
@@ -73,6 +75,9 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
         </intent>
     </queries>
 </manifest>

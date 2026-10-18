@@ -18,6 +18,8 @@ import '../services/sedentary_tracker_service.dart';
 import '../services/reminder_scheduler_service.dart';
 import '../models/detected_activity_record.dart';
 import '../services/activity_transition_service.dart';
+import '../models/nutrition_models.dart';
+import '../services/nutrition/macro_computation_engine.dart';
 
 class LastExerciseRecord {
   final String exerciseName;
@@ -53,6 +55,9 @@ class SomaProvider extends ChangeNotifier {
   // Routines & Splits State
   List<WorkoutRoutine> _routines = WorkoutRoutine.builtInPresets;
   String _activeRoutineId = 'preset_push_split';
+
+  // Smart Meal & Macro Computation Engine
+  final MacroComputationEngine _macroEngine = MacroComputationEngine();
 
   DateTime get selectedDate => _selectedDate;
   int get currentTabIndex => _currentTabIndex;
@@ -354,6 +359,91 @@ class SomaProvider extends ChangeNotifier {
       fats: fats,
     );
     currentLog.entries.insert(0, entry);
+    notifyListeners();
+    await saveToPrefs();
+  }
+
+  /// Parses natural language text into structured food items and computed macros
+  Future<MealParseResult> parseMealQuery(String query) async {
+    return await _macroEngine.parseAndCompute(query);
+  }
+
+  /// Recalculates an item when quantity, unit, or entity changes
+  Future<ParsedMealItem> recalculateParsedItem(
+    ParsedMealItem item, {
+    double? newQuantity,
+    String? newUnit,
+    FoodEntity? newEntity,
+  }) async {
+    return await _macroEngine.recalculateItem(
+      item,
+      newQuantity: newQuantity,
+      newUnit: newUnit,
+      newEntity: newEntity,
+    );
+  }
+
+  /// Recalculates an item when its recipe ingredients are customized
+  ParsedMealItem recalculateItemWithIngredients({
+    required ParsedMealItem item,
+    required List<RecipeIngredientItem> updatedIngredients,
+    String? updatedCustomName,
+  }) {
+    return _macroEngine.recalculateWithIngredients(
+      item: item,
+      updatedIngredients: updatedIngredients,
+      updatedCustomName: updatedCustomName,
+    );
+  }
+
+  /// Returns all available raw ingredients for selection in custom recipe editor
+  Future<List<FoodEntity>> getAllIngredients() async {
+    return await _macroEngine.dbService.getAllIngredients();
+  }
+
+  /// Persists a customized recipe into SQLite
+  Future<FoodEntity> saveCustomRecipe({
+    required String baseRecipeName,
+    required String customRecipeName,
+    required String servingUnit,
+    required List<RecipeIngredientItem> ingredients,
+    List<String>? extraAliases,
+  }) async {
+    final entity = await _macroEngine.dbService.saveCustomRecipe(
+      baseRecipeName: baseRecipeName,
+      customRecipeName: customRecipeName,
+      servingUnit: servingUnit,
+      ingredients: ingredients,
+      extraAliases: extraAliases,
+    );
+    notifyListeners();
+    return entity;
+  }
+  Future<void> logSmartMeal({
+    required MealParseResult parseResult,
+    required String mealType,
+  }) async {
+    if (parseResult.items.isEmpty) return;
+
+    for (final item in parseResult.items) {
+      final title = item.resolvedEntity?.name ?? item.rawInput;
+      final qtyStr = item.quantity % 1 == 0 ? item.quantity.toInt().toString() : item.quantity.toStringAsFixed(1);
+      final subtitle = '$qtyStr ${item.unit} (~${item.calculatedGrams.round()}g) • $mealType';
+
+      final entry = LogEntry(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        timestamp: DateTime.now(),
+        type: LogType.meal,
+        title: title,
+        subtitle: subtitle,
+        calories: item.macros.calories.round(),
+        protein: item.macros.proteinG.round(),
+        carbs: item.macros.carbsG.round(),
+        fats: item.macros.fatG.round(),
+      );
+      currentLog.entries.insert(0, entry);
+    }
+
     notifyListeners();
     await saveToPrefs();
   }
