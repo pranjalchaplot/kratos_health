@@ -62,6 +62,19 @@ class _RecipeCustomizerSheetState extends State<RecipeCustomizerSheet> {
     super.dispose();
   }
 
+  double _effectiveUnitGrams(double baseServingGrams) {
+    final normalizedUnit = widget.item.unit.toLowerCase().trim();
+    if (normalizedUnit == 'plate' && baseServingGrams < 100.0) {
+      // In Indian dining, 1 plate of piece-based snacks/sweets is 2 pieces
+      return baseServingGrams * 2.0;
+    } else if (normalizedUnit == 'g' || normalizedUnit == 'gram') {
+      return 1.0;
+    } else if (normalizedUnit == 'kg') {
+      return 1000.0;
+    }
+    return baseServingGrams;
+  }
+
   MacroNutrients _computeCurrentMacros() {
     double totalGrams = 0;
     double totalKcal = 0;
@@ -88,13 +101,15 @@ class _RecipeCustomizerSheetState extends State<RecipeCustomizerSheet> {
       fatG: double.parse((totalFat * scaleTo100g).toStringAsFixed(2)),
     );
 
-    final totalServingGrams = widget.item.quantity * servingGrams;
+    final effectiveUnit = _effectiveUnitGrams(servingGrams);
+    final totalServingGrams = widget.item.quantity * effectiveUnit;
     return macrosPer100g.scale(totalServingGrams / 100.0);
   }
 
   double _computeTotalServingGrams() {
     final baseGrams = _ingredients.fold<double>(0.0, (sum, i) => sum + i.gramsUsed);
-    return widget.item.quantity * (baseGrams > 0 ? baseGrams : 100.0);
+    final effectiveUnit = _effectiveUnitGrams(baseGrams > 0 ? baseGrams : 100.0);
+    return widget.item.quantity * effectiveUnit;
   }
 
   void _updateGrams(int index, double delta) {
@@ -386,14 +401,25 @@ class _RecipeCustomizerSheetState extends State<RecipeCustomizerSheet> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.3)),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+            child: Column(
               children: [
-                _buildMacroCol('TOTAL WEIGHT', '${totalGrams.round()}', 'g', SomaColors.onSurface),
-                _buildMacroCol('CALORIES', '${currentMacros.calories.round()}', 'kcal', SomaColors.primaryContainer),
-                _buildMacroCol('PROTEIN', '${currentMacros.proteinG.round()}', 'g', Colors.cyanAccent),
-                _buildMacroCol('CARBS', '${currentMacros.carbsG.round()}', 'g', Colors.amberAccent),
-                _buildMacroCol('FATS', '${currentMacros.fatG.round()}', 'g', Colors.orangeAccent),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildMacroCol('WEIGHT', '${totalGrams.round()}', 'g', SomaColors.onSurface),
+                    _buildMacroCol('CALORIES', '${currentMacros.calories.round()}', 'kcal', SomaColors.primaryContainer),
+                    _buildMacroCol('PROTEIN', '${currentMacros.proteinG.round()}', 'g', Colors.cyanAccent),
+                    _buildMacroCol('CARBS', '${currentMacros.carbsG.round()}', 'g', Colors.amberAccent),
+                    _buildMacroCol('FATS', '${currentMacros.fatG.round()}', 'g', Colors.orangeAccent),
+                  ],
+                ),
+                if (widget.item.unit.isNotEmpty && widget.item.unit != 'piece' && widget.item.unit != 'g') ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Scaled for ${widget.item.quantity == 1.0 ? '1' : widget.item.quantity} ${widget.item.unit} (${totalGrams.round()}g edible)',
+                    style: SomaFonts.mono(fontSize: 10, color: SomaColors.onSecondaryContainer),
+                  ),
+                ],
               ],
             ),
           ),

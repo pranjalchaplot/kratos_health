@@ -6,6 +6,7 @@ import 'package:soma_app/models/nutrition_models.dart';
 import 'package:soma_app/services/nutrition/meal_text_parser.dart';
 import 'package:soma_app/services/nutrition/nutrition_database_service.dart';
 import 'package:soma_app/services/nutrition/macro_computation_engine.dart';
+import 'package:soma_app/services/nutrition/meal_verdict_engine.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -305,6 +306,11 @@ void main() {
       expect(kachori.quantity, 1.0);
       expect(kachori.calculatedGrams, 75.0);
       expect(kachori.macros.calories, greaterThan(180.0));
+
+      // 1 plate of kachori should scale to 2 pieces (150g), not a 300g main-course meal plate!
+      final plateKachori = await engine.parseAndCompute('1 plate kachori');
+      expect(plateKachori.items.first.calculatedGrams, 150.0);
+      expect(plateKachori.items.first.macros.calories, closeTo(654.0, 20.0));
     });
 
     test('resolves popular Indian street foods and sweets: pav bhaji, chole bhature, biryani, gulab jamun', () async {
@@ -314,7 +320,7 @@ void main() {
 
       final cb = await engine.parseAndCompute('1 plate chole bhature');
       expect(cb.items.first.resolvedEntity?.name, 'Chole Bhature');
-      expect(cb.items.first.calculatedGrams, 300.0);
+      expect(cb.items.first.calculatedGrams, 350.0);
 
       final biryani = await engine.parseAndCompute('1 plate chicken biryani');
       expect(biryani.items.first.resolvedEntity?.name, 'Chicken Biryani');
@@ -325,6 +331,185 @@ void main() {
       expect(sweets.items.length, 2);
       expect(sweets.items[0].resolvedEntity?.name, 'Gulab Jamun');
       expect(sweets.items[1].resolvedEntity?.name, 'Jalebi');
+    });
+
+    test('resolves and computes beverages: black coffee, tea/chai, cold coffee, diet coke, coconut water', () async {
+      // Black Coffee
+      final coffee = await engine.parseAndCompute('1 cup of black coffee');
+      expect(coffee.status, ParseStatus.success);
+      expect(coffee.items.length, 1);
+      expect(coffee.items.first.resolvedEntity?.name, 'Black Coffee (Espresso / Americano)');
+      expect(coffee.items.first.macros.calories, lessThan(10.0));
+
+      // Tea / Chai
+      final chai = await engine.parseAndCompute('1 cup of chai');
+      expect(chai.status, ParseStatus.success);
+      expect(chai.items.first.resolvedEntity?.name, contains('Milk Tea'));
+      expect(chai.items.first.macros.calories, greaterThan(40.0));
+
+      // Diet Coke (0 cal)
+      final dietCoke = await engine.parseAndCompute('1 can of diet coke');
+      expect(dietCoke.status, ParseStatus.success);
+      expect(dietCoke.items.first.resolvedEntity?.name, 'Diet Coke / Coke Zero (Can)');
+      expect(dietCoke.items.first.calculatedGrams, 330.0);
+      expect(dietCoke.items.first.macros.calories, 0.0);
+
+      // Cold Coffee
+      final coldCoffee = await engine.parseAndCompute('1 glass of cold coffee');
+      expect(coldCoffee.items.first.resolvedEntity?.name, 'Cold Coffee (Iced Blended)');
+      expect(coldCoffee.items.first.calculatedGrams, 300.0);
+
+      // Coconut Water
+      final coco = await engine.parseAndCompute('1 glass of coconut water');
+      expect(coco.items.first.resolvedEntity?.name, 'Tender Coconut Water (Fresh)');
+      expect(coco.items.first.calculatedGrams, 250.0);
+    });
+
+    test('resolves and computes sandwiches: dark chocolate sandwich, veg grilled, cheese, club sandwich', () async {
+      // Dark Chocolate Sandwich
+      final chocoSandwich = await engine.parseAndCompute('1 dark chocolate sandwich');
+      expect(chocoSandwich.status, ParseStatus.success);
+      expect(chocoSandwich.items.length, 1);
+      final item = chocoSandwich.items.first;
+      expect(item.resolvedEntity?.name, 'Dark Chocolate Sandwich');
+      expect(item.calculatedGrams, 140.0);
+      expect(item.macros.calories, greaterThan(300.0));
+      expect(item.resolvedEntity!.ingredients.any((i) => i.name.contains('Dark Chocolate')), isTrue);
+
+      // Cheese grilled sandwich
+      final cheeseSandwich = await engine.parseAndCompute('1 cheese sandwich');
+      expect(cheeseSandwich.items.first.resolvedEntity?.name, 'Cheese Grilled Sandwich');
+
+      // Veg sandwich
+      final vegSandwich = await engine.parseAndCompute('1 veg sandwich');
+      expect(vegSandwich.items.first.resolvedEntity?.name, 'Veg Grilled Sandwich (Bombay Style)');
+    });
+
+    test('resolves and computes fast food (US/International & Indian): burger, fries, pizza, momos, shawarma', () async {
+      // Burger & Fries
+      final meal = await engine.parseAndCompute('1 chicken burger and french fries');
+      expect(meal.status, ParseStatus.success);
+      expect(meal.items.length, 2);
+      expect(meal.items[0].resolvedEntity?.name, 'Chicken Burger (Crispy)');
+      expect(meal.items[1].resolvedEntity?.name, 'French Fries (Medium)');
+      expect(meal.totalMacros.calories, greaterThan(600.0));
+
+      // Pizza
+      final pizza = await engine.parseAndCompute('2 slices of margherita pizza');
+      expect(pizza.items.first.resolvedEntity?.name, 'Margherita Pizza (1 Slice)');
+      expect(pizza.items.first.quantity, 2.0);
+      expect(pizza.items.first.calculatedGrams, 200.0);
+
+      // Momos
+      final momos = await engine.parseAndCompute('1 plate momos');
+      expect(momos.items.first.resolvedEntity?.name, 'Steamed Veg Momos (6 Pieces)');
+      expect(momos.items.first.calculatedGrams, 150.0);
+
+      // Shawarma
+      final shawarma = await engine.parseAndCompute('1 chicken shawarma');
+      expect(shawarma.items.first.resolvedEntity?.name, 'Chicken Shawarma Roll');
+      expect(shawarma.items.first.calculatedGrams, 200.0);
+
+      // Cookie and Donut
+      final sweets = await engine.parseAndCompute('1 chocolate chip cookie and 1 glazed donut');
+      expect(sweets.items.length, 2);
+      expect(sweets.items[0].resolvedEntity?.name, 'Chocolate Chip Cookie');
+      expect(sweets.items[1].resolvedEntity?.name, 'Glazed Doughnut / Donut');
+    });
+
+    test('resolves cooked dals and cooked vegetables rather than raw staples (3 rotis and urad dal)', () async {
+      final meal = await engine.parseAndCompute('3 rotis and urad dal');
+      expect(meal.status, ParseStatus.success);
+      expect(meal.items.length, 2);
+
+      // 1. Rotis: 3 pieces -> ~105g edible, ~300 kcal
+      final rotis = meal.items[0];
+      expect(rotis.resolvedEntity?.name, 'Roti / Chapati');
+      expect(rotis.quantity, 3.0);
+      expect(rotis.calculatedGrams, 105.0);
+
+      // 2. Urad Dal: MUST resolve to cooked recipe 'Urad Dal (Cooked / Tadka)', NOT raw dry pulse!
+      final dal = meal.items[1];
+      expect(dal.resolvedEntity?.name, 'Urad Dal (Cooked / Tadka)');
+      expect(dal.calculatedGrams, 150.0);
+      // Cooked dal is diluted with water: ~170 kcal per katori, not 492 kcal raw!
+      expect(dal.macros.calories, lessThan(200.0));
+      expect(dal.macros.proteinG, greaterThan(7.0));
+
+      // Total meal should be around 450-490 kcal
+      expect(meal.totalMacros.calories, lessThan(520.0));
+
+      // 3. Verdict on 3 rotis & urad dal: BALANCED, not HIGH CAL!
+      final verdict = MealVerdict.evaluate(
+        calories: meal.totalMacros.calories,
+        protein: meal.totalMacros.proteinG,
+        carbs: meal.totalMacros.carbsG,
+        fats: meal.totalMacros.fatG,
+      );
+      expect(verdict.tag, equals(MealVerdictTag.balanced));
+      expect(verdict.label, equals('BALANCED'));
+
+      // 4. Test cooked vegetables (mix veg, bhindi, aloo matar)
+      final mixVeg = await engine.parseAndCompute('1 bowl mix veg and 2 rotis');
+      expect(mixVeg.items[0].resolvedEntity?.name, 'Mixed Vegetable Sabzi (Cooked)');
+      expect(mixVeg.items[1].resolvedEntity?.name, 'Roti / Chapati');
+
+      final bhindi = await engine.parseAndCompute('1 katori bhindi');
+      expect(bhindi.items.first.resolvedEntity?.name, 'Bhindi Masala (Okra Fry)');
+
+      final alooMatar = await engine.parseAndCompute('1 bowl aloo matar');
+      expect(alooMatar.items.first.resolvedEntity?.name, 'Aloo Matar (Curry)');
+    });
+
+    test('evaluates MealVerdict correctly for whole fruits (banana, apple) as LIGHT & CLEAN rather than HIGH CAL', () async {
+      // 1 Banana
+      final bananaResult = await engine.parseAndCompute('1 banana');
+      expect(bananaResult.status, ParseStatus.success);
+      expect(bananaResult.items.first.resolvedEntity?.name, 'Banana (Ripe)');
+
+      final bananaVerdict = MealVerdict.evaluate(
+        calories: bananaResult.totalMacros.calories,
+        protein: bananaResult.totalMacros.proteinG,
+        carbs: bananaResult.totalMacros.carbsG,
+        fats: bananaResult.totalMacros.fatG,
+      );
+      // Must NOT be HIGH CAL!
+      expect(bananaVerdict.tag, isNot(equals(MealVerdictTag.highCal)));
+      expect(bananaVerdict.tag, equals(MealVerdictTag.lightClean));
+      expect(bananaVerdict.label, equals('LIGHT & CLEAN'));
+
+      // 1 Apple
+      final appleResult = await engine.parseAndCompute('1 apple');
+      final appleVerdict = MealVerdict.evaluate(
+        calories: appleResult.totalMacros.calories,
+        protein: appleResult.totalMacros.proteinG,
+        carbs: appleResult.totalMacros.carbsG,
+        fats: appleResult.totalMacros.fatG,
+      );
+      expect(appleVerdict.tag, equals(MealVerdictTag.lightClean));
+      expect(appleVerdict.label, equals('LIGHT & CLEAN'));
+    });
+
+    test('resolves raw dal explicitly and provides Cooked <-> Raw switch alternates seamlessly', () async {
+      // 1. Explicit raw query
+      final rawUrad = await engine.parseAndCompute('100g raw urad dal');
+      expect(rawUrad.status, ParseStatus.success);
+      expect(rawUrad.items.first.resolvedEntity?.name, 'Urad Dal (Black Gram Split)');
+      expect(rawUrad.items.first.resolvedEntity?.entityType, EntityType.ingredient);
+      // Raw macros: ~328 kcal per 100g
+      expect(rawUrad.items.first.macros.calories, closeTo(328.0, 5.0));
+      // Alternates for raw should offer the Cooked recipe
+      expect(rawUrad.items.first.alternates.any((a) => a.name.contains('Urad Dal (Cooked')), isTrue);
+
+      // 2. Cooked query alternates should offer the Raw ingredient
+      final cookedUrad = await engine.parseAndCompute('1 katori urad dal');
+      expect(cookedUrad.status, ParseStatus.success);
+      expect(cookedUrad.items.first.resolvedEntity?.name, 'Urad Dal (Cooked / Tadka)');
+      expect(cookedUrad.items.first.resolvedEntity?.entityType, EntityType.recipe);
+      // Cooked macros: ~170 kcal per 150g katori
+      expect(cookedUrad.items.first.macros.calories, closeTo(170.0, 10.0));
+      // Alternates for cooked should offer the Raw ingredient counterpart
+      expect(cookedUrad.items.first.alternates.any((a) => a.name.contains('Raw') || a.name.contains('Black Gram Split')), isTrue);
     });
   });
 }

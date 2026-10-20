@@ -44,6 +44,7 @@ class MacroComputationEngine {
         entityType: entity.entityType,
         entityId: entity.id,
         entityStandardServingGrams: entity.standardServingGrams,
+        entityStandardServingUnit: entity.standardServingUnit,
       );
 
       final totalGrams = token.quantity * unitGrams;
@@ -105,6 +106,7 @@ class MacroComputationEngine {
       entityType: entity.entityType,
       entityId: entity.id,
       entityStandardServingGrams: entity.standardServingGrams,
+      entityStandardServingUnit: entity.standardServingUnit,
     );
 
     final totalGrams = quantity * unitGrams;
@@ -173,7 +175,17 @@ class MacroComputationEngine {
       ingredients: updatedIngredients,
     );
 
-    final calculatedGrams = item.quantity * servingGrams;
+    double effectiveUnitGrams = servingGrams;
+    final normalizedUnit = item.unit.toLowerCase().trim();
+    if (normalizedUnit == 'plate' && servingGrams < 100.0) {
+      effectiveUnitGrams = servingGrams * 2.0;
+    } else if (normalizedUnit == 'g' || normalizedUnit == 'gram') {
+      effectiveUnitGrams = 1.0;
+    } else if (normalizedUnit == 'kg') {
+      effectiveUnitGrams = 1000.0;
+    }
+
+    final calculatedGrams = item.quantity * effectiveUnitGrams;
     final scaleMultiplier = calculatedGrams / 100.0;
     final itemMacros = updatedMacrosPer100g.scale(scaleMultiplier);
 

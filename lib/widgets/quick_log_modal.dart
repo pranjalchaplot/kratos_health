@@ -12,6 +12,7 @@ import '../models/nutrition_models.dart';
 import '../services/nutrition/speech_recognition_service.dart';
 import '../services/nutrition/nutrition_database_service.dart';
 import 'recipe_customizer_sheet.dart';
+import '../services/nutrition/meal_verdict_engine.dart';
 
 class QuickLogTab {
   static const int water = 0;
@@ -1197,10 +1198,48 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${item.calculatedGrams.round()}g edible • ${item.unit}',
-                                  style: SomaFonts.mono(fontSize: 10, color: SomaColors.onSecondaryContainer),
+                                Builder(
+                                  builder: (context) {
+                                    final itemVerdict = MealVerdict.evaluate(
+                                      calories: item.macros.calories,
+                                      protein: item.macros.proteinG,
+                                      carbs: item.macros.carbsG,
+                                      fats: item.macros.fatG,
+                                    );
+                                    return Row(
+                                      children: [
+                                        Text(
+                                          '${item.calculatedGrams.round()}g edible • ${item.unit}',
+                                          style: SomaFonts.mono(fontSize: 10, color: SomaColors.onSecondaryContainer),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                          decoration: BoxDecoration(
+                                            color: itemVerdict.color.withValues(alpha: 0.15),
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(color: itemVerdict.color.withValues(alpha: 0.4), width: 0.8),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(itemVerdict.icon, size: 9, color: itemVerdict.color),
+                                              const SizedBox(width: 3),
+                                              Text(
+                                                itemVerdict.label,
+                                                style: SomaFonts.mono(
+                                                  fontSize: 8.5,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: itemVerdict.color,
+                                                  letterSpacing: 0.4,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -1397,7 +1436,7 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
               },
             ),
 
-            // Live Aggregated Macros Banner
+            // Live Aggregated Macros Banner with Smart Verdict
             Container(
               margin: const EdgeInsets.symmetric(vertical: 8),
               padding: const EdgeInsets.all(12),
@@ -1411,13 +1450,63 @@ class _QuickLogModalState extends State<QuickLogModal> with SingleTickerProvider
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: SomaColors.primaryContainer.withValues(alpha: 0.4)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+              child: Column(
                 children: [
-                  _buildSummaryMacroCol('TOTAL CALORIES', '${_calories.toInt()}', 'kcal', SomaColors.primaryContainer),
-                  _buildSummaryMacroCol('PROTEIN', '${_protein.toInt()}', 'g', Colors.cyanAccent),
-                  _buildSummaryMacroCol('CARBS', '${_carbs.toInt()}', 'g', Colors.amberAccent),
-                  _buildSummaryMacroCol('FATS', '${_fats.toInt()}', 'g', Colors.orangeAccent),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildSummaryMacroCol('TOTAL CALORIES', '${_calories.toInt()}', 'kcal', SomaColors.primaryContainer),
+                      _buildSummaryMacroCol('PROTEIN', '${_protein.toInt()}', 'g', Colors.cyanAccent),
+                      _buildSummaryMacroCol('CARBS', '${_carbs.toInt()}', 'g', Colors.amberAccent),
+                      _buildSummaryMacroCol('FATS', '${_fats.toInt()}', 'g', Colors.orangeAccent),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Builder(
+                    builder: (context) {
+                      final verdict = MealVerdict.evaluate(
+                        calories: _calories,
+                        protein: _protein,
+                        carbs: _carbs,
+                        fats: _fats,
+                      );
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: verdict.color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: verdict.color.withValues(alpha: 0.35)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(verdict.icon, size: 14, color: verdict.color),
+                            const SizedBox(width: 6),
+                            Text(
+                              verdict.label,
+                              style: SomaFonts.mono(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                                color: verdict.color,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                verdict.description,
+                                style: SomaFonts.primary(
+                                  fontSize: 10,
+                                  color: SomaColors.onSecondaryContainer,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),

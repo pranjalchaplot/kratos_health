@@ -111,6 +111,7 @@ INGREDIENTS_DATA = [
     ("Urad Dal (Black Gram Split)", 328.0, 24.0, 59.6, 1.4, "IFCT_2017", 0, 75),
     ("Rajma (Red Kidney Beans)", 333.0, 22.9, 60.6, 1.3, "IFCT_2017", 1, 85),
     ("Kabuli Chana (White Chickpeas)", 360.0, 20.5, 60.0, 5.3, "IFCT_2017", 1, 80),
+    ("Masoor Dal / Red Lentil (Raw)", 343.0, 25.1, 59.0, 0.7, "IFCT_2017", 0, 75),
     ("Soybean (Dry)", 432.0, 36.5, 30.2, 19.9, "IFCT_2017", 0, 65),
 
     # Dairy & Eggs
@@ -177,6 +178,29 @@ INGREDIENTS_DATA = [
     ("Puri / Golgappa Crispy Shell", 480.0, 8.0, 60.0, 24.0, "IFCT_2017", 0, 75),
     ("Tamarind Pulp (Raw)", 239.0, 2.8, 62.5, 0.6, "IFCT_2017", 0, 70),
     ("Fenugreek Leaves (Methi Raw)", 49.0, 4.4, 6.0, 0.9, "IFCT_2017", 0, 65),
+    ("Bottle Gourd / Lauki (Raw)", 14.0, 0.6, 3.4, 0.1, "IFCT_2017", 0, 70),
+    ("Cabbage / Patta Gobi (Raw)", 25.0, 1.3, 5.8, 0.1, "IFCT_2017", 0, 70),
+
+    # Extended Ingredients for Beverages, Sandwiches, and Global Fast Food
+    ("Black Coffee Brew (Unsweetened)", 1.5, 0.2, 0.2, 0.0, "USDA", 1, 95),
+    ("Green Tea Brew (Unsweetened)", 1.0, 0.1, 0.2, 0.0, "USDA", 1, 95),
+    ("Tea Brew / Decoction (Unsweetened)", 1.0, 0.1, 0.2, 0.0, "USDA", 1, 95),
+    ("Dark Chocolate (70% Cocoa)", 598.0, 7.8, 45.9, 42.6, "USDA", 1, 90),
+    ("Milk Chocolate", 535.0, 7.7, 59.4, 29.7, "USDA", 0, 75),
+    ("Cocoa Powder (Unsweetened)", 228.0, 19.6, 57.9, 13.7, "USDA", 0, 70),
+    ("Cheddar / Processed Cheese", 403.0, 24.9, 1.3, 33.1, "USDA", 1, 85),
+    ("Mozzarella Cheese", 300.0, 22.2, 2.2, 22.4, "USDA", 1, 85),
+    ("Mayonnaise", 680.0, 1.0, 0.6, 75.0, "USDA", 0, 75),
+    ("Burger Bun", 270.0, 9.0, 49.0, 4.0, "USDA", 1, 80),
+    ("French Fries (Cooked)", 312.0, 3.4, 41.4, 14.7, "USDA", 1, 85),
+    ("Pizza Crust / Base", 266.0, 8.0, 52.0, 2.5, "USDA", 1, 80),
+    ("Pasta (Durum Wheat Semolina)", 371.0, 13.0, 74.0, 1.5, "USDA", 1, 85),
+    ("Tender Coconut Water", 19.0, 0.7, 3.7, 0.2, "IFCT_2017", 1, 90),
+    ("Fresh Orange Juice", 45.0, 0.7, 10.4, 0.2, "USDA", 1, 85),
+    ("Sugarcane Juice", 39.0, 0.2, 9.5, 0.1, "IFCT_2017", 1, 80),
+    ("Cola / Carbonated Soft Drink", 42.0, 0.0, 10.6, 0.0, "USDA", 0, 80),
+    ("Diet Cola / Zero Calorie Soda", 0.0, 0.0, 0.0, 0.0, "USDA", 1, 85),
+    ("Energy Drink (Caffeinated)", 45.0, 0.0, 11.0, 0.0, "USDA", 0, 75),
 ]
 
 # Master Recipes Data (name, standard_serving_unit, standard_serving_grams, canonical, rank, ingredients_breakdown)
@@ -206,6 +230,33 @@ RECIPES_DATA = [
             ("Moong Dal (Yellow Split)", 35.0),
             ("Desi Ghee (Clarified Butter)", 5.0),
             ("Tomato (Ripe Raw)", 20.0),
+        ]
+    ),
+    (
+        "Urad Dal (Cooked / Tadka)", "katori", 150.0, 1, 92,
+        [
+            ("Urad Dal (Black Gram Split)", 35.0),
+            ("Desi Ghee (Clarified Butter)", 5.0),
+            ("Tomato (Ripe Raw)", 20.0),
+            ("Onion (Raw)", 15.0),
+        ]
+    ),
+    (
+        "Chana Dal (Cooked / Tadka)", "katori", 150.0, 1, 90,
+        [
+            ("Chana Dal (Split Chickpeas)", 35.0),
+            ("Desi Ghee (Clarified Butter)", 5.0),
+            ("Tomato (Ripe Raw)", 20.0),
+            ("Onion (Raw)", 15.0),
+        ]
+    ),
+    (
+        "Masoor Dal (Cooked / Red Lentil)", "katori", 150.0, 1, 90,
+        [
+            ("Masoor Dal / Red Lentil (Raw)", 35.0),
+            ("Desi Ghee (Clarified Butter)", 5.0),
+            ("Tomato (Ripe Raw)", 20.0),
+            ("Onion (Raw)", 15.0),
         ]
     ),
     (
@@ -714,6 +765,86 @@ RECIPES_DATA = [
             ("Tomato (Ripe Raw)", 25.0),
         ]
     ),
+    (
+        "Mixed Vegetable Sabzi (Cooked)", "katori", 150.0, 1, 95,
+        [
+            ("Cauliflower (Gobi)", 35.0),
+            ("Green Peas (Raw)", 25.0),
+            ("Potato (Raw)", 25.0),
+            ("Carrot (Gajar Raw)", 25.0),
+            ("Vegetable Cooking Oil", 8.0),
+            ("Tomato (Ripe Raw)", 20.0),
+        ]
+    ),
+    (
+        "Jeera Aloo (Dry Potato Sabzi)", "katori", 150.0, 1, 92,
+        [
+            ("Potato (Raw)", 120.0),
+            ("Vegetable Cooking Oil", 10.0),
+            ("Desi Ghee (Clarified Butter)", 2.0),
+        ]
+    ),
+    (
+        "Aloo Matar (Curry)", "katori", 150.0, 1, 92,
+        [
+            ("Potato (Raw)", 60.0),
+            ("Green Peas (Raw)", 50.0),
+            ("Tomato (Ripe Raw)", 25.0),
+            ("Onion (Raw)", 20.0),
+            ("Vegetable Cooking Oil", 8.0),
+        ]
+    ),
+    (
+        "Aloo Shimla Mirch (Cooked Sabzi)", "katori", 150.0, 1, 90,
+        [
+            ("Potato (Raw)", 60.0),
+            ("Capsicum / Green Bell Pepper (Raw)", 60.0),
+            ("Tomato (Ripe Raw)", 20.0),
+            ("Vegetable Cooking Oil", 8.0),
+        ]
+    ),
+    (
+        "Gobi Ki Sabzi / Cauliflower Fry", "katori", 150.0, 1, 90,
+        [
+            ("Cauliflower (Gobi)", 120.0),
+            ("Tomato (Ripe Raw)", 20.0),
+            ("Vegetable Cooking Oil", 8.0),
+        ]
+    ),
+    (
+        "Lauki Ki Sabzi (Bottle Gourd Curry)", "katori", 150.0, 1, 90,
+        [
+            ("Bottle Gourd / Lauki (Raw)", 130.0),
+            ("Tomato (Ripe Raw)", 20.0),
+            ("Vegetable Cooking Oil", 6.0),
+        ]
+    ),
+    (
+        "Palak Ki Sabzi / Saag (Cooked)", "katori", 150.0, 1, 90,
+        [
+            ("Spinach (Palak Raw)", 130.0),
+            ("Onion (Raw)", 20.0),
+            ("Desi Ghee (Clarified Butter)", 8.0),
+        ]
+    ),
+    (
+        "Matar Paneer (Curry)", "bowl", 200.0, 1, 92,
+        [
+            ("Paneer (Fresh Cottage Cheese)", 60.0),
+            ("Green Peas (Raw)", 50.0),
+            ("Tomato (Ripe Raw)", 40.0),
+            ("Onion (Raw)", 25.0),
+            ("Vegetable Cooking Oil", 10.0),
+        ]
+    ),
+    (
+        "Cabbage Sabzi / Patta Gobi", "katori", 150.0, 1, 90,
+        [
+            ("Cabbage / Patta Gobi (Raw)", 120.0),
+            ("Green Peas (Raw)", 20.0),
+            ("Vegetable Cooking Oil", 8.0),
+        ]
+    ),
 
     # Indian Sweets & Desserts
     (
@@ -792,6 +923,341 @@ RECIPES_DATA = [
             ("Fenugreek Leaves (Methi Raw)", 10.0),
         ]
     ),
+
+    # Beverages & Cold Drinks
+    (
+        "Black Coffee (Espresso / Americano)", "cup", 150.0, 1, 95,
+        [
+            ("Black Coffee Brew (Unsweetened)", 150.0),
+        ]
+    ),
+    (
+        "Green Tea / Black Tea (Unsweetened)", "cup", 150.0, 1, 95,
+        [
+            ("Green Tea Brew (Unsweetened)", 150.0),
+        ]
+    ),
+    (
+        "Masala Chai / Indian Milk Tea", "cup", 150.0, 1, 98,
+        [
+            ("Cow Milk (Toned 3% Fat)", 80.0),
+            ("Sugar (Granulated)", 8.0),
+            ("Tea Brew / Decoction (Unsweetened)", 62.0),
+        ]
+    ),
+    (
+        "Cold Coffee (Iced Blended)", "glass", 300.0, 1, 92,
+        [
+            ("Cow Milk (Toned 3% Fat)", 220.0),
+            ("Sugar (Granulated)", 16.0),
+            ("Cocoa Powder (Unsweetened)", 5.0),
+        ]
+    ),
+    (
+        "Cappuccino / Cafe Latte", "cup", 200.0, 1, 92,
+        [
+            ("Cow Milk (Toned 3% Fat)", 160.0),
+            ("Sugar (Granulated)", 6.0),
+            ("Black Coffee Brew (Unsweetened)", 34.0),
+        ]
+    ),
+    (
+        "Lemon Iced Tea", "glass", 250.0, 1, 88,
+        [
+            ("Tea Brew / Decoction (Unsweetened)", 220.0),
+            ("Sugar (Granulated)", 18.0),
+            ("Honey", 4.0),
+        ]
+    ),
+    (
+        "Tender Coconut Water (Fresh)", "glass", 250.0, 1, 95,
+        [
+            ("Tender Coconut Water", 250.0),
+        ]
+    ),
+    (
+        "Fresh Orange Juice (Glass)", "glass", 250.0, 1, 90,
+        [
+            ("Fresh Orange Juice", 250.0),
+        ]
+    ),
+    (
+        "Fresh Sugarcane Juice", "glass", 250.0, 1, 88,
+        [
+            ("Sugarcane Juice", 250.0),
+        ]
+    ),
+    (
+        "Cola / Carbonated Soft Drink (Can)", "can", 330.0, 1, 90,
+        [
+            ("Cola / Carbonated Soft Drink", 330.0),
+        ]
+    ),
+    (
+        "Diet Coke / Coke Zero (Can)", "can", 330.0, 1, 95,
+        [
+            ("Diet Cola / Zero Calorie Soda", 330.0),
+        ]
+    ),
+    (
+        "Energy Drink (Red Bull Style)", "can", 250.0, 1, 85,
+        [
+            ("Energy Drink (Caffeinated)", 250.0),
+        ]
+    ),
+
+    # Sandwiches
+    (
+        "Dark Chocolate Sandwich", "piece", 140.0, 1, 95,
+        [
+            ("Bread (White)", 60.0),
+            ("Dark Chocolate (70% Cocoa)", 35.0),
+            ("Butter (Salted)", 10.0),
+        ]
+    ),
+    (
+        "Veg Grilled Sandwich (Bombay Style)", "piece", 180.0, 1, 95,
+        [
+            ("Bread (White)", 60.0),
+            ("Potato (Raw)", 35.0),
+            ("Tomato (Ripe Raw)", 25.0),
+            ("Onion (Raw)", 20.0),
+            ("Capsicum / Green Bell Pepper (Raw)", 15.0),
+            ("Butter (Salted)", 10.0),
+        ]
+    ),
+    (
+        "Cheese Grilled Sandwich", "piece", 150.0, 1, 92,
+        [
+            ("Bread (White)", 60.0),
+            ("Cheddar / Processed Cheese", 45.0),
+            ("Butter (Salted)", 12.0),
+        ]
+    ),
+    (
+        "Chicken Club Sandwich", "piece", 220.0, 1, 92,
+        [
+            ("Bread (Whole Wheat)", 60.0),
+            ("Chicken Breast (Skinless Raw)", 80.0),
+            ("Mayonnaise", 15.0),
+            ("Tomato (Ripe Raw)", 25.0),
+            ("Whole Egg (Raw)", 50.0),
+        ]
+    ),
+    (
+        "Egg / Omelette Sandwich", "piece", 160.0, 1, 90,
+        [
+            ("Bread (White)", 60.0),
+            ("Whole Egg (Raw)", 50.0),
+            ("Butter (Salted)", 8.0),
+            ("Onion (Raw)", 15.0),
+        ]
+    ),
+    (
+        "Peanut Butter Sandwich", "piece", 110.0, 1, 90,
+        [
+            ("Bread (Whole Wheat)", 60.0),
+            ("Peanut Butter", 35.0),
+            ("Honey", 10.0),
+        ]
+    ),
+
+    # Global & US/Indian Fast Food
+    (
+        "Veg Burger / Aloo Tikki Burger", "piece", 180.0, 1, 95,
+        [
+            ("Burger Bun", 70.0),
+            ("Potato (Raw)", 50.0),
+            ("Vegetable Cooking Oil", 10.0),
+            ("Mayonnaise", 12.0),
+            ("Onion (Raw)", 15.0),
+            ("Tomato (Ripe Raw)", 15.0),
+        ]
+    ),
+    (
+        "Chicken Burger (Crispy)", "piece", 190.0, 1, 95,
+        [
+            ("Burger Bun", 70.0),
+            ("Chicken Breast (Skinless Raw)", 90.0),
+            ("Mayonnaise", 15.0),
+            ("Vegetable Cooking Oil", 12.0),
+        ]
+    ),
+    (
+        "Cheeseburger", "piece", 180.0, 1, 92,
+        [
+            ("Burger Bun", 70.0),
+            ("Chicken Breast (Skinless Raw)", 70.0),
+            ("Cheddar / Processed Cheese", 25.0),
+            ("Mayonnaise", 10.0),
+        ]
+    ),
+    (
+        "French Fries (Medium)", "serving", 120.0, 1, 95,
+        [
+            ("French Fries (Cooked)", 120.0),
+        ]
+    ),
+    (
+        "Margherita Pizza (1 Slice)", "slice", 100.0, 1, 95,
+        [
+            ("Pizza Crust / Base", 55.0),
+            ("Mozzarella Cheese", 30.0),
+            ("Tomato (Ripe Raw)", 25.0),
+            ("Olive Oil", 5.0),
+        ]
+    ),
+    (
+        "Veggie Supreme Pizza (1 Slice)", "slice", 120.0, 1, 90,
+        [
+            ("Pizza Crust / Base", 55.0),
+            ("Mozzarella Cheese", 28.0),
+            ("Tomato (Ripe Raw)", 20.0),
+            ("Capsicum / Green Bell Pepper (Raw)", 15.0),
+            ("Onion (Raw)", 15.0),
+            ("Olive Oil", 5.0),
+        ]
+    ),
+    (
+        "Chicken Kathi Roll / Frankie", "piece", 180.0, 1, 92,
+        [
+            ("Refined Wheat Flour (Maida)", 50.0),
+            ("Chicken Breast (Skinless Raw)", 80.0),
+            ("Vegetable Cooking Oil", 10.0),
+            ("Onion (Raw)", 25.0),
+            ("Mayonnaise", 10.0),
+        ]
+    ),
+    (
+        "Paneer Kathi Roll / Frankie", "piece", 180.0, 1, 90,
+        [
+            ("Refined Wheat Flour (Maida)", 50.0),
+            ("Paneer (Fresh Cottage Cheese)", 70.0),
+            ("Vegetable Cooking Oil", 10.0),
+            ("Onion (Raw)", 25.0),
+            ("Capsicum / Green Bell Pepper (Raw)", 15.0),
+        ]
+    ),
+    (
+        "Red Sauce Pasta (Arrabbiata)", "plate", 220.0, 1, 92,
+        [
+            ("Pasta (Durum Wheat Semolina)", 70.0),
+            ("Tomato (Ripe Raw)", 70.0),
+            ("Olive Oil", 10.0),
+            ("Onion (Raw)", 20.0),
+        ]
+    ),
+    (
+        "White Sauce Pasta (Alfredo)", "plate", 240.0, 1, 90,
+        [
+            ("Pasta (Durum Wheat Semolina)", 70.0),
+            ("Cow Milk (Full Cream)", 80.0),
+            ("Butter (Salted)", 15.0),
+            ("Cheddar / Processed Cheese", 25.0),
+            ("Refined Wheat Flour (Maida)", 10.0),
+        ]
+    ),
+    (
+        "Steamed Veg Momos (6 Pieces)", "plate", 150.0, 1, 95,
+        [
+            ("Refined Wheat Flour (Maida)", 45.0),
+            ("Onion (Raw)", 40.0),
+            ("Carrot (Gajar Raw)", 30.0),
+            ("Vegetable Cooking Oil", 5.0),
+        ]
+    ),
+    (
+        "Steamed Chicken Momos (6 Pieces)", "plate", 150.0, 1, 95,
+        [
+            ("Refined Wheat Flour (Maida)", 45.0),
+            ("Chicken Breast (Skinless Raw)", 70.0),
+            ("Onion (Raw)", 25.0),
+            ("Vegetable Cooking Oil", 5.0),
+        ]
+    ),
+    (
+        "Chicken Shawarma Roll", "piece", 200.0, 1, 95,
+        [
+            ("Refined Wheat Flour (Maida)", 55.0),
+            ("Chicken Breast (Skinless Raw)", 90.0),
+            ("Mayonnaise", 18.0),
+            ("Onion (Raw)", 20.0),
+            ("Tomato (Ripe Raw)", 20.0),
+        ]
+    ),
+    (
+        "Chocolate Chip Cookie", "piece", 35.0, 1, 90,
+        [
+            ("Refined Wheat Flour (Maida)", 15.0),
+            ("Sugar (Granulated)", 10.0),
+            ("Butter (Salted)", 8.0),
+            ("Dark Chocolate (70% Cocoa)", 6.0),
+        ]
+    ),
+    (
+        "Glazed Doughnut / Donut", "piece", 60.0, 1, 90,
+        [
+            ("Refined Wheat Flour (Maida)", 30.0),
+            ("Sugar (Granulated)", 16.0),
+            ("Vegetable Cooking Oil", 8.0),
+            ("Butter (Salted)", 6.0),
+        ]
+    ),
+    (
+        "Chicken Pizza (1 Slice)", "slice", 110.0, 1, 92,
+        [
+            ("Pizza Crust / Base", 55.0),
+            ("Mozzarella Cheese", 30.0),
+            ("Chicken Breast (Skinless Raw)", 30.0),
+            ("Tomato (Ripe Raw)", 20.0),
+        ]
+    ),
+    (
+        "Veg Hakka Noodles / Chowmein", "plate", 220.0, 1, 92,
+        [
+            ("Pasta (Durum Wheat Semolina)", 70.0),
+            ("Vegetable Cooking Oil", 12.0),
+            ("Onion (Raw)", 30.0),
+            ("Capsicum / Green Bell Pepper (Raw)", 25.0),
+            ("Carrot (Gajar Raw)", 25.0),
+        ]
+    ),
+    (
+        "Veg Fried Rice", "plate", 250.0, 1, 90,
+        [
+            ("White Rice (Raw)", 75.0),
+            ("Vegetable Cooking Oil", 12.0),
+            ("Onion (Raw)", 30.0),
+            ("Carrot (Gajar Raw)", 25.0),
+            ("Green Peas (Raw)", 20.0),
+        ]
+    ),
+    (
+        "Veg Manchurian (Dry/Gravy)", "plate", 180.0, 1, 90,
+        [
+            ("Refined Wheat Flour (Maida)", 30.0),
+            ("Vegetable Cooking Oil", 14.0),
+            ("Onion (Raw)", 40.0),
+            ("Carrot (Gajar Raw)", 30.0),
+            ("Capsicum / Green Bell Pepper (Raw)", 20.0),
+        ]
+    ),
+    (
+        "Chicken Nuggets (6 Pieces)", "serving", 120.0, 1, 92,
+        [
+            ("Chicken Breast (Skinless Raw)", 80.0),
+            ("Refined Wheat Flour (Maida)", 20.0),
+            ("Vegetable Cooking Oil", 14.0),
+        ]
+    ),
+    (
+        "Garlic Bread (3 Slices)", "serving", 90.0, 1, 90,
+        [
+            ("Bread (White)", 60.0),
+            ("Butter (Salted)", 15.0),
+            ("Mozzarella Cheese", 15.0),
+        ]
+    ),
 ]
 
 # Aliases for Entity Resolution (alias -> (entity_type, name))
@@ -829,9 +1295,65 @@ ALIASES_DATA = [
     ("dal tadka", "RECIPE", "Dal Tadka (Yellow Lentil Curry)"),
     ("yellow dal", "RECIPE", "Dal Tadka (Yellow Lentil Curry)"),
     ("toor dal", "RECIPE", "Dal Tadka (Yellow Lentil Curry)"),
+    ("toor daal", "RECIPE", "Dal Tadka (Yellow Lentil Curry)"),
+    ("toor", "RECIPE", "Dal Tadka (Yellow Lentil Curry)"),
     ("arhar dal", "RECIPE", "Dal Tadka (Yellow Lentil Curry)"),
+    ("arhar daal", "RECIPE", "Dal Tadka (Yellow Lentil Curry)"),
+    ("arhar", "RECIPE", "Dal Tadka (Yellow Lentil Curry)"),
+    ("tuvar dal", "RECIPE", "Dal Tadka (Yellow Lentil Curry)"),
     ("moong dal", "RECIPE", "Moong Dal (Cooked)"),
+    ("moong daal", "RECIPE", "Moong Dal (Cooked)"),
     ("mung dal", "RECIPE", "Moong Dal (Cooked)"),
+    ("mung daal", "RECIPE", "Moong Dal (Cooked)"),
+    ("moong", "RECIPE", "Moong Dal (Cooked)"),
+    ("urad", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("urad dal", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("urad daal", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("urad dal tadka", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("urad dal fry", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("dhuli urad dal", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("dhuli urad", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("kali dal", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("kaali dal", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("maa ki dal", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("urad ki dal", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("black gram dal", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("black gram", "RECIPE", "Urad Dal (Cooked / Tadka)"),
+    ("chana dal", "RECIPE", "Chana Dal (Cooked / Tadka)"),
+    ("chana daal", "RECIPE", "Chana Dal (Cooked / Tadka)"),
+    ("chana dal tadka", "RECIPE", "Chana Dal (Cooked / Tadka)"),
+    ("chana dal fry", "RECIPE", "Chana Dal (Cooked / Tadka)"),
+    ("masoor dal", "RECIPE", "Masoor Dal (Cooked / Red Lentil)"),
+    ("masoor daal", "RECIPE", "Masoor Dal (Cooked / Red Lentil)"),
+    ("masoor", "RECIPE", "Masoor Dal (Cooked / Red Lentil)"),
+    ("red lentil dal", "RECIPE", "Masoor Dal (Cooked / Red Lentil)"),
+    ("masur dal", "RECIPE", "Masoor Dal (Cooked / Red Lentil)"),
+    ("raw urad dal", "INGREDIENT", "Urad Dal (Black Gram Split)"),
+    ("raw urad", "INGREDIENT", "Urad Dal (Black Gram Split)"),
+    ("dry urad dal", "INGREDIENT", "Urad Dal (Black Gram Split)"),
+    ("dry urad", "INGREDIENT", "Urad Dal (Black Gram Split)"),
+    ("uncooked urad dal", "INGREDIENT", "Urad Dal (Black Gram Split)"),
+    ("uncooked urad", "INGREDIENT", "Urad Dal (Black Gram Split)"),
+    ("raw black gram", "INGREDIENT", "Urad Dal (Black Gram Split)"),
+    ("dry black gram", "INGREDIENT", "Urad Dal (Black Gram Split)"),
+    ("raw chana dal", "INGREDIENT", "Chana Dal (Split Chickpeas)"),
+    ("raw chana", "INGREDIENT", "Chana Dal (Split Chickpeas)"),
+    ("dry chana dal", "INGREDIENT", "Chana Dal (Split Chickpeas)"),
+    ("dry chana", "INGREDIENT", "Chana Dal (Split Chickpeas)"),
+    ("uncooked chana dal", "INGREDIENT", "Chana Dal (Split Chickpeas)"),
+    ("raw moong dal", "INGREDIENT", "Moong Dal (Yellow Split)"),
+    ("raw moong", "INGREDIENT", "Moong Dal (Yellow Split)"),
+    ("dry moong dal", "INGREDIENT", "Moong Dal (Yellow Split)"),
+    ("dry moong", "INGREDIENT", "Moong Dal (Yellow Split)"),
+    ("uncooked moong dal", "INGREDIENT", "Moong Dal (Yellow Split)"),
+    ("raw toor dal", "INGREDIENT", "Toor Dal (Yellow Pigeon Pea)"),
+    ("raw toor", "INGREDIENT", "Toor Dal (Yellow Pigeon Pea)"),
+    ("dry toor dal", "INGREDIENT", "Toor Dal (Yellow Pigeon Pea)"),
+    ("dry toor", "INGREDIENT", "Toor Dal (Yellow Pigeon Pea)"),
+    ("raw arhar dal", "INGREDIENT", "Toor Dal (Yellow Pigeon Pea)"),
+    ("raw masoor dal", "INGREDIENT", "Masoor Dal / Red Lentil (Raw)"),
+    ("raw masoor", "INGREDIENT", "Masoor Dal / Red Lentil (Raw)"),
+    ("dry masoor dal", "INGREDIENT", "Masoor Dal / Red Lentil (Raw)"),
 
     # Paneer
     ("paneer", "INGREDIENT", "Paneer (Fresh Cottage Cheese)"),
@@ -1045,6 +1567,47 @@ ALIASES_DATA = [
     ("okra fry", "RECIPE", "Bhindi Masala (Okra Fry)"),
     ("baingan bharta", "RECIPE", "Baingan Bharta (Roasted Eggplant Mash)"),
     ("baigan bharta", "RECIPE", "Baingan Bharta (Roasted Eggplant Mash)"),
+    ("baingan", "RECIPE", "Baingan Bharta (Roasted Eggplant Mash)"),
+    ("eggplant", "RECIPE", "Baingan Bharta (Roasted Eggplant Mash)"),
+    ("brinjal", "RECIPE", "Baingan Bharta (Roasted Eggplant Mash)"),
+    ("mixed veg", "RECIPE", "Mixed Vegetable Sabzi (Cooked)"),
+    ("mix veg", "RECIPE", "Mixed Vegetable Sabzi (Cooked)"),
+    ("mix vegetable", "RECIPE", "Mixed Vegetable Sabzi (Cooked)"),
+    ("mixed vegetable", "RECIPE", "Mixed Vegetable Sabzi (Cooked)"),
+    ("mix veg sabzi", "RECIPE", "Mixed Vegetable Sabzi (Cooked)"),
+    ("sabzi", "RECIPE", "Mixed Vegetable Sabzi (Cooked)"),
+    ("sabji", "RECIPE", "Mixed Vegetable Sabzi (Cooked)"),
+    ("jeera aloo", "RECIPE", "Jeera Aloo (Dry Potato Sabzi)"),
+    ("zeera aloo", "RECIPE", "Jeera Aloo (Dry Potato Sabzi)"),
+    ("aloo matar", "RECIPE", "Aloo Matar (Curry)"),
+    ("alu matar", "RECIPE", "Aloo Matar (Curry)"),
+    ("aloo mutter", "RECIPE", "Aloo Matar (Curry)"),
+    ("aloo shimla mirch", "RECIPE", "Aloo Shimla Mirch (Cooked Sabzi)"),
+    ("shimla mirch aloo", "RECIPE", "Aloo Shimla Mirch (Cooked Sabzi)"),
+    ("gobi sabzi", "RECIPE", "Gobi Ki Sabzi / Cauliflower Fry"),
+    ("gobhi sabzi", "RECIPE", "Gobi Ki Sabzi / Cauliflower Fry"),
+    ("gobi ki sabzi", "RECIPE", "Gobi Ki Sabzi / Cauliflower Fry"),
+    ("gobi", "RECIPE", "Gobi Ki Sabzi / Cauliflower Fry"),
+    ("gobhi", "RECIPE", "Gobi Ki Sabzi / Cauliflower Fry"),
+    ("cauliflower", "RECIPE", "Gobi Ki Sabzi / Cauliflower Fry"),
+    ("lauki", "RECIPE", "Lauki Ki Sabzi (Bottle Gourd Curry)"),
+    ("lauki ki sabzi", "RECIPE", "Lauki Ki Sabzi (Bottle Gourd Curry)"),
+    ("lauki sabzi", "RECIPE", "Lauki Ki Sabzi (Bottle Gourd Curry)"),
+    ("ghiya", "RECIPE", "Lauki Ki Sabzi (Bottle Gourd Curry)"),
+    ("doodhi", "RECIPE", "Lauki Ki Sabzi (Bottle Gourd Curry)"),
+    ("bottle gourd", "RECIPE", "Lauki Ki Sabzi (Bottle Gourd Curry)"),
+    ("palak", "RECIPE", "Palak Ki Sabzi / Saag (Cooked)"),
+    ("palak saag", "RECIPE", "Palak Ki Sabzi / Saag (Cooked)"),
+    ("palak sabzi", "RECIPE", "Palak Ki Sabzi / Saag (Cooked)"),
+    ("spinach", "RECIPE", "Palak Ki Sabzi / Saag (Cooked)"),
+    ("saag", "RECIPE", "Palak Ki Sabzi / Saag (Cooked)"),
+    ("matar paneer", "RECIPE", "Matar Paneer (Curry)"),
+    ("mutter paneer", "RECIPE", "Matar Paneer (Curry)"),
+    ("patta gobi", "RECIPE", "Cabbage Sabzi / Patta Gobi"),
+    ("patta gobhi", "RECIPE", "Cabbage Sabzi / Patta Gobi"),
+    ("band gobi", "RECIPE", "Cabbage Sabzi / Patta Gobi"),
+    ("cabbage sabzi", "RECIPE", "Cabbage Sabzi / Patta Gobi"),
+    ("cabbage", "RECIPE", "Cabbage Sabzi / Patta Gobi"),
     ("kadhi", "RECIPE", "Kadhi Pakora"),
     ("kadhi pakora", "RECIPE", "Kadhi Pakora"),
     ("naan", "RECIPE", "Naan (Butter)"),
@@ -1093,9 +1656,17 @@ ALIASES_DATA = [
     ("gajar", "INGREDIENT", "Carrot (Gajar Raw)"),
     ("carrot", "INGREDIENT", "Carrot (Gajar Raw)"),
     ("carrots", "INGREDIENT", "Carrot (Gajar Raw)"),
-    ("baingan", "INGREDIENT", "Eggplant / Baingan (Raw)"),
-    ("eggplant", "INGREDIENT", "Eggplant / Baingan (Raw)"),
-    ("brinjal", "INGREDIENT", "Eggplant / Baingan (Raw)"),
+    ("raw baingan", "INGREDIENT", "Eggplant / Baingan (Raw)"),
+    ("raw eggplant", "INGREDIENT", "Eggplant / Baingan (Raw)"),
+    ("raw brinjal", "INGREDIENT", "Eggplant / Baingan (Raw)"),
+    ("raw lauki", "INGREDIENT", "Bottle Gourd / Lauki (Raw)"),
+    ("raw cabbage", "INGREDIENT", "Cabbage / Patta Gobi (Raw)"),
+    ("raw palak", "INGREDIENT", "Spinach (Palak Raw)"),
+    ("raw spinach", "INGREDIENT", "Spinach (Palak Raw)"),
+    ("raw gobi", "INGREDIENT", "Cauliflower (Gobi)"),
+    ("raw cauliflower", "INGREDIENT", "Cauliflower (Gobi)"),
+    ("raw bhindi", "INGREDIENT", "Ladyfinger (Bhindi/Okra)"),
+    ("raw okra", "INGREDIENT", "Ladyfinger (Bhindi/Okra)"),
     ("capsicum", "INGREDIENT", "Capsicum / Green Bell Pepper (Raw)"),
     ("shimla mirch", "INGREDIENT", "Capsicum / Green Bell Pepper (Raw)"),
     ("sabudana", "INGREDIENT", "Sago / Sabudana (Dry)"),
@@ -1103,6 +1674,250 @@ ALIASES_DATA = [
     ("sev", "INGREDIENT", "Sev / Fried Gram Flour Noodles"),
     ("bhujia", "INGREDIENT", "Sev / Fried Gram Flour Noodles"),
     ("methi", "INGREDIENT", "Fenugreek Leaves (Methi Raw)"),
+
+    # Beverages & Drinks
+    ("tea", "RECIPE", "Masala Chai / Indian Milk Tea"),
+    ("chai", "RECIPE", "Masala Chai / Indian Milk Tea"),
+    ("milk tea", "RECIPE", "Masala Chai / Indian Milk Tea"),
+    ("masala chai", "RECIPE", "Masala Chai / Indian Milk Tea"),
+    ("masala tea", "RECIPE", "Masala Chai / Indian Milk Tea"),
+    ("adrak chai", "RECIPE", "Masala Chai / Indian Milk Tea"),
+    ("ginger tea", "RECIPE", "Masala Chai / Indian Milk Tea"),
+    ("cutting chai", "RECIPE", "Masala Chai / Indian Milk Tea"),
+    ("cup of tea", "RECIPE", "Masala Chai / Indian Milk Tea"),
+    ("cup of chai", "RECIPE", "Masala Chai / Indian Milk Tea"),
+
+    ("black coffee", "RECIPE", "Black Coffee (Espresso / Americano)"),
+    ("espresso", "RECIPE", "Black Coffee (Espresso / Americano)"),
+    ("americano", "RECIPE", "Black Coffee (Espresso / Americano)"),
+    ("black coffee without sugar", "RECIPE", "Black Coffee (Espresso / Americano)"),
+
+    ("green tea", "RECIPE", "Green Tea / Black Tea (Unsweetened)"),
+    ("black tea", "RECIPE", "Green Tea / Black Tea (Unsweetened)"),
+    ("herbal tea", "RECIPE", "Green Tea / Black Tea (Unsweetened)"),
+
+    ("cold coffee", "RECIPE", "Cold Coffee (Iced Blended)"),
+    ("iced coffee", "RECIPE", "Cold Coffee (Iced Blended)"),
+    ("frappe", "RECIPE", "Cold Coffee (Iced Blended)"),
+
+    ("cappuccino", "RECIPE", "Cappuccino / Cafe Latte"),
+    ("latte", "RECIPE", "Cappuccino / Cafe Latte"),
+    ("cafe latte", "RECIPE", "Cappuccino / Cafe Latte"),
+    ("flat white", "RECIPE", "Cappuccino / Cafe Latte"),
+    ("coffee with milk", "RECIPE", "Cappuccino / Cafe Latte"),
+
+    ("iced tea", "RECIPE", "Lemon Iced Tea"),
+    ("lemon iced tea", "RECIPE", "Lemon Iced Tea"),
+    ("peach iced tea", "RECIPE", "Lemon Iced Tea"),
+
+    ("lassi", "RECIPE", "Sweet Lassi"),
+    ("sweet lassi", "RECIPE", "Sweet Lassi"),
+    ("punjabi lassi", "RECIPE", "Sweet Lassi"),
+
+    ("chaas", "RECIPE", "Chaas / Salted Buttermilk"),
+    ("buttermilk", "RECIPE", "Chaas / Salted Buttermilk"),
+    ("mattha", "RECIPE", "Chaas / Salted Buttermilk"),
+    ("masala chaas", "RECIPE", "Chaas / Salted Buttermilk"),
+
+    ("coconut water", "RECIPE", "Tender Coconut Water (Fresh)"),
+    ("nariyal pani", "RECIPE", "Tender Coconut Water (Fresh)"),
+    ("tender coconut water", "RECIPE", "Tender Coconut Water (Fresh)"),
+    ("daab", "RECIPE", "Tender Coconut Water (Fresh)"),
+
+    ("orange juice", "RECIPE", "Fresh Orange Juice (Glass)"),
+    ("fresh orange juice", "RECIPE", "Fresh Orange Juice (Glass)"),
+    ("mosambi juice", "RECIPE", "Fresh Orange Juice (Glass)"),
+    ("sweet lime juice", "RECIPE", "Fresh Orange Juice (Glass)"),
+    ("juice", "RECIPE", "Fresh Orange Juice (Glass)"),
+
+    ("sugarcane juice", "RECIPE", "Fresh Sugarcane Juice"),
+    ("ganna juice", "RECIPE", "Fresh Sugarcane Juice"),
+    ("ganne ka ras", "RECIPE", "Fresh Sugarcane Juice"),
+
+    ("cola", "RECIPE", "Cola / Carbonated Soft Drink (Can)"),
+    ("coke", "RECIPE", "Cola / Carbonated Soft Drink (Can)"),
+    ("coca cola", "RECIPE", "Cola / Carbonated Soft Drink (Can)"),
+    ("pepsi", "RECIPE", "Cola / Carbonated Soft Drink (Can)"),
+    ("thums up", "RECIPE", "Cola / Carbonated Soft Drink (Can)"),
+    ("thumbs up", "RECIPE", "Cola / Carbonated Soft Drink (Can)"),
+    ("sprite", "RECIPE", "Cola / Carbonated Soft Drink (Can)"),
+    ("fanta", "RECIPE", "Cola / Carbonated Soft Drink (Can)"),
+    ("soda", "RECIPE", "Cola / Carbonated Soft Drink (Can)"),
+    ("soft drink", "RECIPE", "Cola / Carbonated Soft Drink (Can)"),
+
+    ("diet coke", "RECIPE", "Diet Coke / Coke Zero (Can)"),
+    ("coke zero", "RECIPE", "Diet Coke / Coke Zero (Can)"),
+    ("diet pepsi", "RECIPE", "Diet Coke / Coke Zero (Can)"),
+    ("pepsi black", "RECIPE", "Diet Coke / Coke Zero (Can)"),
+    ("zero coke", "RECIPE", "Diet Coke / Coke Zero (Can)"),
+
+    ("red bull", "RECIPE", "Energy Drink (Red Bull Style)"),
+    ("energy drink", "RECIPE", "Energy Drink (Red Bull Style)"),
+    ("monster", "RECIPE", "Energy Drink (Red Bull Style)"),
+    ("sting", "RECIPE", "Energy Drink (Red Bull Style)"),
+
+    # Sandwiches
+    ("dark chocolate sandwich", "RECIPE", "Dark Chocolate Sandwich"),
+    ("dark chocolate sandwiches", "RECIPE", "Dark Chocolate Sandwich"),
+    ("chocolate sandwich", "RECIPE", "Dark Chocolate Sandwich"),
+    ("chocolate sandwiches", "RECIPE", "Dark Chocolate Sandwich"),
+    ("choco sandwich", "RECIPE", "Dark Chocolate Sandwich"),
+    ("nutella sandwich", "RECIPE", "Dark Chocolate Sandwich"),
+
+    ("sandwich", "RECIPE", "Veg Grilled Sandwich (Bombay Style)"),
+    ("sandwiches", "RECIPE", "Veg Grilled Sandwich (Bombay Style)"),
+    ("veg sandwich", "RECIPE", "Veg Grilled Sandwich (Bombay Style)"),
+    ("veg sandwiches", "RECIPE", "Veg Grilled Sandwich (Bombay Style)"),
+    ("vegetable sandwich", "RECIPE", "Veg Grilled Sandwich (Bombay Style)"),
+    ("bombay sandwich", "RECIPE", "Veg Grilled Sandwich (Bombay Style)"),
+    ("grilled veg sandwich", "RECIPE", "Veg Grilled Sandwich (Bombay Style)"),
+    ("veg grilled sandwich", "RECIPE", "Veg Grilled Sandwich (Bombay Style)"),
+
+    ("cheese sandwich", "RECIPE", "Cheese Grilled Sandwich"),
+    ("cheese sandwiches", "RECIPE", "Cheese Grilled Sandwich"),
+    ("cheese grilled sandwich", "RECIPE", "Cheese Grilled Sandwich"),
+    ("grilled cheese", "RECIPE", "Cheese Grilled Sandwich"),
+    ("grilled cheese sandwich", "RECIPE", "Cheese Grilled Sandwich"),
+
+    ("chicken sandwich", "RECIPE", "Chicken Club Sandwich"),
+    ("chicken sandwiches", "RECIPE", "Chicken Club Sandwich"),
+    ("chicken club sandwich", "RECIPE", "Chicken Club Sandwich"),
+    ("club sandwich", "RECIPE", "Chicken Club Sandwich"),
+
+    ("egg sandwich", "RECIPE", "Egg / Omelette Sandwich"),
+    ("egg sandwiches", "RECIPE", "Egg / Omelette Sandwich"),
+    ("omelette sandwich", "RECIPE", "Egg / Omelette Sandwich"),
+    ("omlet sandwich", "RECIPE", "Egg / Omelette Sandwich"),
+    ("anda sandwich", "RECIPE", "Egg / Omelette Sandwich"),
+
+    ("peanut butter sandwich", "RECIPE", "Peanut Butter Sandwich"),
+    ("peanut butter sandwiches", "RECIPE", "Peanut Butter Sandwich"),
+    ("pb sandwich", "RECIPE", "Peanut Butter Sandwich"),
+    ("pb&j sandwich", "RECIPE", "Peanut Butter Sandwich"),
+    ("pbj sandwich", "RECIPE", "Peanut Butter Sandwich"),
+
+    # Fast Food & Street Food
+    ("burger", "RECIPE", "Veg Burger / Aloo Tikki Burger"),
+    ("burgers", "RECIPE", "Veg Burger / Aloo Tikki Burger"),
+    ("veg burger", "RECIPE", "Veg Burger / Aloo Tikki Burger"),
+    ("veg burgers", "RECIPE", "Veg Burger / Aloo Tikki Burger"),
+    ("aloo tikki burger", "RECIPE", "Veg Burger / Aloo Tikki Burger"),
+    ("veggie burger", "RECIPE", "Veg Burger / Aloo Tikki Burger"),
+
+    ("chicken burger", "RECIPE", "Chicken Burger (Crispy)"),
+    ("chicken burgers", "RECIPE", "Chicken Burger (Crispy)"),
+    ("mcchicken", "RECIPE", "Chicken Burger (Crispy)"),
+    ("crispy chicken burger", "RECIPE", "Chicken Burger (Crispy)"),
+    ("zinger burger", "RECIPE", "Chicken Burger (Crispy)"),
+
+    ("cheeseburger", "RECIPE", "Cheeseburger"),
+    ("cheeseburgers", "RECIPE", "Cheeseburger"),
+    ("cheese burger", "RECIPE", "Cheeseburger"),
+
+    ("fries", "RECIPE", "French Fries (Medium)"),
+    ("french fries", "RECIPE", "French Fries (Medium)"),
+    ("french fry", "RECIPE", "French Fries (Medium)"),
+    ("finger chips", "RECIPE", "French Fries (Medium)"),
+    ("chips", "RECIPE", "French Fries (Medium)"),
+
+    ("pizza", "RECIPE", "Margherita Pizza (1 Slice)"),
+    ("pizza slice", "RECIPE", "Margherita Pizza (1 Slice)"),
+    ("margherita", "RECIPE", "Margherita Pizza (1 Slice)"),
+    ("margherita pizza", "RECIPE", "Margherita Pizza (1 Slice)"),
+    ("cheese pizza", "RECIPE", "Margherita Pizza (1 Slice)"),
+
+    ("veg pizza", "RECIPE", "Veggie Supreme Pizza (1 Slice)"),
+    ("veggie pizza", "RECIPE", "Veggie Supreme Pizza (1 Slice)"),
+    ("veggie supreme pizza", "RECIPE", "Veggie Supreme Pizza (1 Slice)"),
+    ("farmhouse pizza", "RECIPE", "Veggie Supreme Pizza (1 Slice)"),
+
+    ("chicken pizza", "RECIPE", "Chicken Pizza (1 Slice)"),
+    ("pepperoni pizza", "RECIPE", "Chicken Pizza (1 Slice)"),
+
+    ("chicken roll", "RECIPE", "Chicken Kathi Roll / Frankie"),
+    ("chicken kathi roll", "RECIPE", "Chicken Kathi Roll / Frankie"),
+    ("chicken frankie", "RECIPE", "Chicken Kathi Roll / Frankie"),
+
+    ("paneer roll", "RECIPE", "Paneer Kathi Roll / Frankie"),
+    ("paneer kathi roll", "RECIPE", "Paneer Kathi Roll / Frankie"),
+    ("paneer frankie", "RECIPE", "Paneer Kathi Roll / Frankie"),
+    ("veg roll", "RECIPE", "Paneer Kathi Roll / Frankie"),
+    ("kathi roll", "RECIPE", "Paneer Kathi Roll / Frankie"),
+    ("frankie", "RECIPE", "Paneer Kathi Roll / Frankie"),
+
+    ("pasta", "RECIPE", "Red Sauce Pasta (Arrabbiata)"),
+    ("red sauce pasta", "RECIPE", "Red Sauce Pasta (Arrabbiata)"),
+    ("arrabbiata", "RECIPE", "Red Sauce Pasta (Arrabbiata)"),
+    ("arrabbiata pasta", "RECIPE", "Red Sauce Pasta (Arrabbiata)"),
+    ("penne arrabbiata", "RECIPE", "Red Sauce Pasta (Arrabbiata)"),
+    ("tomato pasta", "RECIPE", "Red Sauce Pasta (Arrabbiata)"),
+
+    ("white sauce pasta", "RECIPE", "White Sauce Pasta (Alfredo)"),
+    ("alfredo pasta", "RECIPE", "White Sauce Pasta (Alfredo)"),
+    ("alfredo", "RECIPE", "White Sauce Pasta (Alfredo)"),
+    ("cheese pasta", "RECIPE", "White Sauce Pasta (Alfredo)"),
+
+    ("momos", "RECIPE", "Steamed Veg Momos (6 Pieces)"),
+    ("momo", "RECIPE", "Steamed Veg Momos (6 Pieces)"),
+    ("veg momos", "RECIPE", "Steamed Veg Momos (6 Pieces)"),
+    ("veg momo", "RECIPE", "Steamed Veg Momos (6 Pieces)"),
+    ("steamed momos", "RECIPE", "Steamed Veg Momos (6 Pieces)"),
+    ("dim sum", "RECIPE", "Steamed Veg Momos (6 Pieces)"),
+    ("dumplings", "RECIPE", "Steamed Veg Momos (6 Pieces)"),
+
+    ("chicken momos", "RECIPE", "Steamed Chicken Momos (6 Pieces)"),
+    ("chicken momo", "RECIPE", "Steamed Chicken Momos (6 Pieces)"),
+    ("steamed chicken momos", "RECIPE", "Steamed Chicken Momos (6 Pieces)"),
+
+    ("shawarma", "RECIPE", "Chicken Shawarma Roll"),
+    ("chicken shawarma", "RECIPE", "Chicken Shawarma Roll"),
+    ("shawarma roll", "RECIPE", "Chicken Shawarma Roll"),
+
+    ("noodles", "RECIPE", "Veg Hakka Noodles / Chowmein"),
+    ("hakka noodles", "RECIPE", "Veg Hakka Noodles / Chowmein"),
+    ("chowmein", "RECIPE", "Veg Hakka Noodles / Chowmein"),
+    ("veg noodles", "RECIPE", "Veg Hakka Noodles / Chowmein"),
+    ("veg chowmein", "RECIPE", "Veg Hakka Noodles / Chowmein"),
+
+    ("fried rice", "RECIPE", "Veg Fried Rice"),
+    ("veg fried rice", "RECIPE", "Veg Fried Rice"),
+
+    ("manchurian", "RECIPE", "Veg Manchurian (Dry/Gravy)"),
+    ("veg manchurian", "RECIPE", "Veg Manchurian (Dry/Gravy)"),
+    ("gobi manchurian", "RECIPE", "Veg Manchurian (Dry/Gravy)"),
+
+    ("nuggets", "RECIPE", "Chicken Nuggets (6 Pieces)"),
+    ("chicken nuggets", "RECIPE", "Chicken Nuggets (6 Pieces)"),
+
+    ("garlic bread", "RECIPE", "Garlic Bread (3 Slices)"),
+    ("cheese garlic bread", "RECIPE", "Garlic Bread (3 Slices)"),
+
+    ("cookie", "RECIPE", "Chocolate Chip Cookie"),
+    ("cookies", "RECIPE", "Chocolate Chip Cookie"),
+    ("chocolate cookie", "RECIPE", "Chocolate Chip Cookie"),
+    ("chocochip cookie", "RECIPE", "Chocolate Chip Cookie"),
+    ("biscuit", "RECIPE", "Chocolate Chip Cookie"),
+    ("biscuits", "RECIPE", "Chocolate Chip Cookie"),
+
+    ("donut", "RECIPE", "Glazed Doughnut / Donut"),
+    ("donuts", "RECIPE", "Glazed Doughnut / Donut"),
+    ("doughnut", "RECIPE", "Glazed Doughnut / Donut"),
+    ("doughnuts", "RECIPE", "Glazed Doughnut / Donut"),
+
+    # Fast food base ingredients aliases
+    ("dark chocolate", "INGREDIENT", "Dark Chocolate (70% Cocoa)"),
+    ("chocolate", "INGREDIENT", "Milk Chocolate"),
+    ("milk chocolate", "INGREDIENT", "Milk Chocolate"),
+    ("cocoa powder", "INGREDIENT", "Cocoa Powder (Unsweetened)"),
+    ("cheese", "INGREDIENT", "Cheddar / Processed Cheese"),
+    ("cheddar", "INGREDIENT", "Cheddar / Processed Cheese"),
+    ("cheddar cheese", "INGREDIENT", "Cheddar / Processed Cheese"),
+    ("mozzarella", "INGREDIENT", "Mozzarella Cheese"),
+    ("mozzarella cheese", "INGREDIENT", "Mozzarella Cheese"),
+    ("mayo", "INGREDIENT", "Mayonnaise"),
+    ("mayonnaise", "INGREDIENT", "Mayonnaise"),
+    ("bun", "INGREDIENT", "Burger Bun"),
+    ("burger bun", "INGREDIENT", "Burger Bun"),
 ]
 
 # Standard Unit Conversions (unit_name, default_grams)
@@ -1118,6 +1933,12 @@ UNIT_CONVERSIONS_DATA = [
     ("tbsp", 15.0),
     ("tsp", 5.0),
     ("scoop", 30.0),
+    ("can", 330.0),
+    ("bottle", 500.0),
+    ("sandwich", 150.0),
+    ("burger", 180.0),
+    ("roll", 180.0),
+    ("serving", 120.0),
     ("g", 1.0),
     ("gram", 1.0),
     ("grams", 1.0),

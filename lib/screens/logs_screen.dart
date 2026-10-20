@@ -7,6 +7,7 @@ import '../models/log_entry.dart';
 import '../models/daily_log.dart';
 import '../theme/soma_theme.dart';
 import '../widgets/quick_log_modal.dart';
+import '../services/nutrition/meal_verdict_engine.dart';
 
 class LogsScreen extends StatefulWidget {
   const LogsScreen({super.key});
@@ -530,47 +531,32 @@ class _LogsScreenState extends State<LogsScreen> {
     );
   }
 
-  Widget _buildMealHealthBadge(int calories, int protein) {
-    final double ratio = protein > 0 ? calories / protein : (calories > 0 ? double.infinity : 0.0);
-    final bool isSuperClean = protein > 0 && ratio < 10.0;
-    final bool isHealthy = protein > 0 && ratio <= 20.0;
-
-    final Color badgeColor;
-    final String badgeLabel;
-    final IconData badgeIcon;
-
-    if (isSuperClean) {
-      badgeColor = const Color(0xFFFFC700); // Luminous Amber Gold
-      badgeLabel = 'SUPER CLEAN';
-      badgeIcon = Icons.keyboard_double_arrow_up_rounded; // ⇈
-    } else if (isHealthy) {
-      badgeColor = const Color(0xFFD4F84D); // Electric Lime
-      badgeLabel = 'HEALTHY';
-      badgeIcon = Icons.arrow_upward_rounded; // ↑
-    } else {
-      badgeColor = const Color(0xFFFF4848); // Vivid Punchy Crimson
-      badgeLabel = 'HIGH CAL';
-      badgeIcon = Icons.arrow_downward_rounded; // ↓
-    }
+  Widget _buildMealHealthBadge(LogEntry entry) {
+    final verdict = MealVerdict.evaluate(
+      calories: entry.calories,
+      protein: entry.protein,
+      carbs: entry.carbs,
+      fats: entry.fats,
+    );
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: badgeColor.withValues(alpha: 0.14),
+        color: verdict.color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: badgeColor.withValues(alpha: 0.55), width: 1.2),
+        border: Border.all(color: verdict.color.withValues(alpha: 0.55), width: 1.2),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(badgeIcon, size: 12, color: badgeColor),
+          Icon(verdict.icon, size: 12, color: verdict.color),
           const SizedBox(width: 3),
           Text(
-            badgeLabel,
+            verdict.label,
             style: SomaFonts.mono(
               fontSize: 9.5,
               fontWeight: FontWeight.w800,
-              color: badgeColor,
+              color: verdict.color,
               letterSpacing: 0.5,
             ),
           ),
@@ -582,14 +568,12 @@ class _LogsScreenState extends State<LogsScreen> {
   Color _getItemThemeColor(LogEntry entry) {
     switch (entry.type) {
       case LogType.meal:
-        final double ratio = entry.protein > 0 ? entry.calories / entry.protein : (entry.calories > 0 ? double.infinity : 0.0);
-        if (entry.protein > 0 && ratio < 10.0) {
-          return const Color(0xFFFFC700); // Luminous Gold - Super Clean
-        } else if (entry.protein > 0 && ratio <= 20.0) {
-          return const Color(0xFFD4F84D); // Electric Lime - Healthy
-        } else {
-          return const Color(0xFFFF4848); // Vivid Crimson - High Cal
-        }
+        return MealVerdict.evaluate(
+          calories: entry.calories,
+          protein: entry.protein,
+          carbs: entry.carbs,
+          fats: entry.fats,
+        ).color;
       case LogType.activity:
         final cat = entry.activityCategory?.toLowerCase() ?? '';
         final title = entry.title.toLowerCase();
@@ -671,7 +655,7 @@ class _LogsScreenState extends State<LogsScreen> {
           runSpacing: 4,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            _buildMealHealthBadge(entry.calories, entry.protein),
+            _buildMealHealthBadge(entry),
             _buildMacroBadge('CAL', '${entry.calories} kcal', themeColor),
             _buildMacroBadge('PRO', '${entry.protein}g', SomaColors.onSurface),
             _buildMacroBadge('CARB', '${entry.carbs}g', SomaColors.secondary),

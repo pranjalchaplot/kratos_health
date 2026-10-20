@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../../models/nutrition_models.dart';
 
@@ -20,6 +21,9 @@ class EntitySearchResult {
 
 class NutritionDatabaseService {
   static final NutritionDatabaseService instance = NutritionDatabaseService._internal();
+
+  /// Bundled database asset version - incremented when pre-compiled recipes/aliases change
+  static const int bundledDatabaseVersion = 6;
 
   NutritionDatabaseService._internal();
 
@@ -55,22 +59,116 @@ class NutritionDatabaseService {
 
     // 2. Ensure database file exists and syncs when bundled asset is updated
     final dbFile = File(dbPath);
+    bool shouldSyncAsset = false;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storedVersion = prefs.getInt('bundled_nutrition_db_version') ?? 0;
+      if (storedVersion < bundledDatabaseVersion) {
+        shouldSyncAsset = true;
+      }
+    } catch (_) {}
+
     if (!await dbFile.exists() || await dbFile.length() == 0) {
-      await _copyAssetToDisk(dbFile);
-    } else {
+      shouldSyncAsset = true;
+    }
+
+    // Preserve custom recipes if updating existing database
+    List<Map<String, dynamic>> preservedCustomRecipes = [];
+    List<Map<String, dynamic>> preservedCustomIngredients = [];
+    List<Map<String, dynamic>> preservedCustomAliases = [];
+
+    if (shouldSyncAsset && await dbFile.exists() && await dbFile.length() > 0) {
       try {
-        final byteData = await rootBundle.load('assets/database/nutrition.db');
-        if (byteData.lengthInBytes > await dbFile.length()) {
-          await _copyAssetToDisk(dbFile);
+        final oldDb = await openDatabase(dbPath, readOnly: true);
+        final hasRecipeTable = (await oldDb.rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name='recipes'")).isNotEmpty;
+        if (hasRecipeTable) {
+          final recipeCols = await oldDb.rawQuery('PRAGMA table_info(recipes);');
+          if (recipeCols.any((c) => c['name'] == 'is_custom')) {
+            preservedCustomRecipes = await oldDb.query('recipes', where: 'is_custom = 1');
+            if (preservedCustomRecipes.isNotEmpty) {
+              preservedCustomIngredients = await oldDb.rawQuery('''
+                SELECT ri.* FROM recipe_ingredients ri
+                JOIN recipes r ON r.id = ri.recipe_id
+                WHERE r.is_custom = 1
+              ''');
+              preservedCustomAliases = await oldDb.query('food_aliases', where: 'is_custom = 1');
+            }
+          }
         }
+        await oldDb.close();
       } catch (_) {}
+      await _copyAssetToDisk(dbFile);
+    } else if (!await dbFile.exists() || await dbFile.length() == 0) {
+      await _copyAssetToDisk(dbFile);
     }
 
     // Open read-write so user can create & save custom recipes
-    return await openDatabase(
+    var db = await openDatabase(
       dbPath,
       readOnly: false,
     );
+
+    // Self-healing check: verify if the database on disk has the latest cooked recipes
+    final checkCooked = await db.rawQuery("SELECT id FROM recipes WHERE name LIKE '%Urad Dal (Cooked%' LIMIT 1;");
+    if (checkCooked.isEmpty) {
+      debugPrint('[NutritionDatabaseService] Database on disk lacks cooked recipes. Re-copying asset...');
+      await db.close();
+      await _copyAssetToDisk(dbFile);
+      db = await openDatabase(dbPath, readOnly: false);
+    }
+
+    // Restore preserved custom recipes if any
+    for (final cr in preservedCustomRecipes) {
+      try {
+        await db.insert('recipes', cr, conflictAlgorithm: ConflictAlgorithm.replace);
+      } catch (_) {}
+    }
+    for (final ci in preservedCustomIngredients) {
+      try {
+        await db.insert('recipe_ingredients', ci, conflictAlgorithm: ConflictAlgorithm.replace);
+      } catch (_) {}
+    }
+    for (final ca in preservedCustomAliases) {
+      try {
+        await db.insert('food_aliases', ca, conflictAlgorithm: ConflictAlgorithm.replace);
+      } catch (_) {}
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('bundled_nutrition_db_version', bundledDatabaseVersion);
+    } catch (_) {}
+
+    // Self-healing schema migration: ensure is_custom columns exist
+    try {
+      final aliasCols = await db.rawQuery('PRAGMA table_info(food_aliases);');
+      final hasAliasCustom = aliasCols.any((col) => col['name'] == 'is_custom');
+      if (!hasAliasCustom) {
+        await db.execute('ALTER TABLE food_aliases ADD COLUMN is_custom INTEGER NOT NULL DEFAULT 0;');
+      }
+
+      final recipeCols = await db.rawQuery('PRAGMA table_info(recipes);');
+      final hasRecipeCustom = recipeCols.any((col) => col['name'] == 'is_custom');
+      if (!hasRecipeCustom) {
+        await db.execute('ALTER TABLE recipes ADD COLUMN is_custom INTEGER NOT NULL DEFAULT 0;');
+      }
+    } catch (_) {}
+
+    return db;
+  }
+
+  /// Forces a complete re-sync from bundled assets into disk
+  Future<void> forceSyncFromAsset() async {
+    if (_db != null && _db!.isOpen) {
+      await _db!.close();
+      _db = null;
+    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('bundled_nutrition_db_version', 0);
+    } catch (_) {}
+    _db = await _initDatabase();
   }
 
   Future<void> _copyAssetToDisk(File targetFile) async {
@@ -139,7 +237,7 @@ class NutritionDatabaseService {
         SELECT entity_type, entity_id, name, is_custom, bm25(entity_fts) as score
         FROM entity_fts
         WHERE entity_fts MATCH ?
-        ORDER BY is_custom DESC, score ASC
+        ORDER BY is_custom DESC, (CASE WHEN entity_type = 'RECIPE' THEN 0 ELSE 1 END) ASC, score ASC
         LIMIT 4
         ''',
         [ftsPattern],
@@ -155,7 +253,7 @@ class NutritionDatabaseService {
         SELECT 'INGREDIENT' as entity_type, id as entity_id, name, 0 as is_custom, 0.5 as score
         FROM ingredients
         WHERE LOWER(name) LIKE ?
-        ORDER BY is_custom DESC
+        ORDER BY is_custom DESC, (CASE WHEN entity_type = 'RECIPE' THEN 0 ELSE 1 END) ASC
         LIMIT 4
         ''',
         ['%$normalized%', '%$normalized%'],
@@ -214,7 +312,12 @@ class NutritionDatabaseService {
   }) async {
     final db = await database;
     final combined = '$foodName ${queryToken ?? ''}'.toLowerCase();
-    final cleanWords = combined.split(RegExp(r'\s+')).where((w) => w.length > 2).toSet().toList();
+    final cleanWords = combined
+        .replaceAll(RegExp(r'[^\w\s]'), ' ')
+        .split(RegExp(r'\s+'))
+        .where((w) => w.length > 2)
+        .toSet()
+        .toList();
     if (cleanWords.isEmpty) return [];
 
     final ftsPattern = cleanWords.map((w) => '$w*').join(' OR ');
@@ -225,13 +328,13 @@ class NutritionDatabaseService {
         SELECT entity_type, entity_id, name, is_custom, bm25(entity_fts) as score
         FROM entity_fts
         WHERE entity_fts MATCH ? AND NOT (entity_type = ? AND entity_id = ?)
-        ORDER BY is_custom DESC, score ASC
-        LIMIT 4
+        ORDER BY is_custom DESC, (CASE WHEN entity_type = 'RECIPE' THEN 0 ELSE 1 END) ASC, score ASC
+        LIMIT 6
         ''',
         [ftsPattern, currentType.name.toUpperCase(), currentId],
       );
 
-      return rows.map((r) {
+      final alternates = rows.map((r) {
         final tStr = r['entity_type'] as String;
         final type = tStr == 'RECIPE' ? EntityType.recipe : EntityType.ingredient;
         final score = (r['score'] as num?)?.toDouble() ?? 1.0;
@@ -245,6 +348,71 @@ class NutritionDatabaseService {
           isCustom: isCustom,
         );
       }).toList();
+
+      // If current entity is a cooked recipe, also offer its primary raw ingredient as an alternate
+      if (currentType == EntityType.recipe) {
+        final rawRows = await db.rawQuery(
+          '''
+          SELECT i.id as entity_id, i.name as name
+          FROM recipe_ingredients ri
+          JOIN ingredients i ON i.id = ri.ingredient_id
+          WHERE ri.recipe_id = ?
+          ORDER BY ri.grams_used DESC
+          LIMIT 1
+          ''',
+          [currentId],
+        );
+        for (final r in rawRows) {
+          final ingId = r['entity_id'] as int;
+          final ingName = r['name'] as String;
+          if (!alternates.any((a) => a.entityType == EntityType.ingredient && a.entityId == ingId)) {
+            alternates.insert(
+              0,
+              AlternateEntity(
+                entityId: ingId,
+                name: '$ingName (Raw)',
+                entityType: EntityType.ingredient,
+                confidenceScore: 0.90,
+                isCustom: false,
+              ),
+            );
+          }
+        }
+      }
+
+      // If current entity is a raw ingredient, also offer its cooked recipe counterpart as an alternate
+      if (currentType == EntityType.ingredient) {
+        final cookedRows = await db.rawQuery(
+          '''
+          SELECT r.id as entity_id, r.name as name, r.is_custom
+          FROM recipe_ingredients ri
+          JOIN recipes r ON r.id = ri.recipe_id
+          WHERE ri.ingredient_id = ?
+          ORDER BY r.is_custom DESC, ri.grams_used DESC
+          LIMIT 1
+          ''',
+          [currentId],
+        );
+        for (final r in cookedRows) {
+          final recId = r['entity_id'] as int;
+          final recName = r['name'] as String;
+          final isCustom = ((r['is_custom'] as int?) ?? 0) == 1;
+          if (!alternates.any((a) => a.entityType == EntityType.recipe && a.entityId == recId)) {
+            alternates.insert(
+              0,
+              AlternateEntity(
+                entityId: recId,
+                name: recName,
+                entityType: EntityType.recipe,
+                confidenceScore: 0.95,
+                isCustom: isCustom,
+              ),
+            );
+          }
+        }
+      }
+
+      return alternates;
     } catch (_) {
       return [];
     }
@@ -371,6 +539,7 @@ class NutritionDatabaseService {
     required EntityType entityType,
     required int entityId,
     required double entityStandardServingGrams,
+    String? entityStandardServingUnit,
   }) async {
     if (unit == null || unit.isEmpty) {
       return entityStandardServingGrams;
@@ -384,6 +553,10 @@ class NutritionDatabaseService {
       return 1000.0;
     }
     if (normalizedUnit == 'piece' || normalizedUnit == 'serving' || normalizedUnit == 'portion') {
+      return entityStandardServingGrams;
+    }
+    if (entityStandardServingUnit != null &&
+        normalizedUnit == entityStandardServingUnit.toLowerCase().trim()) {
       return entityStandardServingGrams;
     }
 
@@ -408,7 +581,14 @@ class NutritionDatabaseService {
       limit: 1,
     );
     if (defaultRows.isNotEmpty) {
-      return (defaultRows.first['default_grams'] as num).toDouble();
+      final defaultVal = (defaultRows.first['default_grams'] as num).toDouble();
+      // Intelligent snack plate scaling:
+      // If unit is 'plate' and standard serving is a single piece (< 100g like Kachori, Samosa, Idli),
+      // 1 plate is 2 pieces (e.g. 2 kachoris = ~140-150g, 2 samosas = 170g), not a 300g main-course plate!
+      if (normalizedUnit == 'plate' && entityStandardServingGrams < 100.0) {
+        return entityStandardServingGrams * 2.0;
+      }
+      return defaultVal;
     }
 
     // Fallback to entity's standard serving grams

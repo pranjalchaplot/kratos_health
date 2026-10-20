@@ -114,6 +114,24 @@ class MealTextParser {
     'liters': 'l',
     'litre': 'l',
     'litres': 'l',
+    'can': 'can',
+    'cans': 'can',
+    'bottle': 'bottle',
+    'bottles': 'bottle',
+    'sandwich': 'piece',
+    'sandwiches': 'piece',
+    'burger': 'piece',
+    'burgers': 'piece',
+    'roll': 'piece',
+    'rolls': 'piece',
+    'momo': 'piece',
+    'momos': 'piece',
+    'cookie': 'piece',
+    'cookies': 'piece',
+    'donut': 'piece',
+    'donuts': 'piece',
+    'doughnut': 'piece',
+    'doughnuts': 'piece',
   };
 
   /// Normalizes and parses free-form natural language input into segmented tokens
@@ -191,7 +209,21 @@ class MealTextParser {
       }
     }
 
-    // 4. Check for standard decimal or integer digits (e.g. "2", "1.5", ".5")
+    // 4. Check for digits with attached units (e.g. "100g", "250ml", "1kg", "2cups")
+    if (parsedQuantity == null) {
+      final attachedUnitMatch = RegExp(r'^(\d+(?:\.\d+)?|\.\d+)([a-zA-Z]+)\b').firstMatch(working);
+      if (attachedUnitMatch != null) {
+        final val = double.tryParse(attachedUnitMatch.group(1)!);
+        final rawUnit = attachedUnitMatch.group(2)!.toLowerCase();
+        if (val != null && _unitSynonyms.containsKey(rawUnit)) {
+          parsedQuantity = val;
+          parsedUnit = _unitSynonyms[rawUnit];
+          working = working.substring(attachedUnitMatch.end).trim();
+        }
+      }
+    }
+
+    // 5. Check for standard decimal or integer digits (e.g. "2", "1.5", ".5")
     if (parsedQuantity == null) {
       final digitMatch = RegExp(r'^(\d+(?:\.\d+)?|\.\d+)\b').firstMatch(working);
       if (digitMatch != null) {
@@ -233,6 +265,12 @@ class MealTextParser {
             'kachori', 'kachoris',
             'ladoo', 'laddu',
             'bhatura', 'bhature',
+            'sandwich', 'sandwiches',
+            'burger', 'burgers',
+            'roll', 'rolls',
+            'momo', 'momos',
+            'cookie', 'cookies',
+            'donut', 'donuts', 'doughnut', 'doughnuts',
           ].contains(candidateUnit)) {
             parsedUnit = _unitSynonyms[candidateUnit] ?? 'piece';
             working = candidateUnit;

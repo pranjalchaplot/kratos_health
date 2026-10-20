@@ -4,6 +4,8 @@ import 'package:soma_app/models/log_entry.dart';
 import 'package:soma_app/models/user_goals.dart';
 import 'package:soma_app/models/dashboard_data.dart';
 
+import 'package:soma_app/services/nutrition/meal_verdict_engine.dart';
+
 void main() {
   group('Calorie Deficit & Trend Tests', () {
     test('Calculates calorie deficit correctly as Total Burn - Consumption', () {
@@ -84,29 +86,34 @@ void main() {
       expect(data.sleepDelta, equals(0.0));
     });
 
-    test('Meal Health Rule categorizes <10x, <=20x and >20x calories-to-protein', () {
-      // Helper simulating the exact ratio check
-      String classifyMeal(int calories, int protein) {
-        final double ratio = protein > 0 ? calories / protein : (calories > 0 ? double.infinity : 0.0);
-        if (protein > 0 && ratio < 10.0) return 'SUPER CLEAN';
-        if (protein > 0 && ratio <= 20.0) return 'HEALTHY';
-        return 'HIGH CAL';
-      }
+    test('Meal Health Verdict categorizes whole foods, balanced meals, high protein, and high cal accurately', () {
+      // 1. High Protein Lean meal: 30g protein with 240 kcal -> SUPER CLEAN
+      final superClean = MealVerdict.evaluate(calories: 240, protein: 30, carbs: 10, fats: 4);
+      expect(superClean.tag, equals(MealVerdictTag.superClean));
+      expect(superClean.label, equals('SUPER CLEAN'));
 
-      // 30g protein with 240 kcal (ratio 8.0x < 10) -> Super Clean
-      expect(classifyMeal(240, 30), equals('SUPER CLEAN'));
+      // 2. Whole Food Fruit: 1 Banana (89 kcal, 1.1g protein, 23g carbs, 0.3g fat) -> LIGHT & CLEAN (NOT High Cal!)
+      final banana = MealVerdict.evaluate(calories: 89, protein: 1.1, carbs: 23, fats: 0.3);
+      expect(banana.tag, equals(MealVerdictTag.lightClean));
+      expect(banana.label, equals('LIGHT & CLEAN'));
 
-      // 10g protein with 150 kcal (ratio 15.0x <= 20) -> Healthy
-      expect(classifyMeal(150, 10), equals('HEALTHY'));
+      // 3. Apple (52 kcal, 0.3g protein, 14g carbs, 0.2g fat) -> LIGHT & CLEAN
+      final apple = MealVerdict.evaluate(calories: 52, protein: 0.3, carbs: 14, fats: 0.2);
+      expect(apple.tag, equals(MealVerdictTag.lightClean));
 
-      // 10g protein with 200 kcal (ratio 20.0x <= 20) -> Healthy
-      expect(classifyMeal(200, 10), equals('HEALTHY'));
+      // 4. Balanced Home Meal: 3 Rotis & Urad Dal (485 kcal, 17g protein, 70g carbs, 15g fat) -> BALANCED
+      final balancedMeal = MealVerdict.evaluate(calories: 485, protein: 17, carbs: 70, fats: 15);
+      expect(balancedMeal.tag, equals(MealVerdictTag.balanced));
+      expect(balancedMeal.label, equals('BALANCED'));
 
-      // 10g protein with 250 kcal (ratio 25.0x > 20) -> High Cal
-      expect(classifyMeal(250, 10), equals('HIGH CAL'));
+      // 5. High Calorie Junk / Overload: 700 kcal, 12g protein, 80g carbs, 35g fat -> HIGH CAL
+      final highCal = MealVerdict.evaluate(calories: 700, protein: 12, carbs: 80, fats: 35);
+      expect(highCal.tag, equals(MealVerdictTag.highCal));
+      expect(highCal.label, equals('HIGH CAL'));
 
-      // 0g protein with 300 kcal -> High Cal
-      expect(classifyMeal(300, 0), equals('HIGH CAL'));
+      // 6. Zero / Hydrating Drink: 0 kcal diet drink -> HYDRATING / LIGHT
+      final dietDrink = MealVerdict.evaluate(calories: 0, protein: 0, carbs: 0, fats: 0);
+      expect(dietDrink.tag, equals(MealVerdictTag.lightClean));
     });
   });
 }
